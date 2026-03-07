@@ -1,0 +1,75 @@
+:root{
+  --bg:#061221; --card:#0e2430; --muted:#9fb0c9; --accent:#2563eb; --warn:#f59e0b; --danger:#ef4444;
+  --glass: rgba(255,255,255,0.03);
+}
+*{box-sizing:border-box}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans JP";background:var(--bg);color:#e6eef8;margin:0;padding:16px}
+header h1{margin:0 0 6px}
+.muted{color:var(--muted)}
+.small{font-size:.9rem}
+.layout{display:grid;grid-template-columns:1fr 380px;gap:12px;align-items:start}
+.col{display:block}
+.card{background:var(--card);padding:14px;border-radius:12px;margin-bottom:12px;box-shadow:0 10px 30px rgba(0,0,0,0.6)}
+.status{display:flex;justify-content:space-between;align-items:center}
+.left{flex:1}
+.right{width:260px;text-align:right}
+.big{font-size:1.6rem;font-weight:700}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+button{padding:12px 14px;border-radius:12px;border:none;background:var(--accent);color:#fff;cursor:pointer;min-height:44px;line-height:1}
+button.small{padding:8px 10px;font-size:.95rem;min-height:40px}
+button.accent{background:var(--accent)}
+button.warn{background:var(--warn);color:#000}
+button.alt{background:#374151}
+button:disabled{opacity:0.5;cursor:not-allowed}
+input[type=number]{width:84px;padding:8px;border-radius:8px;border:1px solid #173142;background:#071421;color:#e6eef8}
+textarea{width:100%;height:90px;margin-top:8px;padding:10px;border-radius:10px;background:#071421;color:#e6eef8;border:1px solid #173142;resize:vertical}
+.previewbox{background:rgba(255,255,255,0.02);padding:8px;border-radius:6px;white-space:pre-wrap}
+#svgWrap{background:#05202b;padding:8px;border-radius:8px;overflow:auto; -webkit-overflow-scrolling:touch}
+svg{width:100%;height:420px;display:block}
+.nodeRect{rx:8;cursor:pointer;stroke:#08323c;stroke-width:2;transition:stroke-width 0.2s, filter 0.2s;}
+.nodeRect.selected{stroke:#ffd166;stroke-width:4;filter:drop-shadow(0 8px 18px rgba(255,209,102,0.14))}
+.edgeLine{stroke:#14424f;stroke-width:2}
+.toast{max-height: 50vh;overflow-y: auto;position:fixed;right:16px;bottom:16px;display:flex;flex-direction:column;gap:8px;padding:8px;z-index:9999}
+.toastItem{background:rgba(12,40,55,0.95);color:#e6eef8;padding:10px 14px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.5)}
+
+/* Pulse Animation for SVG clicks */
+.pulse { animation: pulseAnim 0.4s ease-out; }
+@keyframes pulseAnim {
+  0% { filter: brightness(1); }
+  50% { filter: brightness(1.7); }
+  100% { filter: brightness(1); }
+}
+
+/* mobile-focused */
+@media (max-width:900px){
+  .layout{grid-template-columns:1fr; padding-bottom:160px}
+  svg{height:360px}
+  button{padding:14px 16px;border-radius:12px;min-height:52px}
+  .right{width:auto;text-align:left}
+  .card{padding:16px}
+}
+/* タブ UI */
+.tabs{display:flex;gap:8px;margin:12px 0 16px;flex-wrap:wrap}
+.tabBtn{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 12px;border-radius:10px;color:var(--muted);cursor:pointer}
+.tabBtn.active{background:var(--glass);border-color:var(--accent);color:#fff;box-shadow:0 6px 18px rgba(0,0,0,0.4)}
+.tabPane{display:block}
+.tabPane[hidden]{display:none}
+
+/* Achievements list */
+#achList .achItem{display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:8px;margin-bottom:6px;background:rgba(255,255,255,0.02)}
+.achLocked{opacity:0.45}
+.achUnlocked{border:1px solid #ffd166;background:linear-gradient(90deg, rgba(255,208,102,0.06), rgba(255,255,255,0.02));}
+
+/* Help formatting */
+#helpContent h4{margin:8px 0 4px}
+#helpContent p{margin:0 0 8px}
+
+/* モバイルでのタブ折返し */
+@media (max-width:900px){
+  .tabs{justify-content:space-between}
+  .sidecol{order:2}
+  .maincol{order:1}
+}
+button{ transition: all 0.12s ease; }
+button:not(:disabled):hover { filter: brightness(1.06); transform: translateY(-1px); }
+button:not(:disabled):active { transform: translateY(1px); }
