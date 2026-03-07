@@ -97,7 +97,14 @@
 
       <div id="tab-legacy" class="tabPane">
         <div class="card">
-          <h3>レガシーツリー（クリックで Inspector）</h3>
+          <div class="legacyHeaderRow">
+            <h3>レガシーツリー（クリックで Inspector）</h3>
+            <div class="legacyZoomControls">
+              <button id="legacyZoomOut" class="small alt" type="button">−</button>
+              <button id="legacyZoomReset" class="small alt" type="button">100%</button>
+              <button id="legacyZoomIn" class="small alt" type="button">＋</button>
+            </div>
+          </div>
           <div id="svgWrap"><svg id="legacySvg" preserveAspectRatio="xMidYMid meet"></svg></div>
         </div>
       </div>

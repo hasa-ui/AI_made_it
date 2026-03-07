@@ -49,3 +49,19 @@
 ## Verify Log (2026-03-07 確認ダイアログ/トースト修正)
 - `node --check game/state.js && node --check game/ui.js && node --check game/engine.js && node --check game/config.js` : 成功
 - `python -m http.server 4173 --directory /workspace/AI_made_it` + Playwright: 設定タブの確認チェック2項目がデフォルトONであること、および購入時トースト表示を確認（スクリーンショット取得）
+
+## Plan (2026-03-07 レガシーツリー拡大縮小 / Ascensionコスト調整)
+- [x] レガシーツリー描画周辺の構造確認と拡大縮小UIの設計
+- [x] レガシーツリーのズーム操作（拡大・縮小・リセット）を実装
+- [x] Ascensionショップ価格を全体的に大幅増額し、下位項目ほど高コスト化
+- [x] 検証ログ記録
+
+## Progress Log (2026-03-07 レガシーツリー拡大縮小 / Ascensionコスト調整)
+- 着手: index.html / game/styles.css / game/ui.js / game/config.js を確認。
+- index.html / game/styles.css: レガシーツリーにズーム操作ボタン（+ / - / 100%）とヘッダー用レイアウトを追加。
+- game/ui.js: legacy zoom 倍率状態を追加し、拡大・縮小・リセットで `legacySvg` 幅率を変更する処理を実装。
+- game/config.js: Ascensionショップコストを全体的に大幅引き上げ、配列下部の強化ほど高コストになるよう再配分。APP_VERSION を Ver.1.9.0 に更新。
+
+## Verify Log (2026-03-07 レガシーツリー拡大縮小 / Ascensionコスト調整)
+- `node --check game/config.js && node --check game/ui.js && node --check game/state.js && node --check game/engine.js` : 成功
+- `python -m http.server 4173 --directory /workspace/AI_made_it` + Playwright: レガシータブでズームボタン押下後の表示を確認し、スクリーンショット取得

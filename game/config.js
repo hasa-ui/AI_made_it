@@ -5,7 +5,7 @@
   const C = {
     SAVE_KEY: 'inc.split.full.v4',
     SAVE_VERSION: 8,
-    APP_VERSION: '1.8.0',
+    APP_VERSION: '1.9.0',
     UI_UPDATE_INTERVAL_MS: 50,
     AUTO_SAVE_INTERVAL: 5000,
     MAX_OFFLINE_SECONDS: 60*60*24,
@@ -46,19 +46,19 @@
   ];
 
   C.ASC_UPGRADES = [
-    { id:'asc_global20', name:'永遠の研究', desc:'恒久: 全体 ×1.30', cost:1, type:'globalMult', payload:{mult:1.30}, maxLevel:4 },
-    { id:'asc_flat50',   name:'黄金の配当', desc:'恒久: +100 GPS', cost:2, type:'flatGPS', payload:{gps:100}, maxLevel:2 },
-    { id:'asc_prestige_boost', name:'超越の加護', desc:'恒久: +0.02 prestige effect /Lv', cost:3, type:'prestigeEffectAdd', payload:{add:0.02}, maxLevel:2 },
-    { id:'asc_galactic_mult', name:'銀河の恩寵', desc:'恒久: 全体 ×3.0', cost:4, type:'globalMult', payload:{mult:3.0}, maxLevel:1 },
-    { id:'asc_colossus_gps',  name:'巨像の配当', desc:'恒久: +500 GPS', cost:6, type:'flatGPS', payload:{gps:500}, maxLevel:1 },
-    { id:'asc_prestige_super', name:'超越の祝福', desc:'恒久: +0.10 prestige effect', cost:4, type:'prestigeEffectAdd', payload:{add:0.10}, maxLevel:1 },
-    { id:'asc_seed_core', name:'創世資金コア', desc:'恒久: 開始ゴールド +1200', cost:5, type:'startGoldFlat', payload:{gold:1200}, maxLevel:1 },
-    { id:'asc_passive_reactor', name:'反応炉配当', desc:'恒久: +1200 GPS', cost:7, type:'flatGPS', payload:{gps:1200}, maxLevel:1 },
-    { id:'asc_keep_total_gold', name:'記録保全プロトコル', desc:'Ascend時に累計ゴールドを維持', cost:8, type:'special', payload:{kind:'keepTotalGold'}, maxLevel:1 },
-    { id:'asc_keep_legacy_tree', name:'レガシー写像保存', desc:'Ascend時にレガシーツリーを維持', cost:12, type:'special', payload:{kind:'keepLegacyTree'}, maxLevel:1 },
-    { id:'asc_unlock_autobuy', name:'自律運用OS', desc:'自動購入機能を解放', cost:6, type:'special', payload:{kind:'unlockAutobuy'}, maxLevel:1 },
-    { id:'asc_cosmic_multiplier', name:'天の倍加', desc:'恒久: 全体 ×10.0', cost:12, type:'globalMult', payload:{mult:10.0}, maxLevel:1 },
-    { id:'asc_mythic_gps', name:'神話の配当', desc:'恒久: +2500 GPS', cost:15, type:'flatGPS', payload:{gps:2500}, maxLevel:1 }
+    { id:'asc_global20', name:'永遠の研究', desc:'恒久: 全体 ×1.30', cost:8, type:'globalMult', payload:{mult:1.30}, maxLevel:4 },
+    { id:'asc_flat50',   name:'黄金の配当', desc:'恒久: +100 GPS', cost:20, type:'flatGPS', payload:{gps:100}, maxLevel:2 },
+    { id:'asc_prestige_boost', name:'超越の加護', desc:'恒久: +0.02 prestige effect /Lv', cost:36, type:'prestigeEffectAdd', payload:{add:0.02}, maxLevel:2 },
+    { id:'asc_galactic_mult', name:'銀河の恩寵', desc:'恒久: 全体 ×3.0', cost:56, type:'globalMult', payload:{mult:3.0}, maxLevel:1 },
+    { id:'asc_colossus_gps',  name:'巨像の配当', desc:'恒久: +500 GPS', cost:80, type:'flatGPS', payload:{gps:500}, maxLevel:1 },
+    { id:'asc_prestige_super', name:'超越の祝福', desc:'恒久: +0.10 prestige effect', cost:110, type:'prestigeEffectAdd', payload:{add:0.10}, maxLevel:1 },
+    { id:'asc_seed_core', name:'創世資金コア', desc:'恒久: 開始ゴールド +1200', cost:145, type:'startGoldFlat', payload:{gold:1200}, maxLevel:1 },
+    { id:'asc_passive_reactor', name:'反応炉配当', desc:'恒久: +1200 GPS', cost:185, type:'flatGPS', payload:{gps:1200}, maxLevel:1 },
+    { id:'asc_keep_total_gold', name:'記録保全プロトコル', desc:'Ascend時に累計ゴールドを維持', cost:235, type:'special', payload:{kind:'keepTotalGold'}, maxLevel:1 },
+    { id:'asc_keep_legacy_tree', name:'レガシー写像保存', desc:'Ascend時にレガシーツリーを維持', cost:300, type:'special', payload:{kind:'keepLegacyTree'}, maxLevel:1 },
+    { id:'asc_unlock_autobuy', name:'自律運用OS', desc:'自動購入機能を解放', cost:380, type:'special', payload:{kind:'unlockAutobuy'}, maxLevel:1 },
+    { id:'asc_cosmic_multiplier', name:'天の倍加', desc:'恒久: 全体 ×10.0', cost:480, type:'globalMult', payload:{mult:10.0}, maxLevel:1 },
+    { id:'asc_mythic_gps', name:'神話の配当', desc:'恒久: +2500 GPS', cost:620, type:'flatGPS', payload:{gps:2500}, maxLevel:1 }
   ];
 
   // --- ACHIEVEMENTS ---

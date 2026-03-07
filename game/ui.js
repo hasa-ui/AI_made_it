@@ -69,6 +69,10 @@
   let svgDirty = true;
   let selectedLegacyId = null;
   let autoBuyAccumulator = 0;
+  const LEGACY_ZOOM_MIN = 0.6;
+  const LEGACY_ZOOM_MAX = 2.2;
+  const LEGACY_ZOOM_STEP = 0.2;
+  let legacyZoom = 1;
 
   function hasAscSpecial(kind){
     const st = E.getState();
@@ -203,7 +207,23 @@
         const handler = ()=>{ rect.classList.remove('pulse'); void rect.offsetWidth; rect.classList.add('pulse'); selectLegacyNode(def.id); };
         rect.addEventListener('click', handler); title.addEventListener('click', handler); sub.addEventListener('click', handler);
       }
+      applyLegacyZoom();
     }catch(e){}
+  }
+
+  function setLegacyZoom(nextZoom){
+    const clamped = Math.min(LEGACY_ZOOM_MAX, Math.max(LEGACY_ZOOM_MIN, nextZoom));
+    legacyZoom = Math.round(clamped * 100) / 100;
+    applyLegacyZoom();
+  }
+
+  function applyLegacyZoom(){
+    const svg = document.getElementById('legacySvg');
+    const resetBtn = document.getElementById('legacyZoomReset');
+    if (!svg) return;
+    const percent = Math.round(legacyZoom * 100);
+    svg.style.width = `${percent}%`;
+    if (resetBtn) resetBtn.textContent = `${percent}%`;
   }
 
   function computeLegacyEffectForLevel(def, level){
@@ -592,6 +612,10 @@
       selectedLegacyId = null; for (const id in svgNodeEls) if (svgNodeEls[id]) svgNodeEls[id].classList.remove('selected');
     });
 
+    document.getElementById('legacyZoomIn')?.addEventListener('click', ()=> setLegacyZoom(legacyZoom + LEGACY_ZOOM_STEP));
+    document.getElementById('legacyZoomOut')?.addEventListener('click', ()=> setLegacyZoom(legacyZoom - LEGACY_ZOOM_STEP));
+    document.getElementById('legacyZoomReset')?.addEventListener('click', ()=> setLegacyZoom(1));
+
     // Save/Load
     document.getElementById('downloadSave')?.addEventListener('click', ()=>{
       try{ const json = JSON.stringify(E.getState(), null, 2); const blob = new Blob([json], { type:'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `inc_save_${new Date().toISOString().replace(/[:.]/g,'-')}.json`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href); showTypedToast('general','ダウンロードしました'); } catch(e){}
@@ -625,6 +649,7 @@
     E.recalcAndCacheGPS(E.getState());
     syncUIAfterChange();
     bindGlobalEvents();
+    applyLegacyZoom();
 
     showTab(E.getState().settings.activeTab || 'play');
 

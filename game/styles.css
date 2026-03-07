@@ -26,6 +26,10 @@ textarea{width:100%;height:90px;margin-top:8px;padding:10px;border-radius:10px;b
 .previewbox{background:rgba(255,255,255,0.02);padding:8px;border-radius:6px;white-space:pre-wrap}
 #svgWrap{background:#05202b;padding:8px;border-radius:8px;overflow:auto; -webkit-overflow-scrolling:touch}
 svg{width:100%;height:420px;display:block}
+.legacyHeaderRow{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.legacyHeaderRow h3{margin:0}
+.legacyZoomControls{display:flex;gap:6px;align-items:center}
+.legacyZoomControls button{min-width:54px}
 .nodeRect{rx:8;cursor:pointer;stroke:#08323c;stroke-width:2;transition:stroke-width 0.2s, filter 0.2s;}
 .nodeRect.selected{stroke:#ffd166;stroke-width:4;filter:drop-shadow(0 8px 18px rgba(255,209,102,0.14))}
 .edgeLine{stroke:#14424f;stroke-width:2}
