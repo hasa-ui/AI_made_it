@@ -303,7 +303,9 @@
   function buildSettingsUI(){
     if (built.settings) return;
     const el = document.getElementById('settingsCard'); if (!el) return;
-    const st = E.getState(); st.settings = st.settings || { notation:'compact', notationThreshold:1000, confirmLegacyBuy:true, confirmLegacyBuyMax:true, toast:{achievement:true,offline:true,purchase:true,general:true} };
+    const st = E.getState();
+    st.settings = Object.assign({ notation:'compact', notationThreshold:1000, confirmLegacyBuy:true, confirmLegacyBuyMax:true, toast:{achievement:true,offline:true,purchase:true,general:true} }, st.settings || {});
+    st.settings.toast = Object.assign({achievement:true,offline:true,purchase:true,general:true}, st.settings.toast || {});
     el.innerHTML = `
       <h3>表示設定</h3>
       <div class="row"><label class="muted small">表示形式: <select id="notationSelect" style="padding:6px; border-radius:6px; background:#071421; color:#fff; border:1px solid #173142;"><option value="compact">コンパクト (1.2K)</option><option value="scientific">指数 (1.23e+3)</option></select></label></div>
