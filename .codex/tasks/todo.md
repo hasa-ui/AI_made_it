@@ -34,3 +34,18 @@
 - スクリーンショット取得を browser tool + Playwright で試行したが、`run_playwright_script` がタイムアウトし取得不可
 - `node --check game/config.js && node --check game/state.js && node --check game/ui.js && node --check game/engine.js` : 成功
 - `python -m http.server 4173 --directory /workspace/AI_made_it` + Playwright(設定タブ遷移) : 成功（スクリーンショット取得）
+
+## Plan (2026-03-07 確認ダイアログ/トースト修正)
+- [x] 設定UIとセーブマイグレーションのデフォルト値の不整合を調査
+- [x] 確認ダイアログのデフォルトチェックがONになるよう状態初期化を修正
+- [x] トースト通知設定の不足キーで表示抑止される問題を修正
+- [x] 検証ログ記録
+
+## Progress Log (2026-03-07 確認ダイアログ/トースト修正)
+- state.js: defaultState.settings に confirmLegacyBuy / confirmLegacyBuyMax / toast 全キー / notationThreshold を追加。
+- state.js: migrateState で settings と settings.toast をデフォルトとマージし、古いセーブでも不足キーを補完するよう修正。
+- ui.js: buildSettingsUI で st.settings と st.settings.toast を毎回デフォルトマージし、既存セーブでもチェック状態と通知設定の整合性を確保。
+
+## Verify Log (2026-03-07 確認ダイアログ/トースト修正)
+- `node --check game/state.js && node --check game/ui.js && node --check game/engine.js && node --check game/config.js` : 成功
+- `python -m http.server 4173 --directory /workspace/AI_made_it` + Playwright: 設定タブの確認チェック2項目がデフォルトONであること、および購入時トースト表示を確認（スクリーンショット取得）

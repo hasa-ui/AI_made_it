@@ -23,7 +23,15 @@
     ascPoints: 0,
     ascEarnedTotal: 0,
     ascOwned: C.ASC_UPGRADES.reduce((a,u)=>(a[u.id]=0,a),{}),
-    settings: { notation:'compact', activeTab:'play', autoBuy:{ enabled:false, units:true, upgrades:true, intervalSec:0.5 } },
+    settings: {
+      notation:'compact',
+      notationThreshold:1000,
+      activeTab:'play',
+      confirmLegacyBuy:true,
+      confirmLegacyBuyMax:true,
+      toast:{ achievement:true, offline:true, purchase:true, general:true },
+      autoBuy:{ enabled:false, units:true, upgrades:true, intervalSec:0.5 }
+    },
     achievementsOwned: {},
     achievementsProgress: {}
   };
@@ -48,7 +56,8 @@
     merged.ascOwned = merged.ascOwned || {};
     for (const a of C.ASC_UPGRADES) if (!(a.id in merged.ascOwned)) merged.ascOwned[a.id]=0;
 
-    merged.settings = merged.settings || deepCopy(defaultState.settings);
+    merged.settings = Object.assign({}, deepCopy(defaultState.settings), merged.settings || {});
+    merged.settings.toast = Object.assign({}, defaultState.settings.toast, merged.settings.toast || {});
     merged.settings.autoBuy = Object.assign({}, defaultState.settings.autoBuy, merged.settings.autoBuy || {});
 
     merged.achievementsOwned = merged.achievementsOwned || {};
