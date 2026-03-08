@@ -606,7 +606,7 @@
     state.challenge.bestSec = state.challenge.bestSec || {};
     const now = nowSec();
     const sec = Math.max(0, Math.floor(now - (state.runStats && state.runStats.currentRunStartedAt || now)));
-    const prev = state.challenge.bestSec[ch.id] || Infinity;
+    const prev = state.challenge.bestSec[ch.id] ?? Infinity;
     state.challenge.bestSec[ch.id] = Math.min(prev, sec);
     state.challenge.completed[ch.id] = true;
     state.challenge.activeId = null;
