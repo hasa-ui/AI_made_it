@@ -34,6 +34,9 @@
         ascPoints: 0,
         ascEarnedTotal: 0,
         ascOwned: (C.ASC_UPGRADES || []).reduce((a,u)=>(a[u.id]=0,a),{}),
+        celestialPoints: 0,
+        celestialEarnedTotal: 0,
+        celestialOwned: (C.CELESTIAL_UPGRADES || []).reduce((a,u)=>(a[u.id]=0,a),{}),
         achievementsOwned: {},
         settings: { notation: 'compact', notationThreshold: 1000, confirmLegacyBuy:true, confirmLegacyBuyMax:true, toast:{achievement:true,offline:true,purchase:true,general:true} }
       };
@@ -107,6 +110,17 @@
       if (b.type === 'costMult' && typeof b.mult === 'number') costMult *= b.mult;
     }
 
+    for (const cel of (C.CELESTIAL_UPGRADES || [])){
+      const lvl = (st.celestialOwned && st.celestialOwned[cel.id]) ? st.celestialOwned[cel.id] : 0;
+      if (lvl <= 0) continue;
+      if (cel.type === 'globalMult') globalMult *= Math.pow(cel.payload.mult || 1, lvl);
+      if (cel.type === 'flatGPS') flatGPS += (cel.payload.gps || 0) * lvl;
+      if (cel.type === 'startGold') startingGoldBonus += (cel.payload.amount || 0) * lvl;
+      if (cel.type === 'prestigeEffectAdd') prestigeEffectAdd += (cel.payload.add || 0) * lvl;
+      if (cel.type === 'costMult') costMult *= Math.pow(cel.payload.mult || 1, lvl);
+      if (cel.type === 'unitMult' && cel.payload.unitId) unitMults[cel.payload.unitId] = (unitMults[cel.payload.unitId] || 1) * Math.pow(cel.payload.mult || 1, lvl);
+    }
+
     // --- Challengeクリア報酬 ---
     const completed = (st.challenge && st.challenge.completed) ? st.challenge.completed : {};
     for (const ch of (C.CHALLENGES || [])){
@@ -157,7 +171,8 @@
       name: layer.name,
       need: layer.need || 0,
       unlocked: (st.prestigeEarnedTotal || 0) >= (layer.need || 0),
-      desc: layer.desc || ''
+      desc: layer.desc || '',
+      bonus: layer.bonus || null
     }));
   }
 
@@ -168,7 +183,8 @@
       name: layer.name,
       need: layer.need || 0,
       unlocked: (st.ascEarnedTotal || 0) >= (layer.need || 0),
-      desc: layer.desc || ''
+      desc: layer.desc || '',
+      bonus: layer.bonus || null
     }));
   }
 
@@ -445,6 +461,8 @@
     return Math.max(0, calcPrestigeGainFromTotal(state.totalGoldEarned || 0) - (state.prestigeEarnedTotal || 0));
   }
   function computeStartingGoldOnPrestige(){
+    const activeChallenge = getActiveChallengeDef(state);
+    if (activeChallenge && activeChallenge.effects && typeof activeChallenge.effects.forceStartGold === 'number') return Math.max(0, activeChallenge.effects.forceStartGold);
     return (C.STARTING_GOLD || 50) + (getAggregates(state).startingGoldBonus || 0);
   }
   function doPrestigeInternal(){
@@ -472,6 +490,27 @@
   function previewAscGain(){
     return Math.max(0, calcAscGainFromPrestige(state.prestigeEarnedTotal || 0));
   }
+
+  function calcCelestialGain(ascGain){
+    const unlockedLayers = getUnlockedCelestialLayerCount(state);
+    if (ascGain <= 0) return 0;
+    return Math.max(1, Math.floor(ascGain / 3) + Math.floor(unlockedLayers / 2));
+  }
+
+  function buyCelestialUpgradeInternal(id){
+    const def = (C.CELESTIAL_UPGRADES || []).find(x=>x.id===id);
+    if (!def) return { ok:false, reason:'not_found' };
+    state.celestialOwned = state.celestialOwned || {};
+    const lvl = state.celestialOwned[def.id] || 0;
+    if (def.maxLevel && lvl >= def.maxLevel) return { ok:false, reason:'max' };
+    const cost = def.cost || 0;
+    if ((state.celestialPoints || 0) < cost) return { ok:false, reason:'cp' };
+    state.celestialPoints -= cost;
+    state.celestialOwned[def.id] = lvl + 1;
+    invalidateAggCache();
+    recalcAndCacheGPS(state);
+    return { ok:true, id:def.id, lvl: state.celestialOwned[def.id] };
+  }
   function doAscendInternal(){
     const gain = previewAscGain();
     if (gain <= 0) return { ok:false };
@@ -479,6 +518,9 @@
     const keepLegacyTree = hasSpecialAscUpgrade(state, 'keepLegacyTree');
     state.ascPoints = (state.ascPoints || 0) + gain;
     state.ascEarnedTotal = (state.ascEarnedTotal || 0) + gain;
+    const celestialGain = calcCelestialGain(gain);
+    state.celestialPoints = (state.celestialPoints || 0) + celestialGain;
+    state.celestialEarnedTotal = (state.celestialEarnedTotal || 0) + celestialGain;
     state.units = (C.UNIT_DEFS || []).reduce((a,u)=>(a[u.id]=0,a),{});
     state.upgrades = (C.UPGRADE_DEFS || []).reduce((a,u)=>(a[u.id]=0,a),{});
     state.prestigeEarnedTotal = 0;
@@ -519,7 +561,7 @@
     state.gold = computeStartingGoldOnPrestige();
     state.runStats.currentRunPeakGold = state.gold;
     recalcAndCacheGPS(state);
-    return { ok:true, gain };
+    return { ok:true, gain, celestialGain };
   }
 
 
@@ -592,6 +634,7 @@
     attemptBuyLegacyInternal: (legacyId, maxCount) => attemptBuyLegacyInternal(legacyId, maxCount),
     canBuyLegacyInternal: (legacyId, st) => canBuyLegacyInternal(legacyId, st || state),
     buyAscensionUpgradeInternal: (id) => buyAscensionUpgradeInternal(id),
+    buyCelestialUpgradeInternal: (id) => buyCelestialUpgradeInternal(id),
     startChallengeInternal: (id) => startChallengeInternal(id),
     abandonChallengeInternal: () => abandonChallengeInternal(),
     tryCompleteChallengeInternal: () => tryCompleteChallengeInternal(),

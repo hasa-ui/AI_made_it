@@ -57,9 +57,9 @@
 
   <nav id="mainTabs">
     <button class="tabBtn active" data-tab="play">プレイ</button>
-    <button class="tabBtn" data-tab="upgrades">アップグレード</button>
-    <button class="tabBtn" data-tab="legacy">レガシー</button>
+        <button class="tabBtn" data-tab="legacy">レガシー</button>
     <button class="tabBtn" data-tab="ascension">Ascension</button>
+    <button class="tabBtn" data-tab="celestial">Celestial</button>
     <button class="tabBtn" data-tab="challenges">Challenge</button>
     <button class="tabBtn" data-tab="achievements">実績</button>
     <button class="tabBtn" data-tab="stats">統計</button>
@@ -74,6 +74,11 @@
         <div class="card">
           <h3>ユニット</h3>
           <div id="unitsCard"></div>
+        </div>
+
+        <div class="card">
+          <h3>ゲーム内アップグレード</h3>
+          <div id="upgradesCard"></div>
         </div>
 
         <div class="card">
@@ -99,13 +104,6 @@
               <button id="doPrestige" class="accent">プレステージ実行</button>
             </div>
           </div>
-        </div>
-      </div>
-
-      <div id="tab-upgrades" class="tabPane">
-        <div class="card">
-          <h3>ゲーム内アップグレード</h3>
-          <div id="upgradesCard"></div>
         </div>
       </div>
 
@@ -196,6 +194,32 @@
       </div>
 
       
+
+      <div id="tab-celestial" class="tabPane">
+        <div class="card">
+          <h3>Celestial Nexus</h3>
+          <p class="muted small">Ascend時に獲得する <strong>Celestial Point (CP)</strong> を使って、独創的な恒久アップグレードを購入できます。</p>
+          <div class="row" style="margin-top:8px;">
+            <div class="statusItem">
+              <div class="muted small">所持CP</div>
+              <div id="celestialAvail" style="color:#a78bfa; font-weight:bold;">0</div>
+            </div>
+            <div class="statusItem">
+              <div class="muted small">累計獲得CP</div>
+              <div id="celestialTotal" class="muted small inline">0</div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Celestial層 効果一覧</h3>
+          <div id="celestialLayerListTab"></div>
+        </div>
+        <div class="card">
+          <h3>Celestialアップグレード</h3>
+          <div id="celestialShop"></div>
+        </div>
+      </div>
+
       <div id="tab-challenges" class="tabPane">
         <div class="card">
           <h3>Challenge (制約周回)</h3>
@@ -273,6 +297,7 @@
           <h3>アップデート情報</h3>
           <p class="small muted" style="margin-top:4px;">このゲームは現在<strong>アルファ版</strong>です。仕様やバランスは今後も変更されます。</p>
           <ul class="small muted" style="margin-top:8px; padding-left:20px; line-height:1.8;">
+            <li><strong>Ver.1.15.0</strong>：実績表示を簡素化。アップグレードタブをプレイタブへ統合。Celestialタブ/Celestial Point/Celestial専用アップグレードを追加。Prestige/Celestial層の効果表示を明確化し、Challengeを7種へ拡張、新実績を追加。</li>
             <li><strong>Ver.1.14.1</strong>：Prestige実行時、同回で解放されたPrestige層の開始ゴールド補正が反映されない不具合を修正。</li>
             <li><strong>Ver.1.14.0</strong>：Ascension累計APで解放される新層「Celestial層」を追加。Challenge 4 (Mono Line) と新実績を追加し、ユニット最低コストを1に固定。レガシーツリーのノード座標を再調整。</li>
             <li><strong>Ver.1.13.2</strong>：存在しないトップ階層ファイル参照（styles.css / config.js / state.js / engine.js / ui.js）を削除し、初回ロード時の404エラーを解消。</li>

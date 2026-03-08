@@ -319,3 +319,27 @@
 - `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
 - `node - <<'NODE' ... (Prestige 79→80 到達時に開始ゴールドが 50→550 へ同回反映されることを検証) ... NODE` : 成功
 - `python -m http.server 4173 --bind 0.0.0.0 --directory /workspace/AI_made_it` + Playwright: `Page.goto: net::ERR_EMPTY_RESPONSE` によりスクリーンショット取得失敗
+
+## Plan (2026-03-08 タブ統合/Celestial拡張/Challenge・実績追加)
+- [x] 現行実装を確認し、変更対象を特定
+- [x] プレイタブへのアップグレード統合とタブ構成変更
+- [x] Prestige/Celestial効果の可視化強化
+- [x] CelestialポイントとCelestial専用アップグレード実装
+- [x] Challengeの大幅追加
+- [x] 実績表示の簡素化と新規実績追加
+- [x] Ver更新とアップデート情報追記
+- [x] 検証コマンド実行・結果記録
+
+## Progress Log (2026-03-08 タブ統合/Celestial拡張/Challenge・実績追加)
+- 初期調査: `index.html`, `game/config.js`, `game/state.js`, `game/engine.js`, `game/ui.js`, `game/styles.css` を確認。
+- 実装: アップグレードタブを廃止し、プレイタブへ統合。CelestialタブとCP表示/ショップを追加。
+- 実装: `CELESTIAL_UPGRADES` / `celestialPoints` / `celestialOwned` / `celestialEarnedTotal` を追加し、Ascend時にCP獲得ロジックを実装。
+- 実装: Challengeを7種へ拡張。新実績（Celestial強化回数・層解放複合条件など）を追加。
+- 実装: Prestige/Celestial層の効果文言をUIに明示表示。
+
+## Verify Log (2026-03-08 タブ統合/Celestial拡張/Challenge・実績追加)
+- `node --check game/ui.js` : 成功
+- `node --check game/engine.js` : 成功
+- `node --check game/state.js` : 成功
+- `node --check game/config.js` : 成功
+- `mcp__browser_tools__run_playwright_script` : 失敗（browser container から `ERR_EMPTY_RESPONSE` が発生しスクリーンショット取得不可）

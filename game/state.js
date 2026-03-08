@@ -23,6 +23,9 @@
     ascPoints: 0,
     ascEarnedTotal: 0,
     ascOwned: C.ASC_UPGRADES.reduce((a,u)=>(a[u.id]=0,a),{}),
+    celestialPoints: 0,
+    celestialEarnedTotal: 0,
+    celestialOwned: (C.CELESTIAL_UPGRADES || []).reduce((a,u)=>(a[u.id]=0,a),{}),
     settings: {
       notation:'compact',
       notationThreshold:1000,
@@ -78,6 +81,11 @@
 
     merged.ascOwned = merged.ascOwned || {};
     for (const a of C.ASC_UPGRADES) if (!(a.id in merged.ascOwned)) merged.ascOwned[a.id]=0;
+
+    merged.celestialOwned = merged.celestialOwned || {};
+    for (const a of (C.CELESTIAL_UPGRADES || [])) if (!(a.id in merged.celestialOwned)) merged.celestialOwned[a.id]=0;
+    if (typeof merged.celestialPoints !== 'number') merged.celestialPoints = 0;
+    if (typeof merged.celestialEarnedTotal !== 'number') merged.celestialEarnedTotal = 0;
 
     merged.settings = Object.assign({}, deepCopy(defaultState.settings), merged.settings || {});
     merged.settings.toast = Object.assign({}, defaultState.settings.toast, merged.settings.toast || {});

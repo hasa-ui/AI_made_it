@@ -54,6 +54,8 @@
     refs.totalEl = document.getElementById('totalEarned');
     refs.legacyEl = document.getElementById('legacyAvail');
     refs.ascEl = document.getElementById('ascAvail');
+    refs.celestialEl = document.getElementById('celestialAvail');
+    refs.celestialTotalEl = document.getElementById('celestialTotal');
     refs.prestigePreview = document.getElementById('prestigeGainPreview');
     refs.startingGoldPreview = document.getElementById('startingGoldPreview');
     refs.ascGainPreview = document.getElementById('ascGainPreview');
@@ -62,7 +64,7 @@
   function cacheRefsIfNeeded(){ if (!refs.goldEl) cacheRefs(); }
 
   // ---------- ビルド状態 / UIキャッシュ ----------
-  const built = { units:false, upgrades:false, asc:false, achievements:false, settings:false, challenges:false };
+  const built = { units:false, upgrades:false, asc:false, achievements:false, settings:false, challenges:false, celestial:false };
   const unitButtons = {};   
   const upgradeButtons = {};
   let svgNodeEls = {};
@@ -94,6 +96,18 @@
       if (current < required) return false;
     }
     return true;
+  }
+
+
+  function formatBonusText(b){
+    if (!b) return '恒久ボーナス';
+    if (b.type==='globalMult') return `全体 ×${b.mult}`;
+    if (b.type==='flatGPS') return `+${b.gps} GPS`;
+    if (b.type==='startGold') return `開始G +${b.amount}`;
+    if (b.type==='unitMult') return `${b.unitId} ×${b.mult}`;
+    if (b.type==='prestigeEffectAdd') return `Prestige効果 +${b.add}`;
+    if (b.type==='costMult') return `コスト ×${b.mult}`;
+    return '恒久ボーナス';
   }
 
   function ensureMiniGameState(st){
@@ -381,8 +395,8 @@
     for (const a of list){
       const unlocked = !!(st.achievementsOwned && st.achievementsOwned[a.id]);
       const div = document.createElement('div'); div.className = 'achItem ' + (unlocked ? 'achUnlocked' : 'achLocked');
-      const bonusText = a.bonus ? (()=>{ const b=a.bonus; if (b.type==='globalMult') return `恒久: 全体 ×${b.mult}`; if (b.type==='flatGPS') return `恒久: +${b.gps} GPS`; if (b.type==='startGold') return `恒久: 開始G +${b.amount}`; if (b.type==='unitMult') return `恒久: ${b.unitId} ×${b.mult}`; if (b.type==='prestigeEffectAdd') return `恒久: Prestige効果 +${b.add}`; if (b.type==='costMult') return `恒久: コスト ×${b.mult}`; return '恒久ボーナス'; })() : '';
-      div.innerHTML = `<div><strong>${a.name}</strong><div class="muted small">${a.desc||''}</div><div class="muted tiny">${bonusText}</div></div><div class="muted small">${unlocked ? '解除' : '未'}</div>`;
+      const bonusText = `報酬: ${formatBonusText(a.bonus)}`;
+      div.innerHTML = `<div><strong>${a.name}</strong><div class="muted small">${a.desc||''}</div></div><div class="muted small">${unlocked ? '解除' : '未解除'}<div class="muted tiny">${bonusText}</div></div>`;
       el.appendChild(div);
     }
     built.achievements = true;
@@ -411,6 +425,16 @@
       else if (a.type === 'prestigeLayerCount'){ if ((E.getUnlockedPrestigeLayerCount ? E.getUnlockedPrestigeLayerCount(st) : 0) >= a.target) achieved = true; }
       else if (a.type === 'celestialLayerCount'){ if ((E.getUnlockedCelestialLayerCount ? E.getUnlockedCelestialLayerCount(st) : 0) >= a.target) achieved = true; }
       else if (a.type === 'ascendInChallenge'){ if ((st.challenge && st.challenge.ascendedInChallenge || 0) >= a.target) achieved = true; }
+      else if (a.type === 'celestialUpgradeCount'){
+        const total = Object.values(st.celestialOwned || {}).reduce((acc, v)=>acc + (Number(v)||0), 0);
+        if (total >= a.target) achieved = true;
+      }
+      else if (a.type === 'dualLayerCount'){
+        const target = a.target || {};
+        const pOk = (E.getUnlockedPrestigeLayerCount ? E.getUnlockedPrestigeLayerCount(st) : 0) >= (target.prestige || 0);
+        const cOk = (E.getUnlockedCelestialLayerCount ? E.getUnlockedCelestialLayerCount(st) : 0) >= (target.celestial || 0);
+        if (pOk && cOk) achieved = true;
+      }
       if (achieved){
         st.achievementsOwned = st.achievementsOwned || {};
         st.achievementsOwned[a.id] = true;
@@ -574,7 +598,7 @@
     if (!wrap) return;
     const list = E.getPrestigeLayerStatus ? E.getPrestigeLayerStatus() : [];
     if (!list.length){ wrap.innerHTML = '<div class="muted small">Prestige層データがありません</div>'; return; }
-    wrap.innerHTML = list.map(l=>`<div class="achItem ${l.unlocked ? 'achUnlocked':'achLocked'}"><div><strong>${l.name}</strong><div class="muted small">必要Prestige: ${fmtNumber(l.need)} / ${l.desc||''}</div></div><div class="muted small">${l.unlocked ? '解放':'未解放'}</div></div>`).join('');
+    wrap.innerHTML = list.map(l=>`<div class="achItem ${l.unlocked ? 'achUnlocked':'achLocked'}"><div><strong>${l.name}</strong><div class="muted small">必要Prestige: ${fmtNumber(l.need)} / ${l.desc||''}</div><div class="muted tiny">効果: ${formatBonusText(l.bonus)}</div></div><div class="muted small">${l.unlocked ? '解放':'未解放'}</div></div>`).join('');
   }
 
   function renderCelestialLayers(){
@@ -582,7 +606,31 @@
     if (!wrap) return;
     const list = E.getCelestialLayerStatus ? E.getCelestialLayerStatus() : [];
     if (!list.length){ wrap.innerHTML = '<div class="muted small">Celestial層データがありません</div>'; return; }
-    wrap.innerHTML = list.map(l=>`<div class="achItem ${l.unlocked ? 'achUnlocked':'achLocked'}"><div><strong>${l.name}</strong><div class="muted small">必要累計AP: ${fmtNumber(l.need)} / ${l.desc||''}</div></div><div class="muted small">${l.unlocked ? '解放':'未解放'}</div></div>`).join('');
+    const html = list.map(l=>`<div class="achItem ${l.unlocked ? 'achUnlocked':'achLocked'}"><div><strong>${l.name}</strong><div class="muted small">必要累計AP: ${fmtNumber(l.need)} / ${l.desc||''}</div><div class="muted tiny">効果: ${formatBonusText(l.bonus)}</div></div><div class="muted small">${l.unlocked ? '解放':'未解放'}</div></div>`).join('');
+    wrap.innerHTML = html;
+    const tabWrap = document.getElementById('celestialLayerListTab');
+    if (tabWrap) tabWrap.innerHTML = html;
+  }
+
+
+  function buildCelestialShop(){
+    if (built.celestial) return;
+    const wrap = document.getElementById('celestialShop');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+    for (const def of (C.CELESTIAL_UPGRADES || [])){
+      const row = document.createElement('div');
+      row.className = 'upg';
+      const lvl = (E.getState().celestialOwned && E.getState().celestialOwned[def.id]) || 0;
+      row.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><div><strong>${def.name}</strong><div class="muted small">${def.desc}</div></div><div style="text-align:right"><div class="muted small">Lv: <span id="celLvl-${def.id}">${fmtNumber(lvl)}</span>${def.maxLevel?'/'+def.maxLevel:''}</div><button id="celBuy-${def.id}" class="small" style="margin-top:6px;">購入 (${fmtNumber(def.cost)} CP)</button></div></div>`;
+      wrap.appendChild(row);
+      document.getElementById(`celBuy-${def.id}`)?.addEventListener('click', ()=>{
+        const res = E.buyCelestialUpgradeInternal ? E.buyCelestialUpgradeInternal(def.id) : { ok:false };
+        if (!res || !res.ok) showTypedToast('general', 'CP不足、または最大レベルです');
+        else { SM.saveState(E.getState()); syncUIAfterChange(); checkAchievementsAfterAction(); showTypedToast('purchase', `${def.name} を購入しました`); }
+      });
+    }
+    built.celestial = true;
   }
 
   function buildChallengesUI(){
@@ -673,6 +721,8 @@
     if (refs.totalEl) refs.totalEl.textContent = fmtNumber(st.totalGoldEarned || 0);
     if (refs.legacyEl) refs.legacyEl.textContent = fmtNumber(st.legacy || 0);
     if (refs.ascEl) refs.ascEl.textContent = fmtNumber(st.ascPoints || 0);
+    if (refs.celestialEl) refs.celestialEl.textContent = fmtNumber(st.celestialPoints || 0);
+    if (refs.celestialTotalEl) refs.celestialTotalEl.textContent = fmtNumber(st.celestialEarnedTotal || 0);
     if (refs.prestigePreview) refs.prestigePreview.textContent = fmtNumber(E.previewPrestigeGain());
     if (refs.startingGoldPreview) refs.startingGoldPreview.textContent = fmtNumber(E.computeStartingGoldOnPrestige());
     if (refs.ascGainPreview) refs.ascGainPreview.textContent = fmtNumber(E.previewAscGain());
@@ -683,6 +733,15 @@
     renderMiniGameState();
     renderPrestigeLayers();
     renderCelestialLayers();
+    for (const def of (C.CELESTIAL_UPGRADES || [])){
+      const lvlEl = document.getElementById(`celLvl-${def.id}`);
+      if (lvlEl) lvlEl.textContent = fmtNumber((st.celestialOwned && st.celestialOwned[def.id]) || 0);
+      const btn = document.getElementById(`celBuy-${def.id}`);
+      if (btn){
+        const lvl = (st.celestialOwned && st.celestialOwned[def.id]) || 0;
+        btn.disabled = (def.maxLevel && lvl >= def.maxLevel) || ((st.celestialPoints || 0) < (def.cost || 0));
+      }
+    }
     renderChallengeStatus();
     renderStatsTab();
   }
@@ -716,6 +775,8 @@
       if (refs.totalEl) refs.totalEl.textContent = fmtNumber(st.totalGoldEarned || 0);
       if (refs.legacyEl) refs.legacyEl.textContent = fmtNumber(st.legacy || 0);
       if (refs.ascEl) refs.ascEl.textContent = fmtNumber(st.ascPoints || 0);
+    if (refs.celestialEl) refs.celestialEl.textContent = fmtNumber(st.celestialPoints || 0);
+    if (refs.celestialTotalEl) refs.celestialTotalEl.textContent = fmtNumber(st.celestialEarnedTotal || 0);
       if (refs.prestigePreview) refs.prestigePreview.textContent = fmtNumber(E.previewPrestigeGain());
       if (refs.startingGoldPreview) refs.startingGoldPreview.textContent = fmtNumber(E.computeStartingGoldOnPrestige());
       if (refs.ascGainPreview) refs.ascGainPreview.textContent = fmtNumber(E.previewAscGain());
@@ -762,10 +823,10 @@
       if (bt === name) btn.classList.add('active'); else btn.classList.remove('active');
     });
 
-    if (name === 'upgrades') buildUpgradesUI();
-    if (name === 'play') buildUnitsUI();
+    if (name === 'play'){ buildUnitsUI(); buildUpgradesUI(); }
     if (name === 'legacy'){ svgDirty = true; drawLegacySVG(); }
     if (name === 'ascension') buildAscShop();
+    if (name === 'celestial') buildCelestialShop();
     if (name === 'challenges') buildChallengesUI();
 
     try { const st = E.getState(); st.settings = st.settings || {}; st.settings.activeTab = name; SM.saveState(st); } catch(e){}
@@ -790,7 +851,7 @@
       if (p <= 0){ showTypedToast('general','Ascensionで得られるポイントはありません'); return; }
       if (!confirm(`Ascend 実行で AscensionPoints +${fmtNumber(p)} を得ます。実行しますか？`)) return;
       const res = E.doAscendInternal();
-      if (res.ok){ svgDirty=true; syncUIAfterChange(); buildAscShop(); checkAchievementsAfterAction(); showTypedToast('purchase', `Ascend: AP +${fmtNumber(res.gain)}`); }
+      if (res.ok){ svgDirty=true; syncUIAfterChange(); buildAscShop(); buildCelestialShop(); checkAchievementsAfterAction(); showTypedToast('purchase', `Ascend: AP +${fmtNumber(res.gain)} / CP +${fmtNumber(res.celestialGain || 0)}`); }
     });
 
     document.getElementById('miniGameStart')?.addEventListener('click', ()=> startMiniGame());
@@ -877,7 +938,7 @@
 
   // ---------- 初期化 ----------
   document.addEventListener('DOMContentLoaded', ()=>{
-    buildUnitsUI(); buildUpgradesUI(); buildAscShop(); buildChallengesUI(); buildAchievementsUI(); buildSettingsUI();
+    buildUnitsUI(); buildUpgradesUI(); buildAscShop(); buildCelestialShop(); buildChallengesUI(); buildAchievementsUI(); buildSettingsUI();
     bindAutoBuyControls();
     cacheRefs();
 

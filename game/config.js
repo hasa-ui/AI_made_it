@@ -4,8 +4,8 @@
 
   const C = {
     SAVE_KEY: 'inc.split.full.v4',
-    SAVE_VERSION: 11,
-    APP_VERSION: 'Ver.1.14.1',
+    SAVE_VERSION: 12,
+    APP_VERSION: 'Ver.1.15.0',
     UI_UPDATE_INTERVAL_MS: 50,
     AUTO_SAVE_INTERVAL: 5000,
     MAX_OFFLINE_SECONDS: 60*60*24,
@@ -78,6 +78,15 @@
     { id:'cl_epoch', name:'エポック層', need:80, desc:'時代跳躍で Prestige 効果を恒久底上げ', bonus:{ type:'prestigeEffectAdd', add:0.06 } }
   ];
 
+  C.CELESTIAL_UPGRADES = [
+    { id:'cel_prism', name:'プリズム鋳造', desc:'恒久: 全体 ×1.45', cost:3, type:'globalMult', payload:{ mult:1.45 }, maxLevel:4 },
+    { id:'cel_harmonic_seed', name:'ハーモニック種銭', desc:'恒久: 開始ゴールド +25000', cost:5, type:'startGold', payload:{ amount:25000 }, maxLevel:3 },
+    { id:'cel_aether_drift', name:'エーテル漂流炉', desc:'恒久: +4500 GPS', cost:6, type:'flatGPS', payload:{ gps:4500 }, maxLevel:4 },
+    { id:'cel_time_fold', name:'時空折り畳み', desc:'恒久: コスト ×0.82', cost:9, type:'costMult', payload:{ mult:0.82 }, maxLevel:2 },
+    { id:'cel_resonance_core', name:'共鳴核の再編', desc:'恒久: Prestige効果 +0.08', cost:8, type:'prestigeEffectAdd', payload:{ add:0.08 }, maxLevel:3 },
+    { id:'cel_excav_pulse', name:'深層パルス', desc:'恒久: エクスカベーター ×2.5', cost:7, type:'unitMult', payload:{ unitId:'excav', mult:2.5 }, maxLevel:3 }
+  ];
+
   C.CHALLENGES = [
     {
       id:'ch_taxed_growth',
@@ -110,6 +119,30 @@
       goalTotalGold: 280000,
       effects:{ singleUnitOnly:true },
       reward:{ type:'costMult', mult:0.9, text:'恒久: コスト ×0.90' }
+    },
+    {
+      id:'ch_fragile_rush',
+      name:'Challenge 5: Fragile Rush',
+      desc:'開始資金が1に固定され、さらに全体生産が25%になる。序盤設計力が試される。',
+      goalTotalGold: 360000,
+      effects:{ globalMult:0.25, forceStartGold:1 },
+      reward:{ type:'globalMult', mult:1.16, text:'恒久: 全体 ×1.16' }
+    },
+    {
+      id:'ch_ascetic_engine',
+      name:'Challenge 6: Ascetic Engine',
+      desc:'アップグレード購入不可 + コスト1.45倍。基礎運用だけで突破を目指す。',
+      goalTotalGold: 460000,
+      effects:{ disableUpgrades:true, costMult:1.45 },
+      reward:{ type:'flatGPS', gps:2600, text:'恒久: +2600 GPS' }
+    },
+    {
+      id:'ch_quantum_lock',
+      name:'Challenge 7: Quantum Lock',
+      desc:'単一路線かつコスト1.8倍、さらに全体生産45%。高難度の最終試練。',
+      goalTotalGold: 620000,
+      effects:{ singleUnitOnly:true, costMult:1.8, globalMult:0.45 },
+      reward:{ type:'prestigeEffectAdd', add:0.08, text:'恒久: Prestige効果 +0.08' }
     }
   ];
 
@@ -140,7 +173,12 @@
     { id:'ach_layer_hunter', name:'層位探査者', desc:'Prestige層を3段階以上解放する', type:'prestigeLayerCount', target:3, bonus:{type:'startGold', amount:3000} },
     { id:'ach_risk_runner', name:'リスクランナー', desc:'Challenge中に Ascend を実行する', type:'ascendInChallenge', target:1, bonus:{type:'flatGPS', gps:1200} },
     { id:'ach_celestial_step', name:'星階の踏破者', desc:'Celestial層を2段階以上解放する', type:'celestialLayerCount', target:2, bonus:{type:'globalMult', mult:1.22} },
-    { id:'ach_challenge_quadra', name:'四重試練の覇者', desc:'全Challenge(4種)をクリアする', type:'challengeClearCount', target:4, bonus:{type:'prestigeEffectAdd', add:0.04} }
+    { id:'ach_challenge_quadra', name:'四重試練の覇者', desc:'全Challenge(4種)をクリアする', type:'challengeClearCount', target:4, bonus:{type:'prestigeEffectAdd', add:0.04} },
+    { id:'ach_celestial_apprentice', name:'星工学の見習い', desc:'Celestialアップグレードを2回購入する', type:'celestialUpgradeCount', target:2, bonus:{type:'globalMult', mult:1.18} },
+    { id:'ach_celestial_architect', name:'星界設計者', desc:'Celestialアップグレードを8回購入する', type:'celestialUpgradeCount', target:8, bonus:{type:'costMult', mult:0.88} },
+    { id:'ach_challenge_hepta', name:'七重試練の制覇者', desc:'全Challenge(7種)をクリアする', type:'challengeClearCount', target:7, bonus:{type:'prestigeEffectAdd', add:0.1} },
+    { id:'ach_ascension_galaxy', name:'銀河渡り', desc:'累計Ascension AP 180到達', type:'ascend', target:180, bonus:{type:'flatGPS', gps:6000} },
+    { id:'ach_layer_master', name:'層の監督者', desc:'Prestige層5段階 + Celestial層4段階を解放', type:'dualLayerCount', target:{ prestige:5, celestial:4 }, bonus:{type:'globalMult', mult:1.35} }
   ];
 
   window.CONFIG = C;
