@@ -540,7 +540,6 @@
         }
       }
     }
-    if (cycles >= 20) autoBuyAccumulator = 0;
     if (changed){
       syncUIAfterChange();
       SM.saveState(st);

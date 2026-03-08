@@ -209,3 +209,19 @@
 ## Verify Log (2026-03-08 Ascensionミニゲーム説明追加)
 - `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
 - `python -m http.server 4173 --bind 0.0.0.0 --directory /workspace/AI_made_it` + Playwright: Ascensionタブのミニゲーム説明表示を確認しスクリーンショット取得（artifact: artifacts/ascension_minigame_rules.png）
+
+## Plan (2026-03-08 自動購入上限到達時の蓄積時間保持)
+- [x] 自動購入ループの上限到達時処理を確認
+- [x] 上限到達時に accumulator の余剰時間を保持するよう最小修正
+- [x] バージョン表記とアップデート情報を更新
+- [x] 検証ログ記録
+
+## Progress Log (2026-03-08 自動購入上限到達時の蓄積時間保持)
+- 着手: game/ui.js の `runAutoBuy` を確認し、`cycles >= 20` 到達時に `autoBuyAccumulator = 0` で余剰時間を破棄していることを確認。
+- game/ui.js: `autoBuyAccumulator` の強制リセットを削除し、1フレーム上限到達時も余剰時間を次フレームへ保持するよう修正。
+- game/config.js: APP_VERSION を `Ver.1.12.4` に更新。
+- index.html: アップデート情報に Ver.1.12.4 の変更内容を追記。
+
+## Verify Log (2026-03-08 自動購入上限到達時の蓄積時間保持)
+- `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
+- `python -m http.server 4173 --bind 0.0.0.0 --directory /workspace/AI_made_it` + Playwright: アップデート情報タブに Ver.1.12.4 記載を確認しスクリーンショット取得（artifact: artifacts/ver_1_12_4_update.png）
