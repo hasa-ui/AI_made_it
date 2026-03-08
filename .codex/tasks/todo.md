@@ -193,3 +193,19 @@
 ## Verify Log (2026-03-08 レガシーBuy Maxの前提チェック不具合修正)
 - `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
 - `node - <<'NODE'\nconst fs = require('fs');\nconst vm = require('vm');\nconst ctx = { window:{}, console };\nctx.window = ctx.window;\nvm.createContext(ctx);\nvm.runInContext(fs.readFileSync('game/config.js','utf8'), ctx);\nvm.runInContext(fs.readFileSync('game/engine.js','utf8'), ctx);\nconst E = ctx.window.ENGINE;\nconst st = E.getState();\nst.legacy = 999;\nst.legacyNodes = Object.fromEntries(ctx.window.CONFIG.LEGACY_DEFS.map(d=>[d.id,0]));\nE.invalidateAggCache();\nconst r = E.attemptBuyLegacyInternal('lg_miner25', Infinity);\nif (r.ok || r.reason !== 'prereq') throw new Error('prereq bypass still possible');\nconsole.log('ok: prereq is enforced for Buy Max');\nNODE` : 成功
+
+## Plan (2026-03-08 Ascensionミニゲーム説明追加)
+- [x] Ascensionミニゲーム表示領域と既存説明の確認
+- [x] ミニゲームのルール説明（通常/反転/時間短縮/報酬）を追加
+- [x] バージョン表記とアップデート情報を更新
+- [x] 検証ログ記録
+
+## Progress Log (2026-03-08 Ascensionミニゲーム説明追加)
+- 着手: index.html の Ascensionミニゲームカードを確認し、既存説明が1行のみで詳細ルールが不足していることを確認。
+- index.html: ミニゲームカードにルール箇条書きを追加（全14ラウンド、通常/反転、制限時間短縮、タイムアウト、AP還元）。
+- game/config.js: APP_VERSION を `Ver.1.12.3` に更新。
+- index.html: アップデート情報に Ver.1.12.3 の変更内容を追記。
+
+## Verify Log (2026-03-08 Ascensionミニゲーム説明追加)
+- `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
+- `python -m http.server 4173 --bind 0.0.0.0 --directory /workspace/AI_made_it` + Playwright: Ascensionタブのミニゲーム説明表示を確認しスクリーンショット取得（artifact: artifacts/ascension_minigame_rules.png）

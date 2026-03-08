@@ -139,6 +139,16 @@
         <div class="card" id="ascMiniGameCard" style="display:none;">
           <h3>Ascension ミニゲーム: 星脈同調</h3>
           <p class="muted small">Ascension Shop を全購入すると解放。挑戦ごとに AP を1消費。4レーン化・反転ルール・時間短縮ラウンドで高スコアを狙います。</p>
+          <div class="muted small" style="line-height:1.65; margin-top:8px;">
+            <strong>ルール</strong>
+            <ul style="margin:6px 0 0 18px; padding:0;">
+              <li>全14ラウンド。序盤は通常ルール、中盤以降に「反転」ラウンドが出現します。</li>
+              <li>通常ルール：表示された目標レーン（A〜D）を制限時間内に押すと成功です。</li>
+              <li>反転ルール：目標レーン<strong>以外</strong>を押すと成功（目標レーンを押すとミス）です。</li>
+              <li>ラウンドが進むほど制限時間が短くなります。タイムアウトはミス扱いです。</li>
+              <li>挑戦終了時にスコアに応じて AP を還元します（高スコアほど還元量アップ）。</li>
+            </ul>
+          </div>
           <div class="row" style="margin-top:8px;">
             <button id="miniGameStart" class="accent">挑戦開始 (AP -1)</button>
             <span id="miniGameSummary" class="muted small">未挑戦</span>
@@ -241,6 +251,7 @@
           <h3>アップデート情報</h3>
           <p class="small muted" style="margin-top:4px;">このゲームは現在<strong>アルファ版</strong>です。仕様やバランスは今後も変更されます。</p>
           <ul class="small muted" style="margin-top:8px; padding-left:20px; line-height:1.8;">
+            <li><strong>Ver.1.12.3</strong>：Ascensionミニゲームにルール説明（通常/反転/時間短縮/報酬）を追加。</li>
             <li><strong>Ver.1.12.2</strong>：レガシーの「Buy Max」が前提未達ノードも購入できてしまう不具合を修正。</li>
             <li><strong>Ver.1.12.1</strong>：自動購入ループを修正し、低FPS時やバックグラウンド復帰時に実行間隔の取りこぼしで購入頻度が落ちる問題を改善。</li>
             <li><strong>Ver.1.12.0</strong>：Ascension増加式を後半で緩やかに調整、後半ショップ価格を増額、ミニゲーム複雑化、統計タブ追加、自動購入50ms対応＆購入方式切替、モバイルズーム改善、特殊実績を追加。</li>
