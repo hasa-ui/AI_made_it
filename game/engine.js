@@ -283,11 +283,15 @@
     let lvl = state.legacyNodes[legacyId] || 0;
     if (lvl >= def.maxLevel) return { ok:false, reason:'max' };
 
+    if (def.prereq && def.prereq.length){
+      for (const p of def.prereq){
+        const have = state.legacyNodes[p.id] || 0;
+        if (have < (p.minLevel||1)) return { ok:false, reason:'prereq' };
+      }
+    }
+
     if (maxCount === 1){
       const cost = legacyCostForNextLevel(def, lvl);
-      if (def.prereq && def.prereq.length){
-        for (const p of def.prereq){ const have = state.legacyNodes[p.id] || 0; if (have < (p.minLevel||1)) return { ok:false, reason:'prereq' }; }
-      }
       if (state.legacy < cost) return { ok:false, reason:'cost' };
       state.legacy -= cost;
       state.legacyNodes[legacyId] = lvl + 1;

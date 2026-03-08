@@ -177,3 +177,19 @@
 
 ## Verify Log (2026-03-08 自動購入間隔取りこぼし修正)
 - `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
+
+## Plan (2026-03-08 レガシーBuy Maxの前提チェック不具合修正)
+- [x] 重要ロジック（レガシー購入処理）を確認し、再現可能な不具合を特定
+- [x] 前提条件チェックを共通化して Buy Max 側へ適用
+- [x] バージョン表記とアップデート情報を更新
+- [x] 検証ログ記録
+
+## Progress Log (2026-03-08 レガシーBuy Maxの前提チェック不具合修正)
+- 着手: game/engine.js の `attemptBuyLegacyInternal` を確認し、`maxCount !== 1` 分岐で前提条件チェックが欠落していることを確認。
+- game/engine.js: 前提条件チェックを分岐前に移動し、単体購入 / Buy Max の両方で同一条件を適用。
+- game/config.js: APP_VERSION を `Ver.1.12.2` に更新。
+- index.html: アップデート情報に Ver.1.12.2 の修正内容を追記。
+
+## Verify Log (2026-03-08 レガシーBuy Maxの前提チェック不具合修正)
+- `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
+- `node - <<'NODE'\nconst fs = require('fs');\nconst vm = require('vm');\nconst ctx = { window:{}, console };\nctx.window = ctx.window;\nvm.createContext(ctx);\nvm.runInContext(fs.readFileSync('game/config.js','utf8'), ctx);\nvm.runInContext(fs.readFileSync('game/engine.js','utf8'), ctx);\nconst E = ctx.window.ENGINE;\nconst st = E.getState();\nst.legacy = 999;\nst.legacyNodes = Object.fromEntries(ctx.window.CONFIG.LEGACY_DEFS.map(d=>[d.id,0]));\nE.invalidateAggCache();\nconst r = E.attemptBuyLegacyInternal('lg_miner25', Infinity);\nif (r.ok || r.reason !== 'prereq') throw new Error('prereq bypass still possible');\nconsole.log('ok: prereq is enforced for Buy Max');\nNODE` : 成功
