@@ -519,22 +519,28 @@
     const interval = Math.max(50, Number(cfg.intervalMs || 500)) / 1000;
     autoBuyAccumulator += dt;
     if (autoBuyAccumulator < interval) return;
-    autoBuyAccumulator = 0;
 
     let changed = false;
     const buyMaxMode = cfg.purchaseMode === 'max';
-    if (cfg.upgrades){
-      for (const def of C.UPGRADE_DEFS){
-        const res = buyMaxMode ? E.buyMaxUpgradeInternal(def.id) : E.buyUpgradeInternal(def.id);
-        if (res && res.ok) changed = true;
+    let cycles = 0;
+    while (autoBuyAccumulator >= interval && cycles < 20){
+      autoBuyAccumulator -= interval;
+      cycles++;
+
+      if (cfg.upgrades){
+        for (const def of C.UPGRADE_DEFS){
+          const res = buyMaxMode ? E.buyMaxUpgradeInternal(def.id) : E.buyUpgradeInternal(def.id);
+          if (res && res.ok) changed = true;
+        }
+      }
+      if (cfg.units){
+        for (const def of C.UNIT_DEFS){
+          const res = buyMaxMode ? E.buyMaxUnitsInternal(def.id) : E.buyUnitInternal(def.id, 1);
+          if (res && res.ok) changed = true;
+        }
       }
     }
-    if (cfg.units){
-      for (const def of C.UNIT_DEFS){
-        const res = buyMaxMode ? E.buyMaxUnitsInternal(def.id) : E.buyUnitInternal(def.id, 1);
-        if (res && res.ok) changed = true;
-      }
-    }
+    if (cycles >= 20) autoBuyAccumulator = 0;
     if (changed){
       syncUIAfterChange();
       SM.saveState(st);

@@ -162,3 +162,18 @@
 ## Verify Log (2026-03-08 Ascension後半調整 / 自動購入拡張 / 統計タブ)
 - `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
 - `python -m http.server 4173 --directory /workspace/AI_made_it` + Playwright: Ascensionタブ/統計タブを表示してスクリーンショット取得（成功）
+
+## Plan (2026-03-08 自動購入間隔取りこぼし修正)
+- [x] 重要ロジック（自動購入ループ）を確認し、不具合条件を特定
+- [x] 最小差分で自動購入の蓄積時間処理を修正
+- [x] バージョン表記とアップデート情報を更新
+- [x] 検証ログ記録
+
+## Progress Log (2026-03-08 自動購入間隔取りこぼし修正)
+- 着手: game/ui.js の `runAutoBuy` を確認し、`dt` が大きいフレームで `autoBuyAccumulator` を 0 にリセットしていたため、複数回分の購入処理が失われることを確認。
+- game/ui.js: `runAutoBuy` を `while (accumulator >= interval)` 方式へ変更し、未処理時間を消費しながら複数サイクル実行できるよう修正（安全のため1フレーム上限20サイクルを設定）。
+- game/config.js: APP_VERSION を `Ver.1.12.1` に更新。
+- index.html: アップデート情報に Ver.1.12.1 の修正内容を追記。
+
+## Verify Log (2026-03-08 自動購入間隔取りこぼし修正)
+- `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
