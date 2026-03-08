@@ -50,7 +50,13 @@
       currentRunUpgradeBuys: 0,
       history: []
     },
-    lastAscensionRun: null
+    lastAscensionRun: null,
+    challenge: {
+      activeId: null,
+      completed: {},
+      bestSec: {},
+      ascendedInChallenge: 0
+    }
   };
 
   function migrateState(raw){
@@ -90,6 +96,10 @@
     merged.runStats.currentRunUnitTypes = Object.assign({}, merged.runStats.currentRunUnitTypes || {});
     merged.runStats.history = Array.isArray(merged.runStats.history) ? merged.runStats.history.slice(-30) : [];
     if (!merged.lastAscensionRun || typeof merged.lastAscensionRun !== 'object') merged.lastAscensionRun = null;
+    merged.challenge = Object.assign({}, deepCopy(defaultState.challenge), merged.challenge || {});
+    merged.challenge.completed = Object.assign({}, merged.challenge.completed || {});
+    merged.challenge.bestSec = Object.assign({}, merged.challenge.bestSec || {});
+    if (typeof merged.challenge.ascendedInChallenge !== 'number') merged.challenge.ascendedInChallenge = 0;
     return merged;
   }
 

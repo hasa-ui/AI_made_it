@@ -4,8 +4,8 @@
 
   const C = {
     SAVE_KEY: 'inc.split.full.v4',
-    SAVE_VERSION: 10,
-    APP_VERSION: 'Ver.1.12.4',
+    SAVE_VERSION: 11,
+    APP_VERSION: 'Ver.1.13.0',
     UI_UPDATE_INTERVAL_MS: 50,
     AUTO_SAVE_INTERVAL: 5000,
     MAX_OFFLINE_SECONDS: 60*60*24,
@@ -63,6 +63,41 @@
     { id:'asc_mythic_gps', name:'神話の配当', desc:'恒久: +2500 GPS', cost:2800, type:'flatGPS', payload:{gps:2500}, maxLevel:1 }
   ];
 
+  C.PRESTIGE_LAYERS = [
+    { id:'pl_echo', name:'残響層', need:25, desc:'プレステージ共鳴で全体がわずかに活性化', bonus:{ type:'globalMult', mult:1.12 } },
+    { id:'pl_weave', name:'織界層', need:80, desc:'織り込まれた知見で開始資金と初速を強化', bonus:{ type:'startGold', amount:500 } },
+    { id:'pl_fractal', name:'フラクタル層', need:180, desc:'自己相似最適化で Prestige 効果を加速', bonus:{ type:'prestigeEffectAdd', add:0.025 } },
+    { id:'pl_orbit', name:'軌道層', need:320, desc:'周回経済を安定化しコストを圧縮', bonus:{ type:'costMult', mult:0.9 } },
+    { id:'pl_aurora', name:'極光層', need:520, desc:'極光演算が全生産ラインを常時補助', bonus:{ type:'flatGPS', gps:1500 } }
+  ];
+
+  C.CHALLENGES = [
+    {
+      id:'ch_taxed_growth',
+      name:'Challenge 1: Taxed Growth',
+      desc:'全体生産が35%に低下、代わりにコスト上昇は通常のまま。',
+      goalTotalGold: 120000,
+      effects:{ globalMult:0.35 },
+      reward:{ type:'globalMult', mult:1.08, text:'恒久: 全体 ×1.08' }
+    },
+    {
+      id:'ch_no_upgrades',
+      name:'Challenge 2: Pure Machinery',
+      desc:'アップグレード購入不可で累計ゴールドを到達させる。',
+      goalTotalGold: 160000,
+      effects:{ disableUpgrades:true },
+      reward:{ type:'flatGPS', gps:350, text:'恒久: +350 GPS' }
+    },
+    {
+      id:'ch_cost_spike',
+      name:'Challenge 3: Cost Spike',
+      desc:'ユニット価格が1.7倍で進行。成長設計が試される。',
+      goalTotalGold: 220000,
+      effects:{ costMult:1.7 },
+      reward:{ type:'prestigeEffectAdd', add:0.02, text:'恒久: Prestige効果 +0.02' }
+    }
+  ];
+
   // --- ACHIEVEMENTS ---
   // 実績はここに定義する（追加はここに書くだけでOK）
   // bonus.type: globalMult/flatGPS/startGold/unitMult/prestigeEffectAdd/costMult
@@ -84,7 +119,11 @@
     { id:'ach_minigame_perfect', name:'完全同期', desc:'ミニゲームでミス0かつ高得点の完全勝利を達成する', type:'miniGamePerfect', target:1, bonus:{type:'startGold', amount:5000} },
     { id:'ach_speed_ascender', name:'時空を裂く者', desc:'5分以内の周回で Ascend を実行する', type:'ascRunDurationMax', target:300, bonus:{type:'globalMult', mult:1.35} },
     { id:'ach_pure_reset', name:'純粋理論', desc:'アップグレード未購入で Ascend を実行する', type:'ascNoUpgrade', target:1, bonus:{type:'costMult', mult:0.92} },
-    { id:'ach_monounit_path', name:'単一路線', desc:'1種類のユニットのみで Ascend を実行する', type:'ascSingleUnitType', target:1, bonus:{type:'flatGPS', gps:900} }
+    { id:'ach_monounit_path', name:'単一路線', desc:'1種類のユニットのみで Ascend を実行する', type:'ascSingleUnitType', target:1, bonus:{type:'flatGPS', gps:900} },
+    { id:'ach_challenge_clear', name:'試練の突破者', desc:'Challengeを1つクリアする', type:'challengeClearCount', target:1, bonus:{type:'globalMult', mult:1.12} },
+    { id:'ach_challenge_trinity', name:'三重試練の覇者', desc:'全Challenge(3種)をクリアする', type:'challengeClearCount', target:3, bonus:{type:'prestigeEffectAdd', add:0.03} },
+    { id:'ach_layer_hunter', name:'層位探査者', desc:'Prestige層を3段階以上解放する', type:'prestigeLayerCount', target:3, bonus:{type:'startGold', amount:3000} },
+    { id:'ach_risk_runner', name:'リスクランナー', desc:'Challenge中に Ascend を実行する', type:'ascendInChallenge', target:1, bonus:{type:'flatGPS', gps:1200} }
   ];
 
   window.CONFIG = C;

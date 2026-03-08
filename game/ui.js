@@ -62,14 +62,14 @@
   function cacheRefsIfNeeded(){ if (!refs.goldEl) cacheRefs(); }
 
   // ---------- ビルド状態 / UIキャッシュ ----------
-  const built = { units:false, upgrades:false, asc:false, achievements:false, settings:false };
+  const built = { units:false, upgrades:false, asc:false, achievements:false, settings:false, challenges:false };
   const unitButtons = {};   
   const upgradeButtons = {};
   let svgNodeEls = {};
   let svgDirty = true;
   let selectedLegacyId = null;
   let autoBuyAccumulator = 0;
-  let miniGameRuntime = { active:false, round:0, totalRounds:14, score:0, misses:0, streak:0, bestStreak:0, targetLane:0, timerId:null, rule:'normal', roundTimeoutMs:900 };
+  let miniGameRuntime = { active:false, round:0, totalRounds:10, score:0, misses:0, streak:0, bestStreak:0, targetLane:0, timerId:null, rule:'normal', roundTimeoutMs:1100 };
   const isMobileViewport = ()=> window.matchMedia && window.matchMedia('(max-width: 900px)').matches;
   const LEGACY_ZOOM_MIN = 0.75;
   const LEGACY_ZOOM_MAX = 2.0;
@@ -135,14 +135,14 @@
     if (miniGameRuntime.timerId) clearTimeout(miniGameRuntime.timerId);
     miniGameRuntime.timerId = null;
 
-    const reward = Math.min(5, Math.floor(miniGameRuntime.score / 140));
+    const reward = Math.min(6, Math.floor(miniGameRuntime.score / 110));
     st.ascPoints += reward;
     st.miniGame.plays += 1;
     st.miniGame.lastScore = miniGameRuntime.score;
     st.miniGame.lastMisses = miniGameRuntime.misses;
     st.miniGame.bestScore = Math.max(st.miniGame.bestScore, miniGameRuntime.score);
     st.miniGame.bestStreak = Math.max(st.miniGame.bestStreak || 0, miniGameRuntime.bestStreak || 0);
-    if (miniGameRuntime.misses === 0 && miniGameRuntime.score >= 180) st.miniGame.perfectRuns += 1;
+    if (miniGameRuntime.misses === 0 && miniGameRuntime.score >= 140) st.miniGame.perfectRuns += 1;
     SM.saveState(st);
     syncUIAfterChange();
     checkAchievementsAfterAction();
@@ -155,8 +155,8 @@
     if (miniGameRuntime.round >= miniGameRuntime.totalRounds){ finishMiniGame(); return; }
     miniGameRuntime.targetLane = Math.floor(Math.random() * 4);
     miniGameRuntime.round += 1;
-    miniGameRuntime.rule = (miniGameRuntime.round % 4 === 0) ? 'inverse' : 'normal';
-    miniGameRuntime.roundTimeoutMs = Math.max(380, 930 - (miniGameRuntime.round * 35));
+    miniGameRuntime.rule = (miniGameRuntime.round % 5 === 0) ? 'inverse' : 'normal';
+    miniGameRuntime.roundTimeoutMs = Math.max(620, 1200 - (miniGameRuntime.round * 45));
     const status = document.getElementById('miniGameStatus');
     if (status) status.textContent = `ラウンド ${miniGameRuntime.round}/${miniGameRuntime.totalRounds} (${miniGameRuntime.rule === 'inverse' ? '反転' : '通常'})\nスコア: ${fmtNumber(miniGameRuntime.score)}\n連続正解: ${fmtNumber(miniGameRuntime.streak)}\nミス: ${fmtNumber(miniGameRuntime.misses)}\n制限時間: ${fmtNumber(miniGameRuntime.roundTimeoutMs)}ms`;
     renderMiniGameState();
@@ -174,7 +174,7 @@
     if (!isAscShopFullyPurchased(st)){ showTypedToast('general', 'Ascension Shop 全購入後に解放されます'); return; }
     if ((st.ascPoints || 0) < 1){ showTypedToast('general', '開始には AP が1必要です'); return; }
     st.ascPoints -= 1;
-    miniGameRuntime = { active:true, round:0, totalRounds:14, score:0, misses:0, streak:0, bestStreak:0, targetLane:0, timerId:null, rule:'normal', roundTimeoutMs:900 };
+    miniGameRuntime = { active:true, round:0, totalRounds:10, score:0, misses:0, streak:0, bestStreak:0, targetLane:0, timerId:null, rule:'normal', roundTimeoutMs:1100 };
     SM.saveState(st);
     syncUIAfterChange();
     runMiniGameRound();
@@ -381,7 +381,7 @@
     for (const a of list){
       const unlocked = !!(st.achievementsOwned && st.achievementsOwned[a.id]);
       const div = document.createElement('div'); div.className = 'achItem ' + (unlocked ? 'achUnlocked' : 'achLocked');
-      const bonusText = a.bonus ? (()=>{ const b=a.bonus; if (b.type==='globalMult') return `恒久: 全体 ×${b.mult}`; if (b.type==='flatGPS') return `恒久: +${b.gps} GPS`; if (b.type==='startGold') return `恒久: 開始G +${b.amount}`; if (b.type==='unitMult') return `恒久: ${b.unitId} ×${b.mult}`; return '恒久ボーナス'; })() : '';
+      const bonusText = a.bonus ? (()=>{ const b=a.bonus; if (b.type==='globalMult') return `恒久: 全体 ×${b.mult}`; if (b.type==='flatGPS') return `恒久: +${b.gps} GPS`; if (b.type==='startGold') return `恒久: 開始G +${b.amount}`; if (b.type==='unitMult') return `恒久: ${b.unitId} ×${b.mult}`; if (b.type==='prestigeEffectAdd') return `恒久: Prestige効果 +${b.add}`; if (b.type==='costMult') return `恒久: コスト ×${b.mult}`; return '恒久ボーナス'; })() : '';
       div.innerHTML = `<div><strong>${a.name}</strong><div class="muted small">${a.desc||''}</div><div class="muted tiny">${bonusText}</div></div><div class="muted small">${unlocked ? '解除' : '未'}</div>`;
       el.appendChild(div);
     }
@@ -407,6 +407,9 @@
       else if (a.type === 'ascRunDurationMax'){ if (st.lastAscensionRun && (st.lastAscensionRun.durationSec||Infinity) <= a.target) achieved = true; }
       else if (a.type === 'ascNoUpgrade'){ if (st.lastAscensionRun && st.lastAscensionRun.noUpgrade) achieved = true; }
       else if (a.type === 'ascSingleUnitType'){ if (st.lastAscensionRun && (st.lastAscensionRun.unitTypesUsed||0) === 1) achieved = true; }
+      else if (a.type === 'challengeClearCount'){ const count = Object.keys((st.challenge && st.challenge.completed) || {}).filter(k => st.challenge.completed[k]).length; if (count >= a.target) achieved = true; }
+      else if (a.type === 'prestigeLayerCount'){ if ((E.getUnlockedPrestigeLayerCount ? E.getUnlockedPrestigeLayerCount(st) : 0) >= a.target) achieved = true; }
+      else if (a.type === 'ascendInChallenge'){ if ((st.challenge && st.challenge.ascendedInChallenge || 0) >= a.target) achieved = true; }
       if (achieved){
         st.achievementsOwned = st.achievementsOwned || {};
         st.achievementsOwned[a.id] = true;
@@ -564,6 +567,52 @@
     )).join('');
   }
 
+
+  function renderPrestigeLayers(){
+    const wrap = document.getElementById('prestigeLayerList');
+    if (!wrap) return;
+    const list = E.getPrestigeLayerStatus ? E.getPrestigeLayerStatus() : [];
+    if (!list.length){ wrap.innerHTML = '<div class="muted small">Prestige層データがありません</div>'; return; }
+    wrap.innerHTML = list.map(l=>`<div class="achItem ${l.unlocked ? 'achUnlocked':'achLocked'}"><div><strong>${l.name}</strong><div class="muted small">必要Prestige: ${fmtNumber(l.need)} / ${l.desc||''}</div></div><div class="muted small">${l.unlocked ? '解放':'未解放'}</div></div>`).join('');
+  }
+
+  function buildChallengesUI(){
+    if (built.challenges) return;
+    const wrap = document.getElementById('challengeList');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+    for (const ch of (C.CHALLENGES || [])){
+      const row = document.createElement('div');
+      row.className = 'upgradeRow';
+      row.innerHTML = `<div><strong>${ch.name}</strong><div class="muted small">${ch.desc}</div><div class="muted tiny">目標: 累計Gold ${fmtNumber(ch.goalTotalGold || 0)} / 報酬: ${(ch.reward && ch.reward.text) || '恒久ボーナス'}</div></div><div class="row"><button id="chStart-${ch.id}" class="small accent">開始</button><button id="chClaim-${ch.id}" class="small">達成判定</button><span id="chDone-${ch.id}" class="muted small">未クリア</span></div>`;
+      wrap.appendChild(row);
+    }
+    built.challenges = true;
+  }
+
+  function renderChallengeStatus(){
+    const st = E.getState();
+    st.challenge = st.challenge || { activeId:null, completed:{}, bestSec:{}, ascendedInChallenge:0 };
+    const status = document.getElementById('challengeStatus');
+    if (status){
+      const active = E.getActiveChallenge ? E.getActiveChallenge(st) : null;
+      if (active) status.textContent = `挑戦中: ${active.name}
+進捗: ${fmtNumber(st.totalGoldEarned || 0)} / ${fmtNumber(active.goalTotalGold || 0)}
+アップグレード制限: ${active.effects && active.effects.disableUpgrades ? 'あり' : 'なし'}`;
+      else status.textContent = `待機中
+クリア数: ${fmtNumber(Object.keys(st.challenge.completed || {}).filter(k=>st.challenge.completed[k]).length)} / ${fmtNumber((C.CHALLENGES || []).length)}`;
+    }
+    for (const ch of (C.CHALLENGES || [])){
+      const done = !!(st.challenge.completed && st.challenge.completed[ch.id]);
+      const doneEl = document.getElementById(`chDone-${ch.id}`);
+      if (doneEl) doneEl.textContent = done ? `クリア済み${st.challenge.bestSec && st.challenge.bestSec[ch.id] ? ` (${fmtNumber(st.challenge.bestSec[ch.id])}秒)` : ''}` : '未クリア';
+      const startBtn = document.getElementById(`chStart-${ch.id}`);
+      const claimBtn = document.getElementById(`chClaim-${ch.id}`);
+      if (startBtn) startBtn.disabled = !!(st.challenge.activeId && st.challenge.activeId !== ch.id);
+      if (claimBtn) claimBtn.disabled = !(st.challenge.activeId === ch.id);
+    }
+  }
+
   // ---------- syncUIAfterChange ----------
   function syncUIAfterChange(){
     const st = E.getState();
@@ -622,6 +671,8 @@
     if (currentSaveVersionEl) currentSaveVersionEl.textContent = String(st.version || '-');
     syncAutoBuyControls();
     renderMiniGameState();
+    renderPrestigeLayers();
+    renderChallengeStatus();
     renderStatsTab();
   }
 
@@ -639,6 +690,13 @@
     st.runStats = st.runStats || { runCount:1, currentRunStartedAt:Date.now()/1000, currentRunPeakGold:0, currentRunUnitTypes:{}, currentRunUpgradeBuys:0, history:[] };
     st.runStats.currentRunPeakGold = Math.max(st.runStats.currentRunPeakGold || 0, st.gold || 0);
     runAutoBuy(dt);
+    const chRes = E.tryCompleteChallengeInternal ? E.tryCompleteChallengeInternal() : { ok:false };
+    if (chRes && chRes.ok){
+      SM.saveState(st);
+      showTypedToast('achievement', `Challenge達成: ${chRes.id}`);
+      checkAchievementsAfterAction();
+      syncUIAfterChange();
+    }
 
     if (ts - lastUiUpdate >= (C.UI_UPDATE_INTERVAL_MS || 150)){
       lastUiUpdate = ts;
@@ -658,11 +716,13 @@
         btns.buy10.disabled = st.gold < (btns.buy10Cost || Infinity);
         btns.buyMax.disabled = st.gold < c1;
       }
+      const activeChallenge = E.getActiveChallenge ? E.getActiveChallenge(st) : null;
       for (const def of C.UPGRADE_DEFS){
         const b = upgradeButtons[def.id]; if (!b) continue;
         const cost = b.nextCost || Infinity;
-        b.buy.disabled = !isFinite(cost) || st.gold < cost;
-        b.buyMax.disabled = st.gold < cost || !isFinite(cost);
+        const locked = !!(activeChallenge && activeChallenge.effects && activeChallenge.effects.disableUpgrades);
+        b.buy.disabled = locked || !isFinite(cost) || st.gold < cost;
+        b.buyMax.disabled = locked || st.gold < cost || !isFinite(cost);
       }
       if (svgDirty){ drawLegacySVG(); svgDirty = false; }
     }
@@ -694,7 +754,8 @@
     if (name === 'upgrades') buildUpgradesUI();
     if (name === 'play') buildUnitsUI();
     if (name === 'legacy'){ svgDirty = true; drawLegacySVG(); }
-    if (name === 'ascension') buildAscShop(); // 追加
+    if (name === 'ascension') buildAscShop();
+    if (name === 'challenges') buildChallengesUI();
 
     try { const st = E.getState(); st.settings = st.settings || {}; st.settings.activeTab = name; SM.saveState(st); } catch(e){}
   }
@@ -733,7 +794,7 @@
         if (lane === expectedLane){
           miniGameRuntime.streak += 1;
           miniGameRuntime.bestStreak = Math.max(miniGameRuntime.bestStreak, miniGameRuntime.streak);
-          miniGameRuntime.score += 12 + (miniGameRuntime.streak * 3);
+          miniGameRuntime.score += 16 + (miniGameRuntime.streak * 4);
         } else {
           miniGameRuntime.streak = 0;
           miniGameRuntime.misses += 1;
@@ -741,7 +802,20 @@
         runMiniGameRound();
       });
     });
-    
+
+    for (const ch of (C.CHALLENGES || [])){
+      document.getElementById(`chStart-${ch.id}`)?.addEventListener('click', ()=>{
+        if (!confirm(`${ch.name} を開始します。現在の周回進行はリセットされます。`)) return;
+        const res = E.startChallengeInternal ? E.startChallengeInternal(ch.id) : { ok:false };
+        if (res.ok){ SM.saveState(E.getState()); syncUIAfterChange(); showTypedToast('general', `${ch.name} 開始`); }
+      });
+      document.getElementById(`chClaim-${ch.id}`)?.addEventListener('click', ()=>{
+        const res = E.tryCompleteChallengeInternal ? E.tryCompleteChallengeInternal() : { ok:false };
+        if (res.ok){ SM.saveState(E.getState()); syncUIAfterChange(); checkAchievementsAfterAction(); showTypedToast('achievement', `${ch.name} クリア`); }
+        else showTypedToast('general', '目標未達です');
+      });
+    }
+
     document.getElementById('ins_buy1')?.addEventListener('click', ()=>{
       if (!selectedLegacyId) return;
       const st = E.getState(); const want = st.settings.confirmLegacyBuy !== false;
@@ -792,7 +866,7 @@
 
   // ---------- 初期化 ----------
   document.addEventListener('DOMContentLoaded', ()=>{
-    buildUnitsUI(); buildUpgradesUI(); buildAscShop(); buildAchievementsUI(); buildSettingsUI();
+    buildUnitsUI(); buildUpgradesUI(); buildAscShop(); buildChallengesUI(); buildAchievementsUI(); buildSettingsUI();
     bindAutoBuyControls();
     cacheRefs();
 

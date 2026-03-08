@@ -225,3 +225,25 @@
 ## Verify Log (2026-03-08 自動購入上限到達時の蓄積時間保持)
 - `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
 - `python -m http.server 4173 --bind 0.0.0.0 --directory /workspace/AI_made_it` + Playwright: アップデート情報タブに Ver.1.12.4 記載を確認しスクリーンショット取得（artifact: artifacts/ver_1_12_4_update.png）
+
+## Plan (2026-03-08 難易度緩和 / Prestige層 / Challenge / 実績追加)
+- [x] 既存のミニゲーム・Prestige計算・実績判定・タブ構造の確認
+- [x] Ascensionミニゲームの難易度緩和と報酬再調整
+- [x] 独創的な新Prestige層（到達段階ボーナス）を追加
+- [x] Challengeモード（AD風の制約付き周回）を追加
+- [x] Challenge/Prestige層連動の特殊実績を追加
+- [x] バージョン表記とアップデート情報を更新
+- [x] 検証ログ記録
+
+## Progress Log (2026-03-08 難易度緩和 / Prestige層 / Challenge / 実績追加)
+- 着手: game/config.js / game/state.js / game/engine.js / game/ui.js / index.html の関連構造を確認。
+
+- config.js: Ver.1.13.0へ更新。Prestige層(5段階)・Challenge(3種)・新実績(4種)を定義。
+- state.js: challenge状態(active/completed/bestSec/ascendedInChallenge)を保存対象に追加。
+- engine.js: Prestige層ボーナス適用、Challenge制約(生産/コスト/アップグレード禁止)適用、Challenge開始/達成APIを追加。
+- ui.js/index.html: Challengeタブ・Prestige層表示・Challenge操作UIを追加。ミニゲームを10R/緩和設定に再調整。
+
+## Verify Log (2026-03-08 難易度緩和 / Prestige層 / Challenge / 実績追加)
+- `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js && node --check index.html` : 失敗（node --check は .html 非対応）
+- `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
+- `python -m http.server 4173 --directory /workspace/AI_made_it` + Playwright: Challengeタブ/Prestige層表示のスクリーンショット取得（既存の /config.js 等 404 は非使用の重複script参照）

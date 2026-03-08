@@ -61,6 +61,7 @@
     <button class="tabBtn" data-tab="upgrades">アップグレード</button>
     <button class="tabBtn" data-tab="legacy">レガシー</button>
     <button class="tabBtn" data-tab="ascension">Ascension</button>
+    <button class="tabBtn" data-tab="challenges">Challenge</button>
     <button class="tabBtn" data-tab="achievements">実績</button>
     <button class="tabBtn" data-tab="stats">統計</button>
     <button class="tabBtn" data-tab="settings">設定・セーブ</button>
@@ -74,6 +75,12 @@
         <div class="card">
           <h3>ユニット</h3>
           <div id="unitsCard"></div>
+        </div>
+
+        <div class="card">
+          <h3>プレステージ層 (Resonance Layers)</h3>
+          <p class="muted small">現在周回の Prestige 値に応じて段階解放される特別層です。Ascendでリセットされます。</p>
+          <div id="prestigeLayerList" style="margin-top:10px;"></div>
         </div>
 
         <div class="card">
@@ -138,14 +145,14 @@
 
         <div class="card" id="ascMiniGameCard" style="display:none;">
           <h3>Ascension ミニゲーム: 星脈同調</h3>
-          <p class="muted small">Ascension Shop を全購入すると解放。挑戦ごとに AP を1消費。4レーン化・反転ルール・時間短縮ラウンドで高スコアを狙います。</p>
+          <p class="muted small">Ascension Shop を全購入すると解放。挑戦ごとに AP を1消費。反転頻度を抑えた10ラウンド制で高スコアを狙います。</p>
           <div class="muted small" style="line-height:1.65; margin-top:8px;">
             <strong>ルール</strong>
             <ul style="margin:6px 0 0 18px; padding:0;">
-              <li>全14ラウンド。序盤は通常ルール、中盤以降に「反転」ラウンドが出現します。</li>
+              <li>全10ラウンド。基本は通常ルールで、後半のみ「反転」ラウンドが出現します。</li>
               <li>通常ルール：表示された目標レーン（A〜D）を制限時間内に押すと成功です。</li>
               <li>反転ルール：目標レーン<strong>以外</strong>を押すと成功（目標レーンを押すとミス）です。</li>
-              <li>ラウンドが進むほど制限時間が短くなります。タイムアウトはミス扱いです。</li>
+              <li>ラウンドが進むほど制限時間が短くなりますが、緩やかに短縮されます。タイムアウトはミス扱いです。</li>
               <li>挑戦終了時にスコアに応じて AP を還元します（高スコアほど還元量アップ）。</li>
             </ul>
           </div>
@@ -180,6 +187,16 @@
             <input id="autoBuyInterval" type="number" min="50" step="10" value="500" style="width:90px;" />
             <span id="autoBuyStatus" class="muted small">未解放</span>
           </div>
+        </div>
+      </div>
+
+      
+      <div id="tab-challenges" class="tabPane">
+        <div class="card">
+          <h3>Challenge (制約周回)</h3>
+          <p class="muted small">Antimatter Dimensions風の「制約付きラン」です。開始時に周回をリセットし、目標累計Goldを達成すると恒久報酬を得られます。</p>
+          <div id="challengeList" style="margin-top:12px;"></div>
+          <pre id="challengeStatus" class="muted small previewbox" style="margin-top:10px;">Challenge未挑戦</pre>
         </div>
       </div>
 
@@ -251,6 +268,7 @@
           <h3>アップデート情報</h3>
           <p class="small muted" style="margin-top:4px;">このゲームは現在<strong>アルファ版</strong>です。仕様やバランスは今後も変更されます。</p>
           <ul class="small muted" style="margin-top:8px; padding-left:20px; line-height:1.8;">
+            <li><strong>Ver.1.13.0</strong>：Ascensionミニゲーム難易度を緩和。Prestige層(Resonance Layers)・Challengeモード・特殊実績群を追加。</li>
             <li><strong>Ver.1.12.4</strong>：自動購入の1フレーム上限到達時に未処理の蓄積時間を保持するよう修正し、低FPS時の購入取りこぼしを軽減。</li>
             <li><strong>Ver.1.12.3</strong>：Ascensionミニゲームにルール説明（通常/反転/時間短縮/報酬）を追加。</li>
             <li><strong>Ver.1.12.2</strong>：レガシーの「Buy Max」が前提未達ノードも購入できてしまう不具合を修正。</li>

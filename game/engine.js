@@ -86,9 +86,60 @@
         if (b.type === 'costMult' && typeof b.mult === 'number') costMult *= b.mult;
       }
     }
+    // --- Prestige層ボーナス ---
+    for (const layer of (C.PRESTIGE_LAYERS || [])){
+      if ((st.prestigeEarnedTotal || 0) < (layer.need || 0)) continue;
+      const b = layer.bonus || {};
+      if (b.type === 'globalMult' && typeof b.mult === 'number') globalMult *= b.mult;
+      if (b.type === 'flatGPS' && typeof b.gps === 'number') flatGPS += b.gps;
+      if (b.type === 'startGold' && typeof b.amount === 'number') startingGoldBonus += b.amount;
+      if (b.type === 'prestigeEffectAdd' && typeof b.add === 'number') prestigeEffectAdd += b.add;
+      if (b.type === 'costMult' && typeof b.mult === 'number') costMult *= b.mult;
+    }
+
+    // --- Challengeクリア報酬 ---
+    const completed = (st.challenge && st.challenge.completed) ? st.challenge.completed : {};
+    for (const ch of (C.CHALLENGES || [])){
+      if (!completed[ch.id]) continue;
+      const r = ch.reward || {};
+      if (r.type === 'globalMult' && typeof r.mult === 'number') globalMult *= r.mult;
+      if (r.type === 'flatGPS' && typeof r.gps === 'number') flatGPS += r.gps;
+      if (r.type === 'startGold' && typeof r.amount === 'number') startingGoldBonus += r.amount;
+      if (r.type === 'prestigeEffectAdd' && typeof r.add === 'number') prestigeEffectAdd += r.add;
+      if (r.type === 'costMult' && typeof r.mult === 'number') costMult *= r.mult;
+    }
+
     // --------------------------------
     return { globalMult, unitMults, costMult, startingGoldBonus, startingUnits, prestigeEffectAdd, flatGPS };
 
+  }
+
+
+  function getActiveChallengeDef(st){
+    st = st || state;
+    const activeId = st.challenge && st.challenge.activeId;
+    if (!activeId) return null;
+    return (C.CHALLENGES || []).find(ch => ch.id === activeId) || null;
+  }
+
+  function getUnlockedPrestigeLayerCount(st){
+    st = st || state;
+    let count = 0;
+    for (const layer of (C.PRESTIGE_LAYERS || [])){
+      if ((st.prestigeEarnedTotal || 0) >= (layer.need || 0)) count += 1;
+    }
+    return count;
+  }
+
+  function getPrestigeLayerStatus(st){
+    st = st || state;
+    return (C.PRESTIGE_LAYERS || []).map(layer=>({
+      id: layer.id,
+      name: layer.name,
+      need: layer.need || 0,
+      unlocked: (st.prestigeEarnedTotal || 0) >= (layer.need || 0),
+      desc: layer.desc || ''
+    }));
   }
 
   function hasSpecialAscUpgrade(st, kind){
@@ -112,7 +163,13 @@
 
   // --- cost / gps helpers ---
   function unitBaseCost(def, owned){ return Math.floor(def.baseCost * Math.pow(def.costMult, owned)); }
-  function unitCost(def, owned, st){ const agg = getAggregates(st); return Math.floor(unitBaseCost(def, owned) * (agg.costMult || 1)); }
+  function unitCost(def, owned, st){
+    const agg = getAggregates(st);
+    let cost = unitBaseCost(def, owned) * (agg.costMult || 1);
+    const activeChallenge = getActiveChallengeDef(st);
+    if (activeChallenge && activeChallenge.effects && typeof activeChallenge.effects.costMult === 'number') cost *= activeChallenge.effects.costMult;
+    return Math.floor(cost);
+  }
   function upgradeCostNextLevel(def, currentLevel){ return Math.floor(def.baseCost * Math.pow(def.costMult, currentLevel)); }
   function legacyCostForNextLevel(def, currentLevel){ if (currentLevel >= def.maxLevel) return Infinity; return Math.floor(def.baseCost * Math.pow(def.costMult, currentLevel)); }
 
@@ -135,7 +192,12 @@
       const ul = st.upgrades[up.id]||0; if (ul<=0) continue;
       if (up.type === 'globalMult') globalMult *= Math.pow(1 + (up.payload.multPerLevel||0), ul);
     }
-    return total * globalMult * (agg.globalMult || 1);
+    let out = total * globalMult * (agg.globalMult || 1);
+    const activeChallenge = getActiveChallengeDef(st);
+    if (activeChallenge && activeChallenge.effects && typeof activeChallenge.effects.globalMult === 'number'){
+      out *= activeChallenge.effects.globalMult;
+    }
+    return out;
   }
 
   function computePrestigeEffectPerPoint(st){
@@ -220,6 +282,8 @@
   }
 
   function buyUpgradeInternal(upId){
+    const activeChallenge = getActiveChallengeDef(state);
+    if (activeChallenge && activeChallenge.effects && activeChallenge.effects.disableUpgrades) return { ok:false, reason:'challenge_lock' };
     const def = (C.UPGRADE_DEFS||[]).find(u=>u.id===upId);
     if (!def) return { ok:false };
     const lvl = state.upgrades[upId] || 0;
@@ -234,6 +298,8 @@
   }
 
   function buyMaxUpgradeInternal(upId){
+    const activeChallenge = getActiveChallengeDef(state);
+    if (activeChallenge && activeChallenge.effects && activeChallenge.effects.disableUpgrades) return { ok:false, reason:'challenge_lock' };
     const def = (C.UPGRADE_DEFS||[]).find(u=>u.id===upId);
     if (!def) return { ok:false };
     const lvl = state.upgrades[upId] || 0;
@@ -388,9 +454,12 @@
       gainedAP: gain,
       noUpgrade: (state.runStats.currentRunUpgradeBuys || 0) === 0,
       unitTypesUsed,
+      challengeId: (state.challenge && state.challenge.activeId) || null,
       endedAt: now
     };
     state.lastAscensionRun = runSummary;
+    state.challenge = state.challenge || { activeId:null, completed:{}, bestSec:{}, ascendedInChallenge:0 };
+    if (state.challenge.activeId) state.challenge.ascendedInChallenge = (state.challenge.ascendedInChallenge || 0) + 1;
     state.runStats.history.push(runSummary);
     if (state.runStats.history.length > 30) state.runStats.history = state.runStats.history.slice(-30);
     state.runStats.runCount = (state.runStats.runCount || 1) + 1;
@@ -406,6 +475,54 @@
     recalcAndCacheGPS(state);
     return { ok:true, gain };
   }
+
+
+  function startChallengeInternal(id){
+    const ch = (C.CHALLENGES || []).find(x=>x.id===id);
+    if (!ch) return { ok:false, reason:'not_found' };
+    state.challenge = state.challenge || { activeId:null, completed:{}, bestSec:{}, ascendedInChallenge:0 };
+    state.challenge.activeId = id;
+    state.gold = computeStartingGoldOnPrestige();
+    state.units = (C.UNIT_DEFS || []).reduce((a,u)=>(a[u.id]=0,a),{});
+    state.upgrades = (C.UPGRADE_DEFS || []).reduce((a,u)=>(a[u.id]=0,a),{});
+    state.legacy = 0;
+    state.prestigeEarnedTotal = 0;
+    state.totalGoldEarned = 0;
+    state.runStats = state.runStats || {};
+    const now = nowSec();
+    state.runStats.currentRunStartedAt = now;
+    state.runStats.currentRunPeakGold = state.gold;
+    state.runStats.currentRunUnitTypes = {};
+    state.runStats.currentRunUpgradeBuys = 0;
+    invalidateAggCache(); recalcAndCacheGPS(state);
+    return { ok:true, id };
+  }
+
+  function abandonChallengeInternal(){
+    state.challenge = state.challenge || { activeId:null, completed:{}, bestSec:{}, ascendedInChallenge:0 };
+    state.challenge.activeId = null;
+    invalidateAggCache(); recalcAndCacheGPS(state);
+    return { ok:true };
+  }
+
+  function tryCompleteChallengeInternal(){
+    const ch = getActiveChallengeDef(state);
+    if (!ch) return { ok:false, reason:'no_active' };
+    const goal = ch.goalTotalGold || Infinity;
+    if ((state.totalGoldEarned || 0) < goal) return { ok:false, reason:'goal' };
+    state.challenge = state.challenge || { activeId:null, completed:{}, bestSec:{}, ascendedInChallenge:0 };
+    state.challenge.completed = state.challenge.completed || {};
+    state.challenge.bestSec = state.challenge.bestSec || {};
+    const now = nowSec();
+    const sec = Math.max(0, Math.floor(now - (state.runStats && state.runStats.currentRunStartedAt || now)));
+    const prev = state.challenge.bestSec[ch.id] || Infinity;
+    state.challenge.bestSec[ch.id] = Math.min(prev, sec);
+    state.challenge.completed[ch.id] = true;
+    state.challenge.activeId = null;
+    invalidateAggCache(); recalcAndCacheGPS(state);
+    return { ok:true, id:ch.id, firstClear: !Number.isFinite(prev), sec };
+  }
+
 
   // --- export API ---
   const E = {
@@ -428,6 +545,12 @@
     attemptBuyLegacyInternal: (legacyId, maxCount) => attemptBuyLegacyInternal(legacyId, maxCount),
     canBuyLegacyInternal: (legacyId, st) => canBuyLegacyInternal(legacyId, st || state),
     buyAscensionUpgradeInternal: (id) => buyAscensionUpgradeInternal(id),
+    startChallengeInternal: (id) => startChallengeInternal(id),
+    abandonChallengeInternal: () => abandonChallengeInternal(),
+    tryCompleteChallengeInternal: () => tryCompleteChallengeInternal(),
+    getActiveChallenge: (st) => getActiveChallengeDef(st || state),
+    getPrestigeLayerStatus: (st) => getPrestigeLayerStatus(st || state),
+    getUnlockedPrestigeLayerCount: (st) => getUnlockedPrestigeLayerCount(st || state),
 
     // prestige / ascend
     previewPrestigeGain,
