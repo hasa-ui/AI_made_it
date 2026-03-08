@@ -277,6 +277,7 @@
   function buyUnitInternal(unitId, qty){
     const def = (C.UNIT_DEFS||[]).find(d=>d.id===unitId);
     if (!def) return { ok:false, reason:'no_def' };
+    if (!Number.isInteger(qty) || qty <= 0) return { ok:false, reason:'invalid_qty' };
     const activeChallenge = getActiveChallengeDef(state);
     if (activeChallenge && activeChallenge.effects && activeChallenge.effects.singleUnitOnly){
       for (const u of (C.UNIT_DEFS || [])){

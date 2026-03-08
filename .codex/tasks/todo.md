@@ -426,3 +426,20 @@
 ## Verify Log (2026-03-08 重要経路バグ修正: Challenge firstClear判定)
 - `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
 - `node - <<'NODE' ... (Challengeを2回即時クリアし、1回目のみ firstClear=true / 2回目は false となることを検証) ... NODE` : 成功
+
+## Plan (2026-03-08 購入数バリデーション修正)
+- [x] 重要箇所（購入/進行ロジック）を確認して不具合候補を特定する
+- [x] 再現条件を整理し、最小修正方針を決める
+- [x] 修正を実装する
+- [x] 検証コマンドを実行して結果を記録する
+- [x] 変更内容をコミットし、PRメッセージを作成する
+
+## Progress Log (2026-03-08 購入数バリデーション修正)
+- `game/engine.js` の購入処理を確認。`buyUnitInternal` が `qty` のバリデーションをしておらず、0/負数/非整数入力を受け入れる不具合を確認。
+- 重要機能（ゲーム進行の中核であるユニット購入）に影響するため、`qty` を正の整数に制限する方針を採用。
+- `buyUnitInternal` に `invalid_qty` ガードを追加し、正規購入フローへの影響を避ける最小差分修正を実装。
+- バージョン表記を `Ver.1.16.2` へ更新し、アップデート情報へ修正内容を追記。
+
+## Verify Log (2026-03-08 購入数バリデーション修正)
+- `node - <<'NODE' ...`（config/state/engine をVMで読み込み、`buyUnitInternal('junior', -1)` が `invalid_qty` を返し、`buyUnitInternal('junior', 1)` が成功することを確認）
+- `rg -n "Ver\.1\.16\.2|invalid_qty|APP_VERSION" game/engine.js game/config.js index.html`（修正反映箇所を確認）
