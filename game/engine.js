@@ -175,6 +175,9 @@
     if (state.gold < totalCost) return { ok:false, reason:'cost' };
     state.gold -= totalCost;
     state.units[unitId] = owned + qty;
+    state.runStats = state.runStats || { currentRunUnitTypes:{}, currentRunUpgradeBuys:0 };
+    state.runStats.currentRunUnitTypes = state.runStats.currentRunUnitTypes || {};
+    state.runStats.currentRunUnitTypes[unitId] = (state.runStats.currentRunUnitTypes[unitId] || 0) + qty;
     
     invalidateAggCache();
     recalcAndCacheGPS(state);
@@ -207,6 +210,9 @@
     if (actualN > 0){
       state.gold -= exactCost;
       state.units[unitId] = owned + actualN;
+      state.runStats = state.runStats || { currentRunUnitTypes:{}, currentRunUpgradeBuys:0 };
+      state.runStats.currentRunUnitTypes = state.runStats.currentRunUnitTypes || {};
+      state.runStats.currentRunUnitTypes[unitId] = (state.runStats.currentRunUnitTypes[unitId] || 0) + actualN;
       invalidateAggCache(); recalcAndCacheGPS(state);
       return { ok:true, bought:actualN, cost: exactCost };
     }
@@ -221,6 +227,8 @@
     if (state.gold < cost) return { ok:false };
     state.gold -= cost;
     state.upgrades[upId] = lvl + 1;
+    state.runStats = state.runStats || { currentRunUnitTypes:{}, currentRunUpgradeBuys:0 };
+    state.runStats.currentRunUpgradeBuys = (state.runStats.currentRunUpgradeBuys || 0) + 1;
     invalidateAggCache(); recalcAndCacheGPS(state);
     return { ok:true, lvl: lvl + 1, cost };
   }
@@ -246,6 +254,8 @@
     if (actualN > 0){
       state.gold -= exactCost;
       state.upgrades[upId] = lvl + actualN;
+      state.runStats = state.runStats || { currentRunUnitTypes:{}, currentRunUpgradeBuys:0 };
+      state.runStats.currentRunUpgradeBuys = (state.runStats.currentRunUpgradeBuys || 0) + actualN;
       invalidateAggCache(); recalcAndCacheGPS(state);
       return { ok:true, bought:actualN, cost: exactCost };
     }
@@ -335,8 +345,16 @@
     return { ok:true, gain };
   }
 
+  function calcAscGainFromPrestige(prestigeEarned){
+    const raw = Math.sqrt(Math.max(0, prestigeEarned || 0) / (C.ASC_BASE_DIV || 25));
+    const softcap = C.ASC_SOFTCAP_START || 20;
+    if (raw <= softcap) return Math.floor(raw);
+    const exp = C.ASC_SOFTCAP_EXPONENT || 0.72;
+    return Math.floor(softcap + Math.pow(raw - softcap, exp));
+  }
+
   function previewAscGain(){
-    return Math.max(0, Math.floor(Math.sqrt((state.prestigeEarnedTotal || 0) / (C.ASC_BASE_DIV || 25))));
+    return Math.max(0, calcAscGainFromPrestige(state.prestigeEarnedTotal || 0));
   }
   function doAscendInternal(){
     const gain = previewAscGain();
@@ -351,9 +369,36 @@
     state.legacy = 0;
     if (!keepTotalGold) state.totalGoldEarned = 0;
     if (!keepLegacyTree) state.legacyNodes = (C.LEGACY_DEFS || []).reduce((a,d)=>(a[d.id]=0,a),{});
+
+    state.runStats = state.runStats || {};
+    state.runStats.history = Array.isArray(state.runStats.history) ? state.runStats.history : [];
+    const now = nowSec();
+    const startedAt = state.runStats.currentRunStartedAt || now;
+    const durationSec = Math.max(0, Math.floor(now - startedAt));
+    const peakGold = Math.max(state.runStats.currentRunPeakGold || 0, state.gold || 0);
+    const unitTypesUsed = Object.keys(state.runStats.currentRunUnitTypes || {}).filter(k => (state.runStats.currentRunUnitTypes[k] || 0) > 0).length;
+    const runSummary = {
+      run: (state.runStats.runCount || 1),
+      reachedGold: peakGold,
+      durationSec,
+      gainedAP: gain,
+      noUpgrade: (state.runStats.currentRunUpgradeBuys || 0) === 0,
+      unitTypesUsed,
+      endedAt: now
+    };
+    state.lastAscensionRun = runSummary;
+    state.runStats.history.push(runSummary);
+    if (state.runStats.history.length > 30) state.runStats.history = state.runStats.history.slice(-30);
+    state.runStats.runCount = (state.runStats.runCount || 1) + 1;
+    state.runStats.currentRunStartedAt = now;
+    state.runStats.currentRunPeakGold = 0;
+    state.runStats.currentRunUnitTypes = {};
+    state.runStats.currentRunUpgradeBuys = 0;
+
     // legacy tree を保持しない場合、開始ゴールドはリセット後の恒久効果で再計算する。
     invalidateAggCache();
     state.gold = computeStartingGoldOnPrestige();
+    state.runStats.currentRunPeakGold = state.gold;
     recalcAndCacheGPS(state);
     return { ok:true, gain };
   }

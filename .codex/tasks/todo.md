@@ -139,3 +139,26 @@
 - `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
 - `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
 - `python -m http.server 4173 --bind 0.0.0.0 --directory /workspace/AI_made_it` + Playwright: アップデート情報タブの Ver.1.11.2 表示を確認しスクリーンショット取得（artifact: artifacts/ver_1_11_2_updates.png）
+
+## Plan (2026-03-08 Ascension後半調整 / 自動購入拡張 / 統計タブ)
+- [x] Ascension増加式とAscension Shop後半価格の再調整
+- [x] 自動購入の50ms対応と単体/全購入モード切替の実装
+- [x] Ascensionミニゲームの複雑化（4レーン・反転ルール・時間短縮）
+- [x] レガシーSVGズームのモバイル挙動を緩和
+- [x] 周回統計タブ（周回回数・到達Gold・所要時間）追加
+- [x] 特殊実績（速度/縛り系）の追加
+- [x] バージョン表記とアップデート情報の更新
+- [x] 検証ログ記録
+
+## Progress Log (2026-03-08 Ascension後半調整 / 自動購入拡張 / 統計タブ)
+- config.js: Ascension後半の獲得抑制用ソフトキャップ定数を追加し、後半ショップ価格を大幅増額。APP_VERSION を Ver.1.12.0 へ更新。
+- state.js: autoBuy 設定を intervalMs/purchaseMode へ拡張し、旧 intervalSec からの移行を追加。runStats/lastAscensionRun の保存構造を追加。
+- engine.js: Ascension gain を後半ソフトキャップ式へ変更。Ascend実行時に周回統計（到達Gold/所要時間/獲得AP）を履歴化する処理を実装。
+- ui.js/index.html: 自動購入UIに購入方式セレクトを追加し、50ms間隔で動作するよう変更。統計タブ表示を追加。
+- ui.js/index.html: ミニゲームを4レーン化し、反転ルール・ラウンド時間短縮・報酬調整を追加。
+- ui.js/game/styles.css: モバイル時のレガシーSVGズームを transform ベースにして拡大時の体感を緩和。
+- config.js/ui.js: Antimatter Dimensions風の縛り系実績（高速周回・無アップグレード・単一路線）を追加。
+
+## Verify Log (2026-03-08 Ascension後半調整 / 自動購入拡張 / 統計タブ)
+- `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
+- `python -m http.server 4173 --directory /workspace/AI_made_it` + Playwright: Ascensionタブ/統計タブを表示してスクリーンショット取得（成功）

@@ -62,6 +62,7 @@
     <button class="tabBtn" data-tab="legacy">レガシー</button>
     <button class="tabBtn" data-tab="ascension">Ascension</button>
     <button class="tabBtn" data-tab="achievements">実績</button>
+    <button class="tabBtn" data-tab="stats">統計</button>
     <button class="tabBtn" data-tab="settings">設定・セーブ</button>
     <button class="tabBtn" data-tab="help">ヘルプ</button>
     <button class="tabBtn" data-tab="updates">アップデート情報</button>
@@ -137,7 +138,7 @@
 
         <div class="card" id="ascMiniGameCard" style="display:none;">
           <h3>Ascension ミニゲーム: 星脈同調</h3>
-          <p class="muted small">Ascension Shop を全購入すると解放。挑戦ごとに AP を1消費し、3レーンの正解を当ててスコアを稼ぎます。</p>
+          <p class="muted small">Ascension Shop を全購入すると解放。挑戦ごとに AP を1消費。4レーン化・反転ルール・時間短縮ラウンドで高スコアを狙います。</p>
           <div class="row" style="margin-top:8px;">
             <button id="miniGameStart" class="accent">挑戦開始 (AP -1)</button>
             <span id="miniGameSummary" class="muted small">未挑戦</span>
@@ -146,6 +147,7 @@
             <button class="small alt miniLaneBtn" data-lane="0" disabled>レーンA</button>
             <button class="small alt miniLaneBtn" data-lane="1" disabled>レーンB</button>
             <button class="small alt miniLaneBtn" data-lane="2" disabled>レーンC</button>
+            <button class="small alt miniLaneBtn" data-lane="3" disabled>レーンD</button>
           </div>
           <pre id="miniGameStatus" class="muted small previewbox" style="margin-top:8px;">解放条件: Ascension Shop 全購入</pre>
         </div>
@@ -157,8 +159,15 @@
           <div class="row"><label class="muted small"><input type="checkbox" id="autoBuyUnits"> ユニットを対象</label></div>
           <div class="row"><label class="muted small"><input type="checkbox" id="autoBuyUpgrades"> アップグレードを対象</label></div>
           <div class="row" style="margin-top:8px; gap:8px; align-items:center;">
-            <label class="muted small">実行間隔(秒)</label>
-            <input id="autoBuyInterval" type="number" min="0.1" step="0.1" value="0.5" style="width:90px;" />
+            <label class="muted small">購入方式</label>
+            <select id="autoBuyMode">
+              <option value="single">単体購入</option>
+              <option value="max">全購入（Buy Max）</option>
+            </select>
+          </div>
+          <div class="row" style="margin-top:8px; gap:8px; align-items:center;">
+            <label class="muted small">実行間隔(ms)</label>
+            <input id="autoBuyInterval" type="number" min="50" step="10" value="500" style="width:90px;" />
             <span id="autoBuyStatus" class="muted small">未解放</span>
           </div>
         </div>
@@ -168,6 +177,14 @@
         <div class="card">
           <h3>実績</h3>
           <div id="achList"></div>
+        </div>
+      </div>
+
+      <div id="tab-stats" class="tabPane">
+        <div class="card">
+          <h3>周回統計</h3>
+          <div id="statsSummary" class="muted small">読み込み中...</div>
+          <div id="statsHistory" class="small" style="margin-top:10px;"></div>
         </div>
       </div>
 
@@ -224,6 +241,7 @@
           <h3>アップデート情報</h3>
           <p class="small muted" style="margin-top:4px;">このゲームは現在<strong>アルファ版</strong>です。仕様やバランスは今後も変更されます。</p>
           <ul class="small muted" style="margin-top:8px; padding-left:20px; line-height:1.8;">
+            <li><strong>Ver.1.12.0</strong>：Ascension増加式を後半で緩やかに調整、後半ショップ価格を増額、ミニゲーム複雑化、統計タブ追加、自動購入50ms対応＆購入方式切替、モバイルズーム改善、特殊実績を追加。</li>
             <li><strong>Ver.1.11.2</strong>：Ascension時にレガシーツリーをリセットする場合、開始ゴールドが旧ツリー補正を誤って引き継ぐ不具合を修正。</li>
             <li><strong>Ver.1.11.1</strong>：アップデート履歴をヘルプから独立タブへ移動。アルファ版表記を追加。</li>
             <li><strong>Ver.1.11.0</strong>：アップデート履歴を追加。次に得られるレガシー見積が購入なしでも更新されるよう修正。</li>

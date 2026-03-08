@@ -30,7 +30,7 @@
       confirmLegacyBuy:true,
       confirmLegacyBuyMax:true,
       toast:{ achievement:true, offline:true, purchase:true, general:true },
-      autoBuy:{ enabled:false, units:true, upgrades:true, intervalSec:0.5 }
+      autoBuy:{ enabled:false, units:true, upgrades:true, intervalMs:500, purchaseMode:'single' }
     },
     achievementsOwned: {},
     achievementsProgress: {},
@@ -39,8 +39,18 @@
       bestScore: 0,
       lastScore: 0,
       lastMisses: 0,
-      perfectRuns: 0
-    }
+      perfectRuns: 0,
+      bestStreak: 0
+    },
+    runStats: {
+      runCount: 1,
+      currentRunStartedAt: nowSec(),
+      currentRunPeakGold: C.STARTING_GOLD,
+      currentRunUnitTypes: {},
+      currentRunUpgradeBuys: 0,
+      history: []
+    },
+    lastAscensionRun: null
   };
 
   function migrateState(raw){
@@ -66,10 +76,20 @@
     merged.settings = Object.assign({}, deepCopy(defaultState.settings), merged.settings || {});
     merged.settings.toast = Object.assign({}, defaultState.settings.toast, merged.settings.toast || {});
     merged.settings.autoBuy = Object.assign({}, defaultState.settings.autoBuy, merged.settings.autoBuy || {});
+    if (typeof merged.settings.autoBuy.intervalMs !== 'number'){
+      const oldSec = Number(merged.settings.autoBuy.intervalSec || 0.5);
+      merged.settings.autoBuy.intervalMs = Math.max(50, Math.round(oldSec * 1000));
+    }
+    if (!merged.settings.autoBuy.purchaseMode) merged.settings.autoBuy.purchaseMode = 'single';
+    delete merged.settings.autoBuy.intervalSec;
 
     merged.achievementsOwned = merged.achievementsOwned || {};
     merged.achievementsProgress = merged.achievementsProgress || {};
     merged.miniGame = Object.assign({}, deepCopy(defaultState.miniGame), merged.miniGame || {});
+    merged.runStats = Object.assign({}, deepCopy(defaultState.runStats), merged.runStats || {});
+    merged.runStats.currentRunUnitTypes = Object.assign({}, merged.runStats.currentRunUnitTypes || {});
+    merged.runStats.history = Array.isArray(merged.runStats.history) ? merged.runStats.history.slice(-30) : [];
+    if (!merged.lastAscensionRun || typeof merged.lastAscensionRun !== 'object') merged.lastAscensionRun = null;
     return merged;
   }
 

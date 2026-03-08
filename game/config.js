@@ -4,15 +4,17 @@
 
   const C = {
     SAVE_KEY: 'inc.split.full.v4',
-    SAVE_VERSION: 9,
-    APP_VERSION: 'Ver.1.11.2',
+    SAVE_VERSION: 10,
+    APP_VERSION: 'Ver.1.12.0',
     UI_UPDATE_INTERVAL_MS: 50,
     AUTO_SAVE_INTERVAL: 5000,
     MAX_OFFLINE_SECONDS: 60*60*24,
     PRESTIGE_BASE_DIV: 2000,
     BASE_PRESTIGE_EFFECT_PER_POINT: 0.05,
     STARTING_GOLD: 50,
-    ASC_BASE_DIV: 25
+    ASC_BASE_DIV: 25,
+    ASC_SOFTCAP_START: 20,
+    ASC_SOFTCAP_EXPONENT: 0.72
   };
 
   C.UNIT_DEFS = [
@@ -52,13 +54,13 @@
     { id:'asc_galactic_mult', name:'銀河の恩寵', desc:'恒久: 全体 ×3.0', cost:56, type:'globalMult', payload:{mult:3.0}, maxLevel:1 },
     { id:'asc_colossus_gps',  name:'巨像の配当', desc:'恒久: +500 GPS', cost:80, type:'flatGPS', payload:{gps:500}, maxLevel:1 },
     { id:'asc_prestige_super', name:'超越の祝福', desc:'恒久: +0.10 prestige effect', cost:110, type:'prestigeEffectAdd', payload:{add:0.10}, maxLevel:1 },
-    { id:'asc_seed_core', name:'創世資金コア', desc:'恒久: 開始ゴールド +1200', cost:145, type:'startGoldFlat', payload:{gold:1200}, maxLevel:1 },
-    { id:'asc_passive_reactor', name:'反応炉配当', desc:'恒久: +1200 GPS', cost:185, type:'flatGPS', payload:{gps:1200}, maxLevel:1 },
-    { id:'asc_keep_total_gold', name:'記録保全プロトコル', desc:'Ascend時に累計ゴールドを維持', cost:235, type:'special', payload:{kind:'keepTotalGold'}, maxLevel:1 },
-    { id:'asc_keep_legacy_tree', name:'レガシー写像保存', desc:'Ascend時にレガシーツリーを維持', cost:300, type:'special', payload:{kind:'keepLegacyTree'}, maxLevel:1 },
-    { id:'asc_unlock_autobuy', name:'自律運用OS', desc:'自動購入機能を解放', cost:380, type:'special', payload:{kind:'unlockAutobuy'}, maxLevel:1 },
-    { id:'asc_cosmic_multiplier', name:'天の倍加', desc:'恒久: 全体 ×10.0', cost:480, type:'globalMult', payload:{mult:10.0}, maxLevel:1 },
-    { id:'asc_mythic_gps', name:'神話の配当', desc:'恒久: +2500 GPS', cost:620, type:'flatGPS', payload:{gps:2500}, maxLevel:1 }
+    { id:'asc_seed_core', name:'創世資金コア', desc:'恒久: 開始ゴールド +1200', cost:220, type:'startGoldFlat', payload:{gold:1200}, maxLevel:1 },
+    { id:'asc_passive_reactor', name:'反応炉配当', desc:'恒久: +1200 GPS', cost:340, type:'flatGPS', payload:{gps:1200}, maxLevel:1 },
+    { id:'asc_keep_total_gold', name:'記録保全プロトコル', desc:'Ascend時に累計ゴールドを維持', cost:520, type:'special', payload:{kind:'keepTotalGold'}, maxLevel:1 },
+    { id:'asc_keep_legacy_tree', name:'レガシー写像保存', desc:'Ascend時にレガシーツリーを維持', cost:760, type:'special', payload:{kind:'keepLegacyTree'}, maxLevel:1 },
+    { id:'asc_unlock_autobuy', name:'自律運用OS', desc:'自動購入機能を解放', cost:1100, type:'special', payload:{kind:'unlockAutobuy'}, maxLevel:1 },
+    { id:'asc_cosmic_multiplier', name:'天の倍加', desc:'恒久: 全体 ×10.0', cost:1800, type:'globalMult', payload:{mult:10.0}, maxLevel:1 },
+    { id:'asc_mythic_gps', name:'神話の配当', desc:'恒久: +2500 GPS', cost:2800, type:'flatGPS', payload:{gps:2500}, maxLevel:1 }
   ];
 
   // --- ACHIEVEMENTS ---
@@ -79,7 +81,10 @@
     { id:'ach_asc_shop_master', name:'超越の商人王', desc:'Ascension Shop を全て最大まで購入する', type:'ascShopAllBought', target:1, bonus:{type:'globalMult', mult:1.3} },
     { id:'ach_minigame_debut', name:'星脈への挑戦', desc:'Ascensionミニゲームに1回挑戦する', type:'miniGamePlay', target:1, bonus:{type:'flatGPS', gps:300} },
     { id:'ach_minigame_highscore', name:'同調の達人', desc:'ミニゲームでスコア200以上を達成する', type:'miniGameScore', target:200, bonus:{type:'globalMult', mult:1.2} },
-    { id:'ach_minigame_perfect', name:'完全同期', desc:'ミニゲームでミス0かつ高得点の完全勝利を達成する', type:'miniGamePerfect', target:1, bonus:{type:'startGold', amount:5000} }
+    { id:'ach_minigame_perfect', name:'完全同期', desc:'ミニゲームでミス0かつ高得点の完全勝利を達成する', type:'miniGamePerfect', target:1, bonus:{type:'startGold', amount:5000} },
+    { id:'ach_speed_ascender', name:'時空を裂く者', desc:'5分以内の周回で Ascend を実行する', type:'ascRunDurationMax', target:300, bonus:{type:'globalMult', mult:1.35} },
+    { id:'ach_pure_reset', name:'純粋理論', desc:'アップグレード未購入で Ascend を実行する', type:'ascNoUpgrade', target:1, bonus:{type:'costMult', mult:0.92} },
+    { id:'ach_monounit_path', name:'単一路線', desc:'1種類のユニットのみで Ascend を実行する', type:'ascSingleUnitType', target:1, bonus:{type:'flatGPS', gps:900} }
   ];
 
   window.CONFIG = C;
