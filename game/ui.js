@@ -595,6 +595,9 @@
       if (refs.totalEl) refs.totalEl.textContent = fmtNumber(st.totalGoldEarned || 0);
       if (refs.legacyEl) refs.legacyEl.textContent = fmtNumber(st.legacy || 0);
       if (refs.ascEl) refs.ascEl.textContent = fmtNumber(st.ascPoints || 0);
+      if (refs.prestigePreview) refs.prestigePreview.textContent = fmtNumber(E.previewPrestigeGain());
+      if (refs.startingGoldPreview) refs.startingGoldPreview.textContent = fmtNumber(E.computeStartingGoldOnPrestige());
+      if (refs.ascGainPreview) refs.ascGainPreview.textContent = fmtNumber(E.previewAscGain());
 
       for (const def of C.UNIT_DEFS){
         const btns = unitButtons[def.id]; if (!btns) continue;

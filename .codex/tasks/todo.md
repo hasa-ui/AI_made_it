@@ -87,3 +87,38 @@
 - `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js && node --check index.html` : 失敗（Nodeの仕様上HTMLは --check 対象外）
 - `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
 - `python -m http.server 4173 --bind 0.0.0.0 --directory /workspace/AI_made_it` + Playwright: Ascensionタブでミニゲーム表示を確認しスクリーンショット取得（artifact: artifacts/ascension_minigame.png）
+
+## Plan (2026-03-08 アップデート履歴追加 / レガシー見積更新修正)
+- [x] 既存UIと見積表示更新フローを確認
+- [x] 過去アップデート情報を確認できる表示を追加
+- [x] レガシー見積が購入操作なしでも更新されるよう修正
+- [x] バージョン表記を更新
+- [x] 検証ログ記録
+
+## Progress Log (2026-03-08 アップデート履歴追加 / レガシー見積更新修正)
+- 着手: index.html / game/ui.js / game/config.js を確認。
+- game/ui.js: mainLoopの定期UI更新に `prestigeGainPreview` / `startingGoldPreview` / `ascGainPreview` の再計算反映を追加し、購入操作なしでも見積が更新されるよう修正。
+- index.html: ヘルプ内に「アップデート履歴」セクションを追加し、Ver.1.11.0 / 1.10.0 / 1.9.0 の履歴を記録。
+- game/config.js: APP_VERSION を `Ver.1.11.0` に更新。
+- Planチェック更新: 全項目完了。
+
+## Verify Log (2026-03-08 アップデート履歴追加 / レガシー見積更新修正)
+- `node --check game/config.js && node --check game/ui.js && node --check game/engine.js && node --check game/state.js` : 成功
+- `python -m http.server 4173 --bind 0.0.0.0 --directory /workspace/AI_made_it` + Playwright: ヘルプタブのアップデート履歴表示を確認しスクリーンショット取得（artifact: artifacts/help_update_history.png）
+
+## Plan (2026-03-08 アップデート情報タブ化 / アルファ版表記追記)
+- [x] 既存のタブ構造とアップデート履歴表示位置を確認
+- [x] ヘルプからアップデート履歴を分離し専用タブを追加
+- [x] ゲームがアルファ版である旨をUIに追記
+- [x] バージョン表記を更新
+- [x] 検証ログ記録
+
+## Progress Log (2026-03-08 アップデート情報タブ化 / アルファ版表記追記)
+- 着手: index.html / game/config.js / game/ui.js を確認。
+- index.html: ナビゲーションに「アップデート情報」タブを追加し、ヘルプから履歴を分離して専用ペイン `tab-updates` を追加。
+- index.html: ヘッダー説明文とアップデート情報タブ内に「アルファ版」表記を追記。
+- game/config.js: APP_VERSION を `Ver.1.11.1` に更新。
+
+## Verify Log (2026-03-08 アップデート情報タブ化 / アルファ版表記追記)
+- `node --check game/config.js && node --check game/ui.js && node --check game/engine.js && node --check game/state.js` : 成功
+- `python -m http.server 4173 --bind 0.0.0.0` + Playwright: 「アップデート情報」タブの表示とアルファ版表記を確認し、スクリーンショット取得（artifact: artifacts/updates_tab_alpha.png）
