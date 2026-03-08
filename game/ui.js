@@ -69,6 +69,7 @@
   let svgDirty = true;
   let selectedLegacyId = null;
   let autoBuyAccumulator = 0;
+  let miniGameRuntime = { active:false, round:0, totalRounds:12, score:0, misses:0, streak:0, targetLane:0, timerId:null };
   const LEGACY_ZOOM_MIN = 0.6;
   const LEGACY_ZOOM_MAX = 2.2;
   const LEGACY_ZOOM_STEP = 0.2;
@@ -82,6 +83,95 @@
       if ((st.ascOwned[def.id] || 0) > 0) return true;
     }
     return false;
+  }
+
+  function isAscShopFullyPurchased(st){
+    st = st || E.getState();
+    for (const def of C.ASC_UPGRADES){
+      const current = st.ascOwned[def.id] || 0;
+      const required = def.maxLevel || 1;
+      if (current < required) return false;
+    }
+    return true;
+  }
+
+  function ensureMiniGameState(st){
+    st.miniGame = Object.assign({ plays:0, bestScore:0, lastScore:0, lastMisses:0, perfectRuns:0 }, st.miniGame || {});
+  }
+
+  function renderMiniGameState(){
+    const st = E.getState();
+    ensureMiniGameState(st);
+    const card = document.getElementById('ascMiniGameCard');
+    const summary = document.getElementById('miniGameSummary');
+    const status = document.getElementById('miniGameStatus');
+    const startBtn = document.getElementById('miniGameStart');
+    const laneButtons = document.querySelectorAll('.miniLaneBtn');
+    if (!card || !summary || !status || !startBtn) return;
+
+    const unlocked = isAscShopFullyPurchased(st);
+    card.style.display = unlocked ? 'block' : 'none';
+    if (!unlocked) return;
+
+    summary.textContent = `ベスト: ${fmtNumber(st.miniGame.bestScore)} / 挑戦回数: ${fmtNumber(st.miniGame.plays)}`;
+    if (!miniGameRuntime.active){
+      status.textContent = `待機中\n前回スコア: ${fmtNumber(st.miniGame.lastScore)}\n前回ミス: ${fmtNumber(st.miniGame.lastMisses)}\n完全勝利: ${fmtNumber(st.miniGame.perfectRuns)} 回`;
+    }
+    startBtn.disabled = miniGameRuntime.active || (st.ascPoints || 0) < 1;
+    laneButtons.forEach((btn, idx)=>{
+      btn.disabled = !miniGameRuntime.active;
+      btn.classList.toggle('accent', miniGameRuntime.active && idx === miniGameRuntime.targetLane);
+      btn.classList.toggle('alt', !(miniGameRuntime.active && idx === miniGameRuntime.targetLane));
+    });
+  }
+
+  function finishMiniGame(){
+    const st = E.getState();
+    ensureMiniGameState(st);
+    miniGameRuntime.active = false;
+    if (miniGameRuntime.timerId) clearTimeout(miniGameRuntime.timerId);
+    miniGameRuntime.timerId = null;
+
+    const reward = Math.min(3, Math.floor(miniGameRuntime.score / 120));
+    st.ascPoints += reward;
+    st.miniGame.plays += 1;
+    st.miniGame.lastScore = miniGameRuntime.score;
+    st.miniGame.lastMisses = miniGameRuntime.misses;
+    st.miniGame.bestScore = Math.max(st.miniGame.bestScore, miniGameRuntime.score);
+    if (miniGameRuntime.misses === 0 && miniGameRuntime.score >= 180) st.miniGame.perfectRuns += 1;
+    SM.saveState(st);
+    syncUIAfterChange();
+    checkAchievementsAfterAction();
+    showTypedToast('general', `ミニゲーム終了: スコア ${fmtNumber(miniGameRuntime.score)} / AP +${fmtNumber(reward)}`);
+    renderMiniGameState();
+  }
+
+  function runMiniGameRound(){
+    if (!miniGameRuntime.active) return;
+    if (miniGameRuntime.round >= miniGameRuntime.totalRounds){ finishMiniGame(); return; }
+    miniGameRuntime.targetLane = Math.floor(Math.random() * 3);
+    miniGameRuntime.round += 1;
+    const status = document.getElementById('miniGameStatus');
+    if (status) status.textContent = `ラウンド ${miniGameRuntime.round}/${miniGameRuntime.totalRounds}\nスコア: ${fmtNumber(miniGameRuntime.score)}\n連続正解: ${fmtNumber(miniGameRuntime.streak)}\nミス: ${fmtNumber(miniGameRuntime.misses)}`;
+    renderMiniGameState();
+    miniGameRuntime.timerId = setTimeout(()=>{
+      if (!miniGameRuntime.active) return;
+      miniGameRuntime.misses += 1;
+      miniGameRuntime.streak = 0;
+      runMiniGameRound();
+    }, 800);
+  }
+
+  function startMiniGame(){
+    const st = E.getState();
+    ensureMiniGameState(st);
+    if (!isAscShopFullyPurchased(st)){ showTypedToast('general', 'Ascension Shop 全購入後に解放されます'); return; }
+    if ((st.ascPoints || 0) < 1){ showTypedToast('general', '開始には AP が1必要です'); return; }
+    st.ascPoints -= 1;
+    miniGameRuntime = { active:true, round:0, totalRounds:12, score:0, misses:0, streak:0, targetLane:0, timerId:null };
+    SM.saveState(st);
+    syncUIAfterChange();
+    runMiniGameRound();
   }
 
   // ---------- UI 生成関数 ----------
@@ -162,6 +252,7 @@
       });
     }
     built.asc = true; cacheRefs();
+    renderMiniGameState();
   }
 
   // ---------- Legacy SVG / Inspector ----------
@@ -261,26 +352,8 @@
     const nextEff = computeLegacyEffectForLevel(def, Math.min(def.maxLevel, lvl+1));
     document.getElementById('ins_next_effect').textContent = `${currEff.text} → ${nextEff.text}`;
 
-    const agg = E.getAggregates(E.getState());
-    const totals = [ `全体乗数: ×${(agg.globalMult||1).toFixed(3)}`, `コスト乗数: ×${(agg.costMult||1).toFixed(3)}`, `恒久GPS合計: +${(agg.flatGPS||0).toFixed(2)} GPS`, `開始Gボーナス: +${(agg.startingGoldBonus||0)}` ];
-    document.getElementById('ins_preview_result').textContent = totals.join('\n');
-
     for (const k in svgNodeEls) if (svgNodeEls[k]) svgNodeEls[k].classList.remove('selected');
     if (svgNodeEls[id]) svgNodeEls[id].classList.add('selected');
-  }
-
-  function previewLegacyIncrease(n){
-    if (!selectedLegacyId) return;
-    const def = C.LEGACY_DEFS.find(d=>d.id===selectedLegacyId); if (!def) return;
-    const cur = E.getState().legacyNodes[selectedLegacyId] || 0;
-    const add = Math.min(n, Math.max(0, def.maxLevel - cur));
-    if (add <= 0){ document.getElementById('ins_preview_result').textContent='最大レベルです。'; return; }
-    const sim = SM.deepCopy(E.getState());
-    sim.legacyNodes[selectedLegacyId] = (sim.legacyNodes[selectedLegacyId]||0) + add;
-    E.recalcAndCacheGPS(E.getState()); E.recalcAndCacheGPS(sim);
-    const curr = E.getState().gpsCache || 0, future = sim.gpsCache || 0, delta = future - curr;
-    const pct = curr > 0 ? (delta / curr * 100) : (delta>0?Infinity:0);
-    document.getElementById('ins_preview_result').textContent = `現在: ${fmtNumber(curr)} → 予測: ${fmtNumber(future)}\n増分: ${fmtNumber(delta)} (${isFinite(pct)?pct.toFixed(2)+'%':'∞'}) （+${add}Lv）`;
   }
 
   // ---------- Achievements ----------
@@ -301,6 +374,7 @@
 
   function checkAchievementsAfterAction(){
     const st = E.getState();
+    ensureMiniGameState(st);
     for (const a of (C.ACHIEVEMENTS||[])){
       if (st.achievementsOwned && st.achievementsOwned[a.id]) continue;
       let achieved = false;
@@ -310,6 +384,10 @@
       else if (a.type === 'prestige'){ if ((st.prestigeEarnedTotal||0) >= a.target) achieved = true; }
       else if (a.type === 'ascend'){ if ((st.ascEarnedTotal||0) >= a.target) achieved = true; }
       else if (a.type === 'legacyBought'){ for (const d of C.LEGACY_DEFS) if ((st.legacyNodes[d.id]||0) >= a.target) { achieved = true; break; } }
+      else if (a.type === 'ascShopAllBought'){ if (isAscShopFullyPurchased(st)) achieved = true; }
+      else if (a.type === 'miniGamePlay'){ if ((st.miniGame.plays||0) >= a.target) achieved = true; }
+      else if (a.type === 'miniGameScore'){ if ((st.miniGame.bestScore||0) >= a.target) achieved = true; }
+      else if (a.type === 'miniGamePerfect'){ if ((st.miniGame.perfectRuns||0) >= a.target) achieved = true; }
       if (achieved){
         st.achievementsOwned = st.achievementsOwned || {};
         st.achievementsOwned[a.id] = true;
@@ -494,6 +572,7 @@
     const currentSaveVersionEl = document.getElementById('currentSaveVersionText');
     if (currentSaveVersionEl) currentSaveVersionEl.textContent = String(st.version || '-');
     syncAutoBuyControls();
+    renderMiniGameState();
   }
 
   // ---------- mainLoop ----------
@@ -587,7 +666,22 @@
       if (res.ok){ svgDirty=true; syncUIAfterChange(); buildAscShop(); checkAchievementsAfterAction(); showTypedToast('purchase', `Ascend: AP +${fmtNumber(res.gain)}`); }
     });
 
-    document.getElementById('ins_preview_btn')?.addEventListener('click', ()=> previewLegacyIncrease(Math.max(1, Math.floor(Number(document.getElementById('ins_preview_n').value || 1)))));
+    document.getElementById('miniGameStart')?.addEventListener('click', ()=> startMiniGame());
+    document.querySelectorAll('.miniLaneBtn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        if (!miniGameRuntime.active) return;
+        const lane = Number(btn.dataset.lane || -1);
+        if (miniGameRuntime.timerId) clearTimeout(miniGameRuntime.timerId);
+        if (lane === miniGameRuntime.targetLane){
+          miniGameRuntime.streak += 1;
+          miniGameRuntime.score += 10 + (miniGameRuntime.streak * 2);
+        } else {
+          miniGameRuntime.streak = 0;
+          miniGameRuntime.misses += 1;
+        }
+        runMiniGameRound();
+      });
+    });
     
     document.getElementById('ins_buy1')?.addEventListener('click', ()=>{
       if (!selectedLegacyId) return;

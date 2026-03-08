@@ -33,7 +33,14 @@
       autoBuy:{ enabled:false, units:true, upgrades:true, intervalSec:0.5 }
     },
     achievementsOwned: {},
-    achievementsProgress: {}
+    achievementsProgress: {},
+    miniGame: {
+      plays: 0,
+      bestScore: 0,
+      lastScore: 0,
+      lastMisses: 0,
+      perfectRuns: 0
+    }
   };
 
   function migrateState(raw){
@@ -62,6 +69,7 @@
 
     merged.achievementsOwned = merged.achievementsOwned || {};
     merged.achievementsProgress = merged.achievementsProgress || {};
+    merged.miniGame = Object.assign({}, deepCopy(defaultState.miniGame), merged.miniGame || {});
     return merged;
   }
 

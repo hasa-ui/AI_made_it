@@ -134,6 +134,21 @@
           <div id="ascShop" style="margin-top:12px;"></div>
         </div>
 
+        <div class="card" id="ascMiniGameCard" style="display:none;">
+          <h3>Ascension ミニゲーム: 星脈同調</h3>
+          <p class="muted small">Ascension Shop を全購入すると解放。挑戦ごとに AP を1消費し、3レーンの正解を当ててスコアを稼ぎます。</p>
+          <div class="row" style="margin-top:8px;">
+            <button id="miniGameStart" class="accent">挑戦開始 (AP -1)</button>
+            <span id="miniGameSummary" class="muted small">未挑戦</span>
+          </div>
+          <div class="row" style="margin-top:8px;">
+            <button class="small alt miniLaneBtn" data-lane="0" disabled>レーンA</button>
+            <button class="small alt miniLaneBtn" data-lane="1" disabled>レーンB</button>
+            <button class="small alt miniLaneBtn" data-lane="2" disabled>レーンC</button>
+          </div>
+          <pre id="miniGameStatus" class="muted small previewbox" style="margin-top:8px;">解放条件: Ascension Shop 全購入</pre>
+        </div>
+
         <div class="card">
           <h3>自動購入</h3>
           <p class="muted small">「自律運用OS」を購入すると、ユニット/アップグレードの自動購入を有効化できます。</p>
@@ -195,7 +210,7 @@
 
             <h4 style="margin-top:16px;">💡 ヒント</h4>
             <ul class="small muted" style="margin-top:4px; padding-left:20px;">
-              <li><strong>Inspector機能：</strong> レガシーツリーのノードをクリックすると、右側に詳細が表示され「nレベル上げたときの増加量プレビュー」を確認できます。</li>
+              <li><strong>Inspector機能：</strong> レガシーツリーのノードをクリックすると、右側に詳細（前提・効果・コスト）が表示されます。</li>
               <li>設定タブから、数字の表示形式（コンパクト / 指数）や各種通知のON/OFFを切り替えられます。</li>
             </ul>
           </div>
@@ -218,13 +233,6 @@
 
             <hr style="border-color:rgba(255,255,255,0.1); margin:12px 0;">
 
-            <div class="muted small">累積プレビュー (+n)</div>
-            <div class="row" style="margin-top:4px;">
-              <input id="ins_preview_n" type="number" min="1" value="1" />
-              <button id="ins_preview_btn" class="small">プレビュー</button>
-            </div>
-            <pre id="ins_preview_result" class="muted small previewbox">プレビュー結果がここに表示されます。</pre>
-
             <div class="row" style="margin-top:12px;">
               <button id="ins_buy1">Lv +1 購入</button>
               <button id="ins_buyMax" class="small warn">最大購入</button>
@@ -233,7 +241,7 @@
           </div>
         </div>
         <div class="card hintbox">
-          <div class="muted small">💡 ヒント: Inspector のプレビューは、現在の全てのバフを加味して実際にシミュレーション計算を行います。</div>
+          <div class="muted small">💡 ヒント: Inspector では前提と次レベルコストを見ながら効率よくレガシーを伸ばせます。</div>
         </div>
       </div>
     </aside>

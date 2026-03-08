@@ -4,8 +4,8 @@
 
   const C = {
     SAVE_KEY: 'inc.split.full.v4',
-    SAVE_VERSION: 8,
-    APP_VERSION: '1.9.0',
+    SAVE_VERSION: 9,
+    APP_VERSION: '1.10.0',
     UI_UPDATE_INTERVAL_MS: 50,
     AUTO_SAVE_INTERVAL: 5000,
     MAX_OFFLINE_SECONDS: 60*60*24,
@@ -75,7 +75,11 @@
     { id:'ach_ascend_once', name:'超越の一歩', desc:'一度 Ascend を実行', type:'ascend', target:1, bonus:{type:'globalMult', mult:1.25} },
     { id:'ach_buy_legacy_1', name:'初レガシー', desc:'任意のレガシーを1レベル購入', type:'legacyBought', target:1, bonus:{type:'startGold', amount:50} },
     // 特殊：難しい条件、強力なボーナス
-    { id:'ach_legendary_collector', name:'伝説の収集家', desc:'全てのユニットを合計500以上所持', type:'unitBought', target:500, bonus:{type:'globalMult', mult:1.5} }
+    { id:'ach_legendary_collector', name:'伝説の収集家', desc:'全てのユニットを合計500以上所持', type:'unitBought', target:500, bonus:{type:'globalMult', mult:1.5} },
+    { id:'ach_asc_shop_master', name:'超越の商人王', desc:'Ascension Shop を全て最大まで購入する', type:'ascShopAllBought', target:1, bonus:{type:'globalMult', mult:1.3} },
+    { id:'ach_minigame_debut', name:'星脈への挑戦', desc:'Ascensionミニゲームに1回挑戦する', type:'miniGamePlay', target:1, bonus:{type:'flatGPS', gps:300} },
+    { id:'ach_minigame_highscore', name:'同調の達人', desc:'ミニゲームでスコア200以上を達成する', type:'miniGameScore', target:200, bonus:{type:'globalMult', mult:1.2} },
+    { id:'ach_minigame_perfect', name:'完全同期', desc:'ミニゲームでミス0かつ高得点の完全勝利を達成する', type:'miniGamePerfect', target:1, bonus:{type:'startGold', amount:5000} }
   ];
 
   window.CONFIG = C;

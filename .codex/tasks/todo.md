@@ -65,3 +65,25 @@
 ## Verify Log (2026-03-07 レガシーツリー拡大縮小 / Ascensionコスト調整)
 - `node --check game/config.js && node --check game/ui.js && node --check game/state.js && node --check game/engine.js` : 成功
 - `python -m http.server 4173 --directory /workspace/AI_made_it` + Playwright: レガシータブでズームボタン押下後の表示を確認し、スクリーンショット取得
+
+## Plan (2026-03-07 Inspectorプレビュー削除 / Ascensionミニゲーム / 実績追加)
+- [x] 既存のInspector・Ascensionショップ・実績判定の構造確認
+- [x] InspectorプレビューUI/処理の削除
+- [x] Ascensionショップ全購入後に解放されるミニゲーム追加
+- [x] 特殊条件を含む実績追加と判定ロジック拡張
+- [x] 検証ログ記録
+
+## Progress Log (2026-03-07 Inspectorプレビュー削除 / Ascensionミニゲーム / 実績追加)
+- 着手: index.html / game/ui.js / game/state.js / game/config.js / game/styles.css を確認。
+
+## Verify Log (2026-03-07 Inspectorプレビュー削除 / Ascensionミニゲーム / 実績追加)
+- 着手前
+- index.html: Inspector の累積プレビュー入力/ボタン/結果表示を削除し、関連ヒント・ヘルプ文言を更新。
+- index.html / game/ui.js: Ascension Shop 全購入後に表示されるミニゲーム UI（星脈同調）を追加。
+- game/ui.js: ミニゲーム実行ロジック（AP消費開始、ラウンド進行、スコア/ミス集計、報酬AP付与）と状態表示更新を実装。
+- game/state.js: ミニゲーム統計（plays/bestScore/lastScore/lastMisses/perfectRuns）を保存・マイグレーション対象に追加。
+- game/config.js: SAVE_VERSION を 9、APP_VERSION を Ver.1.10.0 へ更新し、ミニゲーム/全購入連動の実績を追加。
+
+- `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js && node --check index.html` : 失敗（Nodeの仕様上HTMLは --check 対象外）
+- `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
+- `python -m http.server 4173 --bind 0.0.0.0 --directory /workspace/AI_made_it` + Playwright: Ascensionタブでミニゲーム表示を確認しスクリーンショット取得（artifact: artifacts/ascension_minigame.png）
