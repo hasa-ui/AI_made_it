@@ -82,18 +82,6 @@
         </div>
 
         <div class="card">
-          <h3>プレステージ層 (Resonance Layers)</h3>
-          <p class="muted small">現在周回の Prestige 値に応じて段階解放される特別層です。Ascendでリセットされます。</p>
-          <div id="prestigeLayerList" style="margin-top:10px;"></div>
-        </div>
-
-        <div class="card">
-          <h3>Celestial層 (Ascension Nexus)</h3>
-          <p class="muted small">Ascension累計APで解放される、Prestige/Ascensionを横断する恒久レイヤーです。Ascend後も維持されます。</p>
-          <div id="celestialLayerList" style="margin-top:10px;"></div>
-        </div>
-
-        <div class="card">
           <h3>プレステージ</h3>
           <div class="row">
             <div>
@@ -104,6 +92,12 @@
               <button id="doPrestige" class="accent">プレステージ実行</button>
             </div>
           </div>
+        </div>
+
+        <div class="card">
+          <h3>プレステージ層 (Resonance Layers)</h3>
+          <p class="muted small">現在周回の Prestige 値に応じて段階解放される特別層です。Ascendでリセットされます。</p>
+          <div id="prestigeLayerList" style="margin-top:10px;"></div>
         </div>
       </div>
 
@@ -297,6 +291,7 @@
           <h3>アップデート情報</h3>
           <p class="small muted" style="margin-top:4px;">このゲームは現在<strong>アルファ版</strong>です。仕様やバランスは今後も変更されます。</p>
           <ul class="small muted" style="margin-top:8px; padding-left:20px; line-height:1.8;">
+            <li><strong>Ver.1.15.2</strong>：プレイタブからCelestial層の表示を削除し、プレイタブ内の「プレステージ」と「プレステージ層」の表示順を入れ替え。</li>
             <li><strong>Ver.1.15.1</strong>：集計キャッシュが外部stateの試算結果を使い回してしまう不具合を修正し、シミュレーション計算（開始ゴールド/GPS試算）の整合性を改善。</li>
             <li><strong>Ver.1.15.0</strong>：実績表示を簡素化。アップグレードタブをプレイタブへ統合。Celestialタブ/Celestial Point/Celestial専用アップグレードを追加。Prestige/Celestial層の効果表示を明確化し、Challengeを7種へ拡張、新実績を追加。</li>
             <li><strong>Ver.1.14.1</strong>：Prestige実行時、同回で解放されたPrestige層の開始ゴールド補正が反映されない不具合を修正。</li>
