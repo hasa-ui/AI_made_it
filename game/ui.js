@@ -69,10 +69,11 @@
   let svgDirty = true;
   let selectedLegacyId = null;
   let autoBuyAccumulator = 0;
-  let miniGameRuntime = { active:false, round:0, totalRounds:12, score:0, misses:0, streak:0, targetLane:0, timerId:null };
-  const LEGACY_ZOOM_MIN = 0.6;
-  const LEGACY_ZOOM_MAX = 2.2;
-  const LEGACY_ZOOM_STEP = 0.2;
+  let miniGameRuntime = { active:false, round:0, totalRounds:14, score:0, misses:0, streak:0, bestStreak:0, targetLane:0, timerId:null, rule:'normal', roundTimeoutMs:900 };
+  const isMobileViewport = ()=> window.matchMedia && window.matchMedia('(max-width: 900px)').matches;
+  const LEGACY_ZOOM_MIN = 0.75;
+  const LEGACY_ZOOM_MAX = 2.0;
+  const LEGACY_ZOOM_STEP = isMobileViewport() ? 0.1 : 0.2;
   let legacyZoom = 1;
 
   function hasAscSpecial(kind){
@@ -96,7 +97,7 @@
   }
 
   function ensureMiniGameState(st){
-    st.miniGame = Object.assign({ plays:0, bestScore:0, lastScore:0, lastMisses:0, perfectRuns:0 }, st.miniGame || {});
+    st.miniGame = Object.assign({ plays:0, bestScore:0, lastScore:0, lastMisses:0, perfectRuns:0, bestStreak:0 }, st.miniGame || {});
   }
 
   function renderMiniGameState(){
@@ -113,15 +114,17 @@
     card.style.display = unlocked ? 'block' : 'none';
     if (!unlocked) return;
 
-    summary.textContent = `ベスト: ${fmtNumber(st.miniGame.bestScore)} / 挑戦回数: ${fmtNumber(st.miniGame.plays)}`;
+    summary.textContent = `ベスト: ${fmtNumber(st.miniGame.bestScore)} / 挑戦回数: ${fmtNumber(st.miniGame.plays)} / 最高連鎖: ${fmtNumber(st.miniGame.bestStreak || 0)}`;
     if (!miniGameRuntime.active){
       status.textContent = `待機中\n前回スコア: ${fmtNumber(st.miniGame.lastScore)}\n前回ミス: ${fmtNumber(st.miniGame.lastMisses)}\n完全勝利: ${fmtNumber(st.miniGame.perfectRuns)} 回`;
     }
     startBtn.disabled = miniGameRuntime.active || (st.ascPoints || 0) < 1;
     laneButtons.forEach((btn, idx)=>{
       btn.disabled = !miniGameRuntime.active;
-      btn.classList.toggle('accent', miniGameRuntime.active && idx === miniGameRuntime.targetLane);
-      btn.classList.toggle('alt', !(miniGameRuntime.active && idx === miniGameRuntime.targetLane));
+      const isHint = miniGameRuntime.active && miniGameRuntime.rule === 'normal' && idx === miniGameRuntime.targetLane;
+      btn.classList.toggle('accent', isHint);
+      btn.classList.toggle('warn', miniGameRuntime.active && miniGameRuntime.rule === 'inverse' && idx === miniGameRuntime.targetLane);
+      btn.classList.toggle('alt', !isHint && !(miniGameRuntime.active && miniGameRuntime.rule === 'inverse' && idx === miniGameRuntime.targetLane));
     });
   }
 
@@ -132,12 +135,13 @@
     if (miniGameRuntime.timerId) clearTimeout(miniGameRuntime.timerId);
     miniGameRuntime.timerId = null;
 
-    const reward = Math.min(3, Math.floor(miniGameRuntime.score / 120));
+    const reward = Math.min(5, Math.floor(miniGameRuntime.score / 140));
     st.ascPoints += reward;
     st.miniGame.plays += 1;
     st.miniGame.lastScore = miniGameRuntime.score;
     st.miniGame.lastMisses = miniGameRuntime.misses;
     st.miniGame.bestScore = Math.max(st.miniGame.bestScore, miniGameRuntime.score);
+    st.miniGame.bestStreak = Math.max(st.miniGame.bestStreak || 0, miniGameRuntime.bestStreak || 0);
     if (miniGameRuntime.misses === 0 && miniGameRuntime.score >= 180) st.miniGame.perfectRuns += 1;
     SM.saveState(st);
     syncUIAfterChange();
@@ -149,17 +153,19 @@
   function runMiniGameRound(){
     if (!miniGameRuntime.active) return;
     if (miniGameRuntime.round >= miniGameRuntime.totalRounds){ finishMiniGame(); return; }
-    miniGameRuntime.targetLane = Math.floor(Math.random() * 3);
+    miniGameRuntime.targetLane = Math.floor(Math.random() * 4);
     miniGameRuntime.round += 1;
+    miniGameRuntime.rule = (miniGameRuntime.round % 4 === 0) ? 'inverse' : 'normal';
+    miniGameRuntime.roundTimeoutMs = Math.max(380, 930 - (miniGameRuntime.round * 35));
     const status = document.getElementById('miniGameStatus');
-    if (status) status.textContent = `ラウンド ${miniGameRuntime.round}/${miniGameRuntime.totalRounds}\nスコア: ${fmtNumber(miniGameRuntime.score)}\n連続正解: ${fmtNumber(miniGameRuntime.streak)}\nミス: ${fmtNumber(miniGameRuntime.misses)}`;
+    if (status) status.textContent = `ラウンド ${miniGameRuntime.round}/${miniGameRuntime.totalRounds} (${miniGameRuntime.rule === 'inverse' ? '反転' : '通常'})\nスコア: ${fmtNumber(miniGameRuntime.score)}\n連続正解: ${fmtNumber(miniGameRuntime.streak)}\nミス: ${fmtNumber(miniGameRuntime.misses)}\n制限時間: ${fmtNumber(miniGameRuntime.roundTimeoutMs)}ms`;
     renderMiniGameState();
     miniGameRuntime.timerId = setTimeout(()=>{
       if (!miniGameRuntime.active) return;
       miniGameRuntime.misses += 1;
       miniGameRuntime.streak = 0;
       runMiniGameRound();
-    }, 800);
+    }, miniGameRuntime.roundTimeoutMs);
   }
 
   function startMiniGame(){
@@ -168,7 +174,7 @@
     if (!isAscShopFullyPurchased(st)){ showTypedToast('general', 'Ascension Shop 全購入後に解放されます'); return; }
     if ((st.ascPoints || 0) < 1){ showTypedToast('general', '開始には AP が1必要です'); return; }
     st.ascPoints -= 1;
-    miniGameRuntime = { active:true, round:0, totalRounds:12, score:0, misses:0, streak:0, targetLane:0, timerId:null };
+    miniGameRuntime = { active:true, round:0, totalRounds:14, score:0, misses:0, streak:0, bestStreak:0, targetLane:0, timerId:null, rule:'normal', roundTimeoutMs:900 };
     SM.saveState(st);
     syncUIAfterChange();
     runMiniGameRound();
@@ -310,10 +316,20 @@
 
   function applyLegacyZoom(){
     const svg = document.getElementById('legacySvg');
+    const wrap = document.getElementById('svgWrap');
     const resetBtn = document.getElementById('legacyZoomReset');
     if (!svg) return;
     const percent = Math.round(legacyZoom * 100);
-    svg.style.width = `${percent}%`;
+    if (isMobileViewport()){
+      svg.style.width = '100%';
+      svg.style.transformOrigin = 'top left';
+      svg.style.transform = `scale(${legacyZoom})`;
+      if (wrap) wrap.style.paddingBottom = `${Math.max(0, (legacyZoom - 1) * 120)}px`;
+    } else {
+      svg.style.transform = 'none';
+      svg.style.width = `${percent}%`;
+      if (wrap) wrap.style.paddingBottom = '8px';
+    }
     if (resetBtn) resetBtn.textContent = `${percent}%`;
   }
 
@@ -388,6 +404,9 @@
       else if (a.type === 'miniGamePlay'){ if ((st.miniGame.plays||0) >= a.target) achieved = true; }
       else if (a.type === 'miniGameScore'){ if ((st.miniGame.bestScore||0) >= a.target) achieved = true; }
       else if (a.type === 'miniGamePerfect'){ if ((st.miniGame.perfectRuns||0) >= a.target) achieved = true; }
+      else if (a.type === 'ascRunDurationMax'){ if (st.lastAscensionRun && (st.lastAscensionRun.durationSec||Infinity) <= a.target) achieved = true; }
+      else if (a.type === 'ascNoUpgrade'){ if (st.lastAscensionRun && st.lastAscensionRun.noUpgrade) achieved = true; }
+      else if (a.type === 'ascSingleUnitType'){ if (st.lastAscensionRun && (st.lastAscensionRun.unitTypesUsed||0) === 1) achieved = true; }
       if (achieved){
         st.achievementsOwned = st.achievementsOwned || {};
         st.achievementsOwned[a.id] = true;
@@ -443,24 +462,27 @@
   function syncAutoBuyControls(){
     const st = E.getState();
     st.settings = st.settings || {};
-    st.settings.autoBuy = Object.assign({ enabled:false, units:true, upgrades:true, intervalSec:0.5 }, st.settings.autoBuy || {});
+    st.settings.autoBuy = Object.assign({ enabled:false, units:true, upgrades:true, intervalMs:500, purchaseMode:'single' }, st.settings.autoBuy || {});
     const unlocked = hasAscSpecial('unlockAutobuy');
     const enableEl = document.getElementById('autoBuyEnable');
     const unitsEl = document.getElementById('autoBuyUnits');
     const upgradesEl = document.getElementById('autoBuyUpgrades');
+    const modeEl = document.getElementById('autoBuyMode');
     const intervalEl = document.getElementById('autoBuyInterval');
     const statusEl = document.getElementById('autoBuyStatus');
-    if (!enableEl || !unitsEl || !upgradesEl || !intervalEl || !statusEl) return;
+    if (!enableEl || !unitsEl || !upgradesEl || !modeEl || !intervalEl || !statusEl) return;
 
     enableEl.disabled = !unlocked;
     unitsEl.disabled = !unlocked;
     upgradesEl.disabled = !unlocked;
+    modeEl.disabled = !unlocked;
     intervalEl.disabled = !unlocked;
 
     enableEl.checked = unlocked ? !!st.settings.autoBuy.enabled : false;
     unitsEl.checked = !!st.settings.autoBuy.units;
     upgradesEl.checked = !!st.settings.autoBuy.upgrades;
-    intervalEl.value = String(Math.max(0.1, Number(st.settings.autoBuy.intervalSec || 0.5)));
+    modeEl.value = st.settings.autoBuy.purchaseMode === 'max' ? 'max' : 'single';
+    intervalEl.value = String(Math.max(50, Number(st.settings.autoBuy.intervalMs || 500)));
     statusEl.textContent = unlocked ? '解放済み' : '未解放';
   }
 
@@ -468,8 +490,9 @@
     const enableEl = document.getElementById('autoBuyEnable');
     const unitsEl = document.getElementById('autoBuyUnits');
     const upgradesEl = document.getElementById('autoBuyUpgrades');
+    const modeEl = document.getElementById('autoBuyMode');
     const intervalEl = document.getElementById('autoBuyInterval');
-    if (!enableEl || !unitsEl || !upgradesEl || !intervalEl) return;
+    if (!enableEl || !unitsEl || !upgradesEl || !modeEl || !intervalEl) return;
     const update = ()=>{
       const st = E.getState();
       st.settings = st.settings || {};
@@ -477,12 +500,14 @@
       st.settings.autoBuy.enabled = !!enableEl.checked;
       st.settings.autoBuy.units = !!unitsEl.checked;
       st.settings.autoBuy.upgrades = !!upgradesEl.checked;
-      st.settings.autoBuy.intervalSec = Math.max(0.1, Number(intervalEl.value || 0.5));
+      st.settings.autoBuy.purchaseMode = modeEl.value === 'max' ? 'max' : 'single';
+      st.settings.autoBuy.intervalMs = Math.max(50, Number(intervalEl.value || 500));
       SM.saveState(st);
     };
     enableEl.addEventListener('change', update);
     unitsEl.addEventListener('change', update);
     upgradesEl.addEventListener('change', update);
+    modeEl.addEventListener('change', update);
     intervalEl.addEventListener('change', update);
   }
 
@@ -491,21 +516,22 @@
     if (!hasAscSpecial('unlockAutobuy')) return;
     const cfg = (st.settings && st.settings.autoBuy) ? st.settings.autoBuy : {};
     if (!cfg.enabled) return;
-    const interval = Math.max(0.1, Number(cfg.intervalSec || 0.5));
+    const interval = Math.max(50, Number(cfg.intervalMs || 500)) / 1000;
     autoBuyAccumulator += dt;
     if (autoBuyAccumulator < interval) return;
     autoBuyAccumulator = 0;
 
     let changed = false;
+    const buyMaxMode = cfg.purchaseMode === 'max';
     if (cfg.upgrades){
       for (const def of C.UPGRADE_DEFS){
-        const res = E.buyUpgradeInternal(def.id);
+        const res = buyMaxMode ? E.buyMaxUpgradeInternal(def.id) : E.buyUpgradeInternal(def.id);
         if (res && res.ok) changed = true;
       }
     }
     if (cfg.units){
       for (const def of C.UNIT_DEFS){
-        const res = E.buyUnitInternal(def.id, 1);
+        const res = buyMaxMode ? E.buyMaxUnitsInternal(def.id) : E.buyUnitInternal(def.id, 1);
         if (res && res.ok) changed = true;
       }
     }
@@ -513,6 +539,24 @@
       syncUIAfterChange();
       SM.saveState(st);
     }
+  }
+
+  function renderStatsTab(){
+    const st = E.getState();
+    const wrap = document.getElementById('statsSummary');
+    const historyEl = document.getElementById('statsHistory');
+    if (!wrap || !historyEl) return;
+    st.runStats = st.runStats || { runCount:1, currentRunStartedAt:Date.now()/1000, currentRunPeakGold:0, history:[] };
+    const now = Date.now()/1000;
+    const elapsed = Math.max(0, Math.floor(now - (st.runStats.currentRunStartedAt || now)));
+    const currentPeak = Math.max(st.runStats.currentRunPeakGold || 0, st.gold || 0);
+    wrap.textContent = `周回回数: ${fmtNumber(st.runStats.runCount || 1)} / 現在周回の到達Gold: ${fmtNumber(currentPeak)} / 経過: ${fmtNumber(elapsed)}秒`;
+
+    const list = Array.isArray(st.runStats.history) ? st.runStats.history.slice().reverse() : [];
+    if (!list.length){ historyEl.innerHTML = '<div class="muted small">まだ周回ログがありません（Ascend後に記録されます）</div>'; return; }
+    historyEl.innerHTML = list.map(item => (
+      `<div class="statsRunItem">#${fmtNumber(item.run || 0)} | 到達Gold: <strong>${fmtNumber(item.reachedGold || 0)}</strong> | 所要: <strong>${fmtNumber(item.durationSec || 0)}秒</strong> | 獲得AP: <strong>${fmtNumber(item.gainedAP || 0)}</strong></div>`
+    )).join('');
   }
 
   // ---------- syncUIAfterChange ----------
@@ -573,6 +617,7 @@
     if (currentSaveVersionEl) currentSaveVersionEl.textContent = String(st.version || '-');
     syncAutoBuyControls();
     renderMiniGameState();
+    renderStatsTab();
   }
 
   // ---------- mainLoop ----------
@@ -586,6 +631,8 @@
     const st = E.getState();
     st.gold += (st.gpsCache || 0) * dt;
     st.totalGoldEarned += (st.gpsCache || 0) * dt;
+    st.runStats = st.runStats || { runCount:1, currentRunStartedAt:Date.now()/1000, currentRunPeakGold:0, currentRunUnitTypes:{}, currentRunUpgradeBuys:0, history:[] };
+    st.runStats.currentRunPeakGold = Math.max(st.runStats.currentRunPeakGold || 0, st.gold || 0);
     runAutoBuy(dt);
 
     if (ts - lastUiUpdate >= (C.UI_UPDATE_INTERVAL_MS || 150)){
@@ -675,9 +722,13 @@
         if (!miniGameRuntime.active) return;
         const lane = Number(btn.dataset.lane || -1);
         if (miniGameRuntime.timerId) clearTimeout(miniGameRuntime.timerId);
-        if (lane === miniGameRuntime.targetLane){
+        const expectedLane = miniGameRuntime.rule === 'inverse'
+          ? ((miniGameRuntime.targetLane + 2) % 4)
+          : miniGameRuntime.targetLane;
+        if (lane === expectedLane){
           miniGameRuntime.streak += 1;
-          miniGameRuntime.score += 10 + (miniGameRuntime.streak * 2);
+          miniGameRuntime.bestStreak = Math.max(miniGameRuntime.bestStreak, miniGameRuntime.streak);
+          miniGameRuntime.score += 12 + (miniGameRuntime.streak * 3);
         } else {
           miniGameRuntime.streak = 0;
           miniGameRuntime.misses += 1;
