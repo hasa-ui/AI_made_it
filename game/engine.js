@@ -97,6 +97,16 @@
       if (b.type === 'costMult' && typeof b.mult === 'number') costMult *= b.mult;
     }
 
+    for (const layer of (C.CELESTIAL_LAYERS || [])){
+      if ((st.ascEarnedTotal || 0) < (layer.need || 0)) continue;
+      const b = layer.bonus || {};
+      if (b.type === 'globalMult' && typeof b.mult === 'number') globalMult *= b.mult;
+      if (b.type === 'flatGPS' && typeof b.gps === 'number') flatGPS += b.gps;
+      if (b.type === 'startGold' && typeof b.amount === 'number') startingGoldBonus += b.amount;
+      if (b.type === 'prestigeEffectAdd' && typeof b.add === 'number') prestigeEffectAdd += b.add;
+      if (b.type === 'costMult' && typeof b.mult === 'number') costMult *= b.mult;
+    }
+
     // --- Challengeクリア報酬 ---
     const completed = (st.challenge && st.challenge.completed) ? st.challenge.completed : {};
     for (const ch of (C.CHALLENGES || [])){
@@ -131,6 +141,15 @@
     return count;
   }
 
+  function getUnlockedCelestialLayerCount(st){
+    st = st || state;
+    let count = 0;
+    for (const layer of (C.CELESTIAL_LAYERS || [])){
+      if ((st.ascEarnedTotal || 0) >= (layer.need || 0)) count += 1;
+    }
+    return count;
+  }
+
   function getPrestigeLayerStatus(st){
     st = st || state;
     return (C.PRESTIGE_LAYERS || []).map(layer=>({
@@ -138,6 +157,17 @@
       name: layer.name,
       need: layer.need || 0,
       unlocked: (st.prestigeEarnedTotal || 0) >= (layer.need || 0),
+      desc: layer.desc || ''
+    }));
+  }
+
+  function getCelestialLayerStatus(st){
+    st = st || state;
+    return (C.CELESTIAL_LAYERS || []).map(layer=>({
+      id: layer.id,
+      name: layer.name,
+      need: layer.need || 0,
+      unlocked: (st.ascEarnedTotal || 0) >= (layer.need || 0),
       desc: layer.desc || ''
     }));
   }
@@ -168,7 +198,7 @@
     let cost = unitBaseCost(def, owned) * (agg.costMult || 1);
     const activeChallenge = getActiveChallengeDef(st);
     if (activeChallenge && activeChallenge.effects && typeof activeChallenge.effects.costMult === 'number') cost *= activeChallenge.effects.costMult;
-    return Math.floor(cost);
+    return Math.max(1, Math.floor(cost));
   }
   function upgradeCostNextLevel(def, currentLevel){ return Math.floor(def.baseCost * Math.pow(def.costMult, currentLevel)); }
   function legacyCostForNextLevel(def, currentLevel){ if (currentLevel >= def.maxLevel) return Infinity; return Math.floor(def.baseCost * Math.pow(def.costMult, currentLevel)); }
@@ -229,6 +259,13 @@
   function buyUnitInternal(unitId, qty){
     const def = (C.UNIT_DEFS||[]).find(d=>d.id===unitId);
     if (!def) return { ok:false, reason:'no_def' };
+    const activeChallenge = getActiveChallengeDef(state);
+    if (activeChallenge && activeChallenge.effects && activeChallenge.effects.singleUnitOnly){
+      for (const u of (C.UNIT_DEFS || [])){
+        if (u.id === unitId) continue;
+        if ((state.units[u.id] || 0) > 0) return { ok:false, reason:'challenge_unit_lock' };
+      }
+    }
     const owned = state.units[unitId] || 0;
     
     let totalCost = 0;
@@ -251,6 +288,13 @@
     const unitId = (typeof stateOrUnitId === 'string') ? stateOrUnitId : maybeUnitId;
     const def = (C.UNIT_DEFS||[]).find(d=>d.id===unitId);
     if (!def) return { ok:false };
+    const activeChallenge = getActiveChallengeDef(state);
+    if (activeChallenge && activeChallenge.effects && activeChallenge.effects.singleUnitOnly){
+      for (const u of (C.UNIT_DEFS || [])){
+        if (u.id === unitId) continue;
+        if ((state.units[u.id] || 0) > 0) return { ok:false, reason:'challenge_unit_lock' };
+      }
+    }
     const owned = state.units[unitId] || 0;
     const agg = getAggregates(state);
     const a1 = def.baseCost * Math.pow(def.costMult, owned) * (agg.costMult || 1);
@@ -552,6 +596,8 @@
     getActiveChallenge: (st) => getActiveChallengeDef(st || state),
     getPrestigeLayerStatus: (st) => getPrestigeLayerStatus(st || state),
     getUnlockedPrestigeLayerCount: (st) => getUnlockedPrestigeLayerCount(st || state),
+    getCelestialLayerStatus: (st) => getCelestialLayerStatus(st || state),
+    getUnlockedCelestialLayerCount: (st) => getUnlockedCelestialLayerCount(st || state),
 
     // prestige / ascend
     previewPrestigeGain,

@@ -409,6 +409,7 @@
       else if (a.type === 'ascSingleUnitType'){ if (st.lastAscensionRun && (st.lastAscensionRun.unitTypesUsed||0) === 1) achieved = true; }
       else if (a.type === 'challengeClearCount'){ const count = Object.keys((st.challenge && st.challenge.completed) || {}).filter(k => st.challenge.completed[k]).length; if (count >= a.target) achieved = true; }
       else if (a.type === 'prestigeLayerCount'){ if ((E.getUnlockedPrestigeLayerCount ? E.getUnlockedPrestigeLayerCount(st) : 0) >= a.target) achieved = true; }
+      else if (a.type === 'celestialLayerCount'){ if ((E.getUnlockedCelestialLayerCount ? E.getUnlockedCelestialLayerCount(st) : 0) >= a.target) achieved = true; }
       else if (a.type === 'ascendInChallenge'){ if ((st.challenge && st.challenge.ascendedInChallenge || 0) >= a.target) achieved = true; }
       if (achieved){
         st.achievementsOwned = st.achievementsOwned || {};
@@ -576,6 +577,14 @@
     wrap.innerHTML = list.map(l=>`<div class="achItem ${l.unlocked ? 'achUnlocked':'achLocked'}"><div><strong>${l.name}</strong><div class="muted small">必要Prestige: ${fmtNumber(l.need)} / ${l.desc||''}</div></div><div class="muted small">${l.unlocked ? '解放':'未解放'}</div></div>`).join('');
   }
 
+  function renderCelestialLayers(){
+    const wrap = document.getElementById('celestialLayerList');
+    if (!wrap) return;
+    const list = E.getCelestialLayerStatus ? E.getCelestialLayerStatus() : [];
+    if (!list.length){ wrap.innerHTML = '<div class="muted small">Celestial層データがありません</div>'; return; }
+    wrap.innerHTML = list.map(l=>`<div class="achItem ${l.unlocked ? 'achUnlocked':'achLocked'}"><div><strong>${l.name}</strong><div class="muted small">必要累計AP: ${fmtNumber(l.need)} / ${l.desc||''}</div></div><div class="muted small">${l.unlocked ? '解放':'未解放'}</div></div>`).join('');
+  }
+
   function buildChallengesUI(){
     if (built.challenges) return;
     const wrap = document.getElementById('challengeList');
@@ -598,7 +607,8 @@
       const active = E.getActiveChallenge ? E.getActiveChallenge(st) : null;
       if (active) status.textContent = `挑戦中: ${active.name}
 進捗: ${fmtNumber(st.totalGoldEarned || 0)} / ${fmtNumber(active.goalTotalGold || 0)}
-アップグレード制限: ${active.effects && active.effects.disableUpgrades ? 'あり' : 'なし'}`;
+アップグレード制限: ${active.effects && active.effects.disableUpgrades ? 'あり' : 'なし'}
+ユニット単一路線: ${active.effects && active.effects.singleUnitOnly ? 'あり' : 'なし'}`;
       else status.textContent = `待機中
 クリア数: ${fmtNumber(Object.keys(st.challenge.completed || {}).filter(k=>st.challenge.completed[k]).length)} / ${fmtNumber((C.CHALLENGES || []).length)}`;
     }
@@ -672,6 +682,7 @@
     syncAutoBuyControls();
     renderMiniGameState();
     renderPrestigeLayers();
+    renderCelestialLayers();
     renderChallengeStatus();
     renderStatsTab();
   }

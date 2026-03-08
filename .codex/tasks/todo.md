@@ -280,3 +280,23 @@
 ## Verify Log (2026-03-08 初回ロード時の404参照修正)
 - `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
 - `python -m http.server 4173 --bind 0.0.0.0 --directory /workspace/AI_made_it` + Playwright: ページロード時に 404 応答が発生しないことを確認、スクリーンショット取得（artifact: artifacts/ver_1_13_2_no_404.png）
+
+## Plan (2026-03-08 Celestial層 / Challenge追加 / 下限コスト / SVG配置調整)
+- [x] 既存の層・Challenge・実績・価格計算・レガシーSVG描画を確認
+- [x] Ascension累計AP基準の新レイヤー（Celestial層）を追加し、効果を恒久集計へ統合
+- [x] 新Challengeと新実績を追加し、判定ロジックを拡張
+- [x] ユニット最低コスト1の下限制約を実装
+- [x] Legacyノード座標を再配置し、表示位置を調整
+- [x] バージョン表記とアップデート情報を更新
+- [x] 検証ログ記録
+
+## Progress Log (2026-03-08 Celestial層 / Challenge追加 / 下限コスト / SVG配置調整)
+- 着手: game/config.js / game/engine.js / game/ui.js / index.html を確認し、既存のPrestige層・Challenge効果・実績判定・Legacy SVG描画を把握。
+- game/config.js: APP_VERSION を Ver.1.14.0 に更新。Celestial層定義（Ascension累計AP基準）を追加。Challenge 4「Mono Line」と実績2件を追加。Legacyノードのx/y座標を再調整。
+- game/engine.js: Celestial層ボーナスを恒久集計へ統合。Celestial層の状態取得APIを追加。Challengeの単一路線制限を購入処理へ実装。ユニットコストの下限を1に固定。
+- game/ui.js: Celestial層実績判定を追加し、Celestial層表示レンダラを追加。Challenge進捗表示に「ユニット単一路線」制約の表示を追加。
+- index.html: プレイ画面に Celestial層カードを追加し、アップデート情報に Ver.1.14.0 を追記。
+
+## Verify Log (2026-03-08 Celestial層 / Challenge追加 / 下限コスト / SVG配置調整)
+- `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
+- `node - <<'NODE'\nconst fs=require('fs');\nconst vm=require('vm');\nconst ctx={window:{},console};\nvm.createContext(ctx);\nvm.runInContext(fs.readFileSync('game/config.js','utf8'),ctx);\nvm.runInContext(fs.readFileSync('game/engine.js','utf8'),ctx);\nconst E=ctx.window.ENGINE;\nconst C=ctx.window.CONFIG;\nconst st=E.getState();\nst.gold=1e12;\nst.legacyNodes=Object.fromEntries(C.LEGACY_DEFS.map(d=>[d.id,0]));\nst.challenge={activeId:'ch_monoline',completed:{},bestSec:{},ascendedInChallenge:0};\nE.invalidateAggCache();\nconst a=E.buyUnitInternal('junior',1);\nconst b=E.buyUnitInternal('miner',1);\nif(!a.ok||b.ok) throw new Error('Mono Line restriction failed');\nst.challenge.activeId=null;\nst.legacyNodes.lg_econ_mastery=2;\nE.invalidateAggCache();\nconst cost=E.unitCost(C.UNIT_DEFS[0],0,st);\nif(cost<1) throw new Error('Unit cost floor failed');\nconsole.log('ok: mono-line challenge + unit cost floor');\nNODE` : 成功

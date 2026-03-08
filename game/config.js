@@ -5,7 +5,7 @@
   const C = {
     SAVE_KEY: 'inc.split.full.v4',
     SAVE_VERSION: 11,
-    APP_VERSION: 'Ver.1.13.2',
+    APP_VERSION: 'Ver.1.14.0',
     UI_UPDATE_INTERVAL_MS: 50,
     AUTO_SAVE_INTERVAL: 5000,
     MAX_OFFLINE_SECONDS: 60*60*24,
@@ -29,22 +29,22 @@
   ];
 
   C.LEGACY_DEFS = [
-    { id:'lg_global10', name:'永続研究所', desc:'全体 ×1.10 /Lv', baseCost:1,  costMult:2.0, maxLevel:5, x:150,  y:80,  type:'globalMult', payload:{multPerLevel:0.10}, prereq:[] },
-    { id:'lg_miner25', name:'鉱夫育成',    desc:'採掘機 ×1.25 /Lv', baseCost:2,  costMult:2.2, maxLevel:4, x:320,  y:170, type:'unitMult', payload:{unitId:'miner', multPerLevel:0.25}, prereq:[{id:'lg_global10',minLevel:1}] },
-    { id:'lg_miner_x2', name:'機械化支援', desc:'採掘機 ×1.5 /Lv',  baseCost:4,  costMult:2.4, maxLevel:3, x:480,  y:170, type:'unitMult', payload:{unitId:'miner', multPerLevel:0.5}, prereq:[{id:'lg_miner25',minLevel:2}] },
-    { id:'lg_cost5', name:'経済学習',       desc:'コスト ×0.95 /Lv', baseCost:2,  costMult:1.9, maxLevel:4, x:320,  y:320, type:'costMult', payload:{multPerLevel:0.95}, prereq:[{id:'lg_global10',minLevel:1}]},
-    { id:'lg_seed50', name:'種銭支給',     desc:'開始ゴールド +150 /Lv', baseCost:2, costMult:1.7, maxLevel:5, x:150, y:320, type:'startGold', payload:{amountPerLevel:150}, prereq:[]},
-    { id:'lg_passive', name:'永続配当',    desc:'恒久 +5 GPS /Lv', baseCost:8, costMult:2.3, maxLevel:4, x:920,  y:120, type:'flatGPS', payload:{gpsPerLevel:5}, prereq:[{id:'lg_global10',minLevel:2}]},
-    { id:'lg_mega', name:'遺産の賢王',     desc:'全体 ×1.5 (Lv1)', baseCost:20, costMult:1.0, maxLevel:1, x:920,  y:400, type:'globalMult', payload:{multPerLevel:0.5}, prereq:[{id:'lg_passive',minLevel:1}]},
+    { id:'lg_global10', name:'永続研究所', desc:'全体 ×1.10 /Lv', baseCost:1,  costMult:2.0, maxLevel:5, x:140,  y:110, type:'globalMult', payload:{multPerLevel:0.10}, prereq:[] },
+    { id:'lg_miner25', name:'鉱夫育成',    desc:'採掘機 ×1.25 /Lv', baseCost:2,  costMult:2.2, maxLevel:4, x:360,  y:90,  type:'unitMult', payload:{unitId:'miner', multPerLevel:0.25}, prereq:[{id:'lg_global10',minLevel:1}] },
+    { id:'lg_miner_x2', name:'機械化支援', desc:'採掘機 ×1.5 /Lv',  baseCost:4,  costMult:2.4, maxLevel:3, x:580,  y:90,  type:'unitMult', payload:{unitId:'miner', multPerLevel:0.5}, prereq:[{id:'lg_miner25',minLevel:2}] },
+    { id:'lg_cost5', name:'経済学習',       desc:'コスト ×0.95 /Lv', baseCost:2,  costMult:1.9, maxLevel:4, x:360,  y:250, type:'costMult', payload:{multPerLevel:0.95}, prereq:[{id:'lg_global10',minLevel:1}]},
+    { id:'lg_seed50', name:'種銭支給',     desc:'開始ゴールド +150 /Lv', baseCost:2, costMult:1.7, maxLevel:5, x:140, y:270, type:'startGold', payload:{amountPerLevel:150}, prereq:[]},
+    { id:'lg_passive', name:'永続配当',    desc:'恒久 +5 GPS /Lv', baseCost:8, costMult:2.3, maxLevel:4, x:860,  y:110, type:'flatGPS', payload:{gpsPerLevel:5}, prereq:[{id:'lg_global10',minLevel:2}]},
+    { id:'lg_mega', name:'遺産の賢王',     desc:'全体 ×1.5 (Lv1)', baseCost:20, costMult:1.0, maxLevel:1, x:860,  y:320, type:'globalMult', payload:{multPerLevel:0.5}, prereq:[{id:'lg_passive',minLevel:1}]},
 
-    { id:'lg_titan_forge', name:'タイタン鍛造所', desc:'全体 ×2.5 /Lv', baseCost:60,  costMult:3.2, maxLevel:2, x:1140, y:60,  type:'globalMult', payload:{multPerLevel:1.5}, prereq:[{id:'lg_mega',minLevel:1}] },
-    { id:'lg_quantum_matrix', name:'量子マトリクス', desc:'採掘機 ×5.00 /Lv', baseCost:200, costMult:4.0, maxLevel:2, x:1360, y:160, type:'unitMult', payload:{unitId:'miner', multPerLevel:4.0}, prereq:[{id:'lg_titan_forge',minLevel:1}] },
-    { id:'lg_excav_boost', name:'メガ掘削支援', desc:'エクスカベーター ×10.0 /Lv', baseCost:500, costMult:3.8, maxLevel:2, x:1360, y:260, type:'unitMult', payload:{unitId:'excav', multPerLevel:9.0}, prereq:[{id:'lg_quantum_matrix',minLevel:1}] },
-    { id:'lg_econ_mastery', name:'経済の覇者', desc:'コスト ×0.5 /Lv', baseCost:400, costMult:3.5, maxLevel:2, x:1580, y:80, type:'costMult', payload:{multPerLevel:0.5}, prereq:[{id:'lg_titan_forge',minLevel:1}] },
-    { id:'lg_ark_dividend', name:'方舟の配当', desc:'恒久 +50 GPS /Lv', baseCost:800, costMult:2.8, maxLevel:2, x:1580, y:320, type:'flatGPS', payload:{gpsPerLevel:50}, prereq:[{id:'lg_passive',minLevel:1}] },
-    { id:'lg_singularity', name:'特異点生成器', desc:'全体 ×10.0 (Lv1)', baseCost:2500, costMult:6.0, maxLevel:1, x:1820, y:160, type:'globalMult', payload:{multPerLevel:9.0}, prereq:[{id:'lg_ark_dividend',minLevel:1}] },
-    { id:'lg_seed_mega', name:'種銭の源泉', desc:'開始ゴールド +1000 /Lv', baseCost:5000, costMult:8.0, maxLevel:1, x:2040, y:240, type:'startGold', payload:{amountPerLevel:1000}, prereq:[{id:'lg_singularity',minLevel:1}] },
-    { id:'lg_universal_amplifier', name:'万能増幅器', desc:'全ユニット ×3.0 /Lv', baseCost:8000, costMult:10.0, maxLevel:1, x:2040, y:80, type:'globalMult', payload:{multPerLevel:2.0}, prereq:[{id:'lg_singularity',minLevel:1}] }
+    { id:'lg_titan_forge', name:'タイタン鍛造所', desc:'全体 ×2.5 /Lv', baseCost:60,  costMult:3.2, maxLevel:2, x:1120, y:80,  type:'globalMult', payload:{multPerLevel:1.5}, prereq:[{id:'lg_mega',minLevel:1}] },
+    { id:'lg_quantum_matrix', name:'量子マトリクス', desc:'採掘機 ×5.00 /Lv', baseCost:200, costMult:4.0, maxLevel:2, x:1340, y:160, type:'unitMult', payload:{unitId:'miner', multPerLevel:4.0}, prereq:[{id:'lg_titan_forge',minLevel:1}] },
+    { id:'lg_excav_boost', name:'メガ掘削支援', desc:'エクスカベーター ×10.0 /Lv', baseCost:500, costMult:3.8, maxLevel:2, x:1340, y:300, type:'unitMult', payload:{unitId:'excav', multPerLevel:9.0}, prereq:[{id:'lg_quantum_matrix',minLevel:1}] },
+    { id:'lg_econ_mastery', name:'経済の覇者', desc:'コスト ×0.5 /Lv', baseCost:400, costMult:3.5, maxLevel:2, x:1560, y:90, type:'costMult', payload:{multPerLevel:0.5}, prereq:[{id:'lg_titan_forge',minLevel:1}] },
+    { id:'lg_ark_dividend', name:'方舟の配当', desc:'恒久 +50 GPS /Lv', baseCost:800, costMult:2.8, maxLevel:2, x:1560, y:320, type:'flatGPS', payload:{gpsPerLevel:50}, prereq:[{id:'lg_passive',minLevel:1}] },
+    { id:'lg_singularity', name:'特異点生成器', desc:'全体 ×10.0 (Lv1)', baseCost:2500, costMult:6.0, maxLevel:1, x:1810, y:180, type:'globalMult', payload:{multPerLevel:9.0}, prereq:[{id:'lg_ark_dividend',minLevel:1}] },
+    { id:'lg_seed_mega', name:'種銭の源泉', desc:'開始ゴールド +1000 /Lv', baseCost:5000, costMult:8.0, maxLevel:1, x:2030, y:280, type:'startGold', payload:{amountPerLevel:1000}, prereq:[{id:'lg_singularity',minLevel:1}] },
+    { id:'lg_universal_amplifier', name:'万能増幅器', desc:'全ユニット ×3.0 /Lv', baseCost:8000, costMult:10.0, maxLevel:1, x:2030, y:80, type:'globalMult', payload:{multPerLevel:2.0}, prereq:[{id:'lg_singularity',minLevel:1}] }
   ];
 
   C.ASC_UPGRADES = [
@@ -71,6 +71,13 @@
     { id:'pl_aurora', name:'極光層', need:520, desc:'極光演算が全生産ラインを常時補助', bonus:{ type:'flatGPS', gps:1500 } }
   ];
 
+  C.CELESTIAL_LAYERS = [
+    { id:'cl_nova', name:'ノヴァ層', need:8, desc:'Ascension残光が生産を自己増幅する', bonus:{ type:'globalMult', mult:1.2 } },
+    { id:'cl_vault', name:'ヴォルト層', need:20, desc:'周回資産を圧縮し、全ユニットコストを恒久軽減', bonus:{ type:'costMult', mult:0.88 } },
+    { id:'cl_mirror', name:'ミラー層', need:45, desc:'鏡像経済により開始資金と基礎配当が増幅', bonus:{ type:'startGold', amount:8000 } },
+    { id:'cl_epoch', name:'エポック層', need:80, desc:'時代跳躍で Prestige 効果を恒久底上げ', bonus:{ type:'prestigeEffectAdd', add:0.06 } }
+  ];
+
   C.CHALLENGES = [
     {
       id:'ch_taxed_growth',
@@ -95,6 +102,14 @@
       goalTotalGold: 220000,
       effects:{ costMult:1.7 },
       reward:{ type:'prestigeEffectAdd', add:0.02, text:'恒久: Prestige効果 +0.02' }
+    },
+    {
+      id:'ch_monoline',
+      name:'Challenge 4: Mono Line',
+      desc:'最初に購入した1種類のユニットだけで走り切る。切替不可。',
+      goalTotalGold: 280000,
+      effects:{ singleUnitOnly:true },
+      reward:{ type:'costMult', mult:0.9, text:'恒久: コスト ×0.90' }
     }
   ];
 
@@ -123,7 +138,9 @@
     { id:'ach_challenge_clear', name:'試練の突破者', desc:'Challengeを1つクリアする', type:'challengeClearCount', target:1, bonus:{type:'globalMult', mult:1.12} },
     { id:'ach_challenge_trinity', name:'三重試練の覇者', desc:'全Challenge(3種)をクリアする', type:'challengeClearCount', target:3, bonus:{type:'prestigeEffectAdd', add:0.03} },
     { id:'ach_layer_hunter', name:'層位探査者', desc:'Prestige層を3段階以上解放する', type:'prestigeLayerCount', target:3, bonus:{type:'startGold', amount:3000} },
-    { id:'ach_risk_runner', name:'リスクランナー', desc:'Challenge中に Ascend を実行する', type:'ascendInChallenge', target:1, bonus:{type:'flatGPS', gps:1200} }
+    { id:'ach_risk_runner', name:'リスクランナー', desc:'Challenge中に Ascend を実行する', type:'ascendInChallenge', target:1, bonus:{type:'flatGPS', gps:1200} },
+    { id:'ach_celestial_step', name:'星階の踏破者', desc:'Celestial層を2段階以上解放する', type:'celestialLayerCount', target:2, bonus:{type:'globalMult', mult:1.22} },
+    { id:'ach_challenge_quadra', name:'四重試練の覇者', desc:'全Challenge(4種)をクリアする', type:'challengeClearCount', target:4, bonus:{type:'prestigeEffectAdd', add:0.04} }
   ];
 
   window.CONFIG = C;
