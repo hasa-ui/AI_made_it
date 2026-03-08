@@ -264,3 +264,19 @@
 - `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
 - `node - <<'NODE'\nconst fs = require('fs');\nconst vm = require('vm');\nconst ctx = { window:{}, console };\nctx.window = ctx.window;\nvm.createContext(ctx);\nvm.runInContext(fs.readFileSync('game/config.js','utf8'), ctx);\nvm.runInContext(fs.readFileSync('game/state.js','utf8'), ctx);\nvm.runInContext(fs.readFileSync('game/engine.js','utf8'), ctx);\nconst E = ctx.window.ENGINE;\nconst st = E.getState();\nst.prestigeEarnedTotal = 200000;\nst.legacyNodes = Object.fromEntries(ctx.window.CONFIG.LEGACY_DEFS.map(d=>[d.id,0]));\nE.invalidateAggCache();\nconst before = E.computeStartingGoldOnPrestige();\nconst res = E.startChallengeInternal('ch_no_upgrades');\nif (!res.ok) throw new Error('challenge start failed');\nconst after = st.gold;\nif (after >= before) throw new Error(`starting gold not reset: before=${before}, after=${after}`);\nif (st.prestigeEarnedTotal !== 0) throw new Error('prestige not reset');\nconsole.log('ok: challenge start gold recalculated after prestige reset');\nNODE` : 成功
 - `python -m http.server 4173 --bind 0.0.0.0 --directory /workspace/AI_made_it` + Playwright: 更新履歴タブで Ver.1.13.1 表示を確認しスクリーンショット取得（artifact: artifacts/ver_1_13_1_update.png）
+
+## Plan (2026-03-08 初回ロード時の404参照修正)
+- [x] 重要経路として `index.html` のCSS/JS読込を点検し、404の原因を特定
+- [x] 実体のないトップ階層参照を削除して読込を `game/` 配下へ統一
+- [x] バージョン表記とアップデート情報を更新
+- [x] 検証ログ記録
+
+## Progress Log (2026-03-08 初回ロード時の404参照修正)
+- 着手: `index.html` を確認し、`styles.css` および `config.js/state.js/engine.js/ui.js` がトップ階層に存在しないのに参照されていることを確認。
+- `index.html`: 存在しないトップ階層のCSS/JS参照を削除し、実際に存在する `game/` 配下のみ読込むよう修正。
+- `game/config.js`: APP_VERSION を `Ver.1.13.2` に更新。
+- `index.html`: アップデート情報に Ver.1.13.2 の修正内容を追記。
+
+## Verify Log (2026-03-08 初回ロード時の404参照修正)
+- `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
+- `python -m http.server 4173 --bind 0.0.0.0 --directory /workspace/AI_made_it` + Playwright: ページロード時に 404 応答が発生しないことを確認、スクリーンショット取得（artifact: artifacts/ver_1_13_2_no_404.png）
