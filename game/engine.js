@@ -345,14 +345,16 @@
     const keepLegacyTree = hasSpecialAscUpgrade(state, 'keepLegacyTree');
     state.ascPoints = (state.ascPoints || 0) + gain;
     state.ascEarnedTotal = (state.ascEarnedTotal || 0) + gain;
-    state.gold = computeStartingGoldOnPrestige();
     state.units = (C.UNIT_DEFS || []).reduce((a,u)=>(a[u.id]=0,a),{});
     state.upgrades = (C.UPGRADE_DEFS || []).reduce((a,u)=>(a[u.id]=0,a),{});
     state.prestigeEarnedTotal = 0;
     state.legacy = 0;
     if (!keepTotalGold) state.totalGoldEarned = 0;
     if (!keepLegacyTree) state.legacyNodes = (C.LEGACY_DEFS || []).reduce((a,d)=>(a[d.id]=0,a),{});
-    invalidateAggCache(); recalcAndCacheGPS(state);
+    // legacy tree を保持しない場合、開始ゴールドはリセット後の恒久効果で再計算する。
+    invalidateAggCache();
+    state.gold = computeStartingGoldOnPrestige();
+    recalcAndCacheGPS(state);
     return { ok:true, gain };
   }
 

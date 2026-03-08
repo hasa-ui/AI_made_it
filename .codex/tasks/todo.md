@@ -122,3 +122,20 @@
 ## Verify Log (2026-03-08 アップデート情報タブ化 / アルファ版表記追記)
 - `node --check game/config.js && node --check game/ui.js && node --check game/engine.js && node --check game/state.js` : 成功
 - `python -m http.server 4173 --bind 0.0.0.0` + Playwright: 「アップデート情報」タブの表示とアルファ版表記を確認し、スクリーンショット取得（artifact: artifacts/updates_tab_alpha.png）
+
+## Plan (2026-03-08 Ascension開始ゴールド計算バグ修正)
+- [x] 重要ロジック（Ascension/恒久効果計算）を調査して再現可能な不具合を特定
+- [x] Ascension時の開始ゴールド計算順序を最小差分で修正
+- [x] バージョン表記とアップデート情報を更新
+- [x] 検証ログ記録
+
+## Progress Log (2026-03-08 Ascension開始ゴールド計算バグ修正)
+- 着手: game/engine.js の Ascension処理を確認し、`doAscendInternal` がレガシーツリーのリセット前に開始ゴールドを計算していることを確認。
+- game/engine.js: Ascension処理でリセット反映後に `invalidateAggCache()` を行い、開始ゴールドを再計算する順序へ修正。
+- game/config.js: APP_VERSION を `Ver.1.11.2` に更新。
+- index.html: アップデート情報に Ver.1.11.2 の修正内容を追記。
+
+## Verify Log (2026-03-08 Ascension開始ゴールド計算バグ修正)
+- `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
+- `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
+- `python -m http.server 4173 --bind 0.0.0.0 --directory /workspace/AI_made_it` + Playwright: アップデート情報タブの Ver.1.11.2 表示を確認しスクリーンショット取得（artifact: artifacts/ver_1_11_2_updates.png）
