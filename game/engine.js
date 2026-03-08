@@ -452,10 +452,12 @@
     if (gain <= 0) return { ok:false };
     state.prestigeEarnedTotal = (state.prestigeEarnedTotal || 0) + gain;
     state.legacy = (state.legacy || 0) + gain;
-    state.gold = computeStartingGoldOnPrestige();
     state.units = (C.UNIT_DEFS || []).reduce((a,u)=>(a[u.id]=0,a),{});
     state.upgrades = (C.UPGRADE_DEFS || []).reduce((a,u)=>(a[u.id]=0,a),{});
-    invalidateAggCache(); recalcAndCacheGPS(state);
+    // prestige到達閾値で解放される開始ゴールド補正を同回で反映するため、先に集計キャッシュを無効化する。
+    invalidateAggCache();
+    state.gold = computeStartingGoldOnPrestige();
+    recalcAndCacheGPS(state);
     return { ok:true, gain };
   }
 

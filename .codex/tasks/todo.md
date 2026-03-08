@@ -300,3 +300,22 @@
 ## Verify Log (2026-03-08 Celestial層 / Challenge追加 / 下限コスト / SVG配置調整)
 - `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
 - `node - <<'NODE'\nconst fs=require('fs');\nconst vm=require('vm');\nconst ctx={window:{},console};\nvm.createContext(ctx);\nvm.runInContext(fs.readFileSync('game/config.js','utf8'),ctx);\nvm.runInContext(fs.readFileSync('game/engine.js','utf8'),ctx);\nconst E=ctx.window.ENGINE;\nconst C=ctx.window.CONFIG;\nconst st=E.getState();\nst.gold=1e12;\nst.legacyNodes=Object.fromEntries(C.LEGACY_DEFS.map(d=>[d.id,0]));\nst.challenge={activeId:'ch_monoline',completed:{},bestSec:{},ascendedInChallenge:0};\nE.invalidateAggCache();\nconst a=E.buyUnitInternal('junior',1);\nconst b=E.buyUnitInternal('miner',1);\nif(!a.ok||b.ok) throw new Error('Mono Line restriction failed');\nst.challenge.activeId=null;\nst.legacyNodes.lg_econ_mastery=2;\nE.invalidateAggCache();\nconst cost=E.unitCost(C.UNIT_DEFS[0],0,st);\nif(cost<1) throw new Error('Unit cost floor failed');\nconsole.log('ok: mono-line challenge + unit cost floor');\nNODE` : 成功
+
+## Plan (2026-03-08 重要経路バグ修正: Prestige開始ゴールド)
+- [x] 重要経路（Prestige/恒久ボーナス再計算）を点検し再現手順を確立
+- [x] 根本原因を修正（最小差分）
+- [x] バージョン表記とアップデート情報を更新
+- [x] 検証ログ記録
+
+## Progress Log (2026-03-08 重要経路バグ修正: Prestige開始ゴールド)
+- 着手: `game/engine.js` の `doPrestigeInternal` と集計キャッシュ無効化順序を確認。
+
+
+- `game/engine.js`: `doPrestigeInternal()` で `computeStartingGoldOnPrestige()` より先に `invalidateAggCache()` を実行する順へ修正。
+- `game/config.js`: APP_VERSION を `Ver.1.14.1` へ更新。
+- `index.html`: アップデート情報に Ver.1.14.1 の不具合修正内容を追記。
+
+## Verify Log (2026-03-08 重要経路バグ修正: Prestige開始ゴールド)
+- `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
+- `node - <<'NODE' ... (Prestige 79→80 到達時に開始ゴールドが 50→550 へ同回反映されることを検証) ... NODE` : 成功
+- `python -m http.server 4173 --bind 0.0.0.0 --directory /workspace/AI_made_it` + Playwright: `Page.goto: net::ERR_EMPTY_RESPONSE` によりスクリーンショット取得失敗
