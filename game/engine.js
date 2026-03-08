@@ -199,9 +199,11 @@
   }
 
   function getAggregates(st){
-    // cache is keyed globally; callers must call invalidateAggCache() on state changes
+    st = st || state;
+    // キャッシュは内部state専用。外部から渡された任意stateは毎回正しく再計算する。
+    if (st !== state) return computeLegacyAggregatesInternal(st);
     if (!aggCache || aggCacheDirty){
-      aggCache = computeLegacyAggregatesInternal(st);
+      aggCache = computeLegacyAggregatesInternal(state);
       aggCacheDirty = false;
     }
     return aggCache;

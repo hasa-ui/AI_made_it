@@ -343,3 +343,19 @@
 - `node --check game/state.js` : 成功
 - `node --check game/config.js` : 成功
 - `mcp__browser_tools__run_playwright_script` : 失敗（browser container から `ERR_EMPTY_RESPONSE` が発生しスクリーンショット取得不可）
+
+## Plan (2026-03-08 重要経路バグ修正: 外部state集計キャッシュ)
+- [x] 重要経路（集計キャッシュと試算API）を点検し再現条件を確立
+- [x] 根本原因を最小差分で修正
+- [x] バージョン表記とアップデート情報を更新
+- [x] 検証ログ記録
+
+## Progress Log (2026-03-08 重要経路バグ修正: 外部state集計キャッシュ)
+- 着手: `game/engine.js` の `getAggregates(st)` とキャッシュ戦略を確認。
+- `game/engine.js`: 内部キャッシュを内部state専用に限定し、外部から渡される任意stateは毎回再計算するよう修正。
+- `game/config.js`: APP_VERSION を `Ver.1.15.1` に更新。
+- `index.html`: アップデート情報に Ver.1.15.1 の不具合修正内容を追記。
+
+## Verify Log (2026-03-08 重要経路バグ修正: 外部state集計キャッシュ)
+- `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
+- `node - <<'NODE' ... (E.getAggregates(st1) と E.getAggregates(st2) の startingGoldBonus が独立に計算されることを検証) ... NODE` : 成功
