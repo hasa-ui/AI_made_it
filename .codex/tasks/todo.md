@@ -410,3 +410,19 @@
 ## Verify Log (2026-03-08 UI無骨化)
 - `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
 - `python -m http.server 4173 --bind 0.0.0.0 --directory /workspace/AI_made_it` + Playwright: トップ画面の無骨化デザイン反映を確認し、スクリーンショット取得（artifact: browser:/tmp/codex_browser_invocations/30924de90f28e4f6/artifacts/artifacts/ver_1_16_0_rugged_ui.png）
+
+## Plan (2026-03-08 重要経路バグ修正: Challenge firstClear判定)
+- [x] Challengeクリア判定の重要経路を点検し再現条件を確立
+- [x] 根本原因を最小差分で修正
+- [x] バージョン表記とアップデート情報を更新
+- [x] 検証ログ記録
+
+## Progress Log (2026-03-08 重要経路バグ修正: Challenge firstClear判定)
+- 着手: `game/engine.js` の `tryCompleteChallengeInternal()` を確認し、`bestSec` が `0` のとき `|| Infinity` により再クリアでも `firstClear: true` になることを再現。
+- `game/engine.js`: `state.challenge.bestSec[ch.id] || Infinity` を `?? Infinity` に変更し、0秒記録を有効値として保持するよう修正。
+- `game/config.js`: APP_VERSION を `Ver.1.16.1` に更新。
+- `index.html`: アップデート情報に Ver.1.16.1 の不具合修正内容を追記。
+
+## Verify Log (2026-03-08 重要経路バグ修正: Challenge firstClear判定)
+- `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
+- `node - <<'NODE' ... (Challengeを2回即時クリアし、1回目のみ firstClear=true / 2回目は false となることを検証) ... NODE` : 成功
