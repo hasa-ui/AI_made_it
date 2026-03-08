@@ -5,7 +5,7 @@
   const C = {
     SAVE_KEY: 'inc.split.full.v4',
     SAVE_VERSION: 11,
-    APP_VERSION: 'Ver.1.13.0',
+    APP_VERSION: 'Ver.1.13.1',
     UI_UPDATE_INTERVAL_MS: 50,
     AUTO_SAVE_INTERVAL: 5000,
     MAX_OFFLINE_SECONDS: 60*60*24,

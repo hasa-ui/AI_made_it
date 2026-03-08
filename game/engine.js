@@ -482,19 +482,20 @@
     if (!ch) return { ok:false, reason:'not_found' };
     state.challenge = state.challenge || { activeId:null, completed:{}, bestSec:{}, ascendedInChallenge:0 };
     state.challenge.activeId = id;
-    state.gold = computeStartingGoldOnPrestige();
     state.units = (C.UNIT_DEFS || []).reduce((a,u)=>(a[u.id]=0,a),{});
     state.upgrades = (C.UPGRADE_DEFS || []).reduce((a,u)=>(a[u.id]=0,a),{});
     state.legacy = 0;
     state.prestigeEarnedTotal = 0;
     state.totalGoldEarned = 0;
+    invalidateAggCache();
+    state.gold = computeStartingGoldOnPrestige();
     state.runStats = state.runStats || {};
     const now = nowSec();
     state.runStats.currentRunStartedAt = now;
     state.runStats.currentRunPeakGold = state.gold;
     state.runStats.currentRunUnitTypes = {};
     state.runStats.currentRunUpgradeBuys = 0;
-    invalidateAggCache(); recalcAndCacheGPS(state);
+    recalcAndCacheGPS(state);
     return { ok:true, id };
   }
 

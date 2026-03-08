@@ -247,3 +247,20 @@
 - `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js && node --check index.html` : 失敗（node --check は .html 非対応）
 - `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
 - `python -m http.server 4173 --directory /workspace/AI_made_it` + Playwright: Challengeタブ/Prestige層表示のスクリーンショット取得（既存の /config.js 等 404 は非使用の重複script参照）
+
+## Plan (2026-03-08 Challenge開始時のPrestige開始ゴールド持ち越し修正)
+- [x] challenge開始処理と開始ゴールド算出順序の調査
+- [x] prestige系リセットを先に実行し、再計算後に開始ゴールドを算出するよう修正
+- [x] バージョン表記とアップデート情報を更新
+- [x] 検証ログ記録
+
+## Progress Log (2026-03-08 Challenge開始時のPrestige開始ゴールド持ち越し修正)
+- 着手: `game/engine.js` の `startChallengeInternal` を確認し、`computeStartingGoldOnPrestige()` が `prestigeEarnedTotal` のリセット前に呼ばれていることを確認。
+- `game/engine.js`: Challenge開始時に `units/upgrades/legacy/prestigeEarnedTotal/totalGoldEarned` のリセットを先行し、`invalidateAggCache()` 後に `computeStartingGoldOnPrestige()` で開始ゴールドを算出する順へ変更。
+- `game/config.js`: APP_VERSION を `Ver.1.13.1` に更新。
+- `index.html`: アップデート情報に Ver.1.13.1 の不具合修正内容を追記。
+
+## Verify Log (2026-03-08 Challenge開始時のPrestige開始ゴールド持ち越し修正)
+- `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
+- `node - <<'NODE'\nconst fs = require('fs');\nconst vm = require('vm');\nconst ctx = { window:{}, console };\nctx.window = ctx.window;\nvm.createContext(ctx);\nvm.runInContext(fs.readFileSync('game/config.js','utf8'), ctx);\nvm.runInContext(fs.readFileSync('game/state.js','utf8'), ctx);\nvm.runInContext(fs.readFileSync('game/engine.js','utf8'), ctx);\nconst E = ctx.window.ENGINE;\nconst st = E.getState();\nst.prestigeEarnedTotal = 200000;\nst.legacyNodes = Object.fromEntries(ctx.window.CONFIG.LEGACY_DEFS.map(d=>[d.id,0]));\nE.invalidateAggCache();\nconst before = E.computeStartingGoldOnPrestige();\nconst res = E.startChallengeInternal('ch_no_upgrades');\nif (!res.ok) throw new Error('challenge start failed');\nconst after = st.gold;\nif (after >= before) throw new Error(`starting gold not reset: before=${before}, after=${after}`);\nif (st.prestigeEarnedTotal !== 0) throw new Error('prestige not reset');\nconsole.log('ok: challenge start gold recalculated after prestige reset');\nNODE` : 成功
+- `python -m http.server 4173 --bind 0.0.0.0 --directory /workspace/AI_made_it` + Playwright: 更新履歴タブで Ver.1.13.1 表示を確認しスクリーンショット取得（artifact: artifacts/ver_1_13_1_update.png）
