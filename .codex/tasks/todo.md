@@ -533,3 +533,21 @@
 - `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
 - `python - <<'PY' ... (index.html内で #tab-ascension の閉じが #tab-challenges より前にあること、更新文言/バージョン更新を検証) ... PY` : 成功
 - `python -m http.server 4173 --bind 0.0.0.0 --directory /workspace/AI_made_it` + Playwright(Chromium/Firefox): ブラウザ環境のクラッシュ/接続リセット（SIGSEGV, NS_ERROR_NET_RESET）でスクリーンショット取得不可
+
+## Plan (2026-03-09 celestialサブタブ表示修正/UI整理)
+- [x] Ascension内celestialサブタブ未表示の原因調査（DOM構造とshowSubTab制御）
+- [x] 最小差分で表示不具合を修正し、必要なUI整理を実施
+- [x] バージョン表記・アップデート情報・モーダル文言を更新
+- [x] 検証ログ記録
+
+## Progress Log (2026-03-09 celestialサブタブ表示修正/UI整理)
+- 着手: `index.html` の `#tab-ascension` 配下を確認し、`#subtab-ascension-core` の閉じタグ不足で `#subtab-ascension-celestial` が core の内側にネストされる構造不整合を確認。
+- `index.html`: `#subtab-ascension-core` の閉じタグを追加し、Celestialサブタブを Ascension 直下の sibling に修正。
+- `index.html`: Ascension説明文の重複2行を削除してUI文言を簡潔化。
+- `game/config.js`: アプリバージョンを `Ver.1.17.3` へ更新。
+- `index.html` / `game/ui.js`: 今回修正内容をアップデート情報と初回表示モーダル文言へ反映。
+
+## Verify Log (2026-03-09 celestialサブタブ表示修正/UI整理)
+- `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
+- `python - <<'PY' ... (index.htmlで core サブタブ閉じタグの追加、Ver.1.17.3反映を検証) ... PY` : 成功
+- `python -m http.server 4173 --bind 0.0.0.0 --directory /workspace/AI_made_it` + Playwright: Ascension → Celestialサブタブ表示を確認し、スクリーンショット取得（artifact: `browser:/tmp/codex_browser_invocations/73f037dd4632031f/artifacts/artifacts/celestial_subtab_fix.png`）

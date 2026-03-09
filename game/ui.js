@@ -983,8 +983,8 @@
     const body = document.getElementById('updateModalBody');
     if (!modal || !body) return;
     body.textContent = `${C.APP_VERSION} の主な更新
-- Challenge / 実績 / 統計 / 設定・セーブ / ヘルプ / アップデート情報タブが表示されない不具合を修正
-- 原因だった Ascension タブ配下のDOM閉じタグ不整合を解消`;
+- Ascension内のCelestialサブタブが表示されない不具合を修正
+- Ascension説明文の重複を整理し、UI表示を簡潔化`;
     modal.style.display = 'flex';
     document.getElementById('closeUpdateModal')?.addEventListener('click', ()=>{
       modal.style.display = 'none';
