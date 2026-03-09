@@ -38,7 +38,9 @@
         celestialEarnedTotal: 0,
         celestialOwned: (C.CELESTIAL_UPGRADES || []).reduce((a,u)=>(a[u.id]=0,a),{}),
         achievementsOwned: {},
-        settings: { notation: 'compact', notationThreshold: 1000, confirmLegacyBuy:true, confirmLegacyBuyMax:true, toast:{achievement:true,offline:true,purchase:true,general:true} }
+        settings: { notation: 'compact', notationThreshold: 1000, confirmLegacyBuy:true, confirmLegacyBuyMax:true, toast:{achievement:true,offline:true,purchase:true,general:true}, activeSubTabs:{prestige:'core',ascension:'core'} },
+        abyss: { shards:0, resetCount:0 },
+        seenUpdateVersion: null
       };
     }
   }
@@ -119,6 +121,14 @@
       if (cel.type === 'prestigeEffectAdd') prestigeEffectAdd += (cel.payload.add || 0) * lvl;
       if (cel.type === 'costMult') costMult *= Math.pow(cel.payload.mult || 1, lvl);
       if (cel.type === 'unitMult' && cel.payload.unitId) unitMults[cel.payload.unitId] = (unitMults[cel.payload.unitId] || 1) * Math.pow(cel.payload.mult || 1, lvl);
+    }
+
+    const abyssShards = (st.abyss && st.abyss.shards) ? st.abyss.shards : 0;
+    if (abyssShards > 0){
+      globalMult *= Math.pow(2.25, abyssShards);
+      startingGoldBonus += abyssShards * 5.0e7;
+      flatGPS += abyssShards * 2.0e6;
+      costMult *= Math.pow(0.93, abyssShards);
     }
 
     // --- Challengeクリア報酬 ---
@@ -514,6 +524,47 @@
     recalcAndCacheGPS(state);
     return { ok:true, id:def.id, lvl: state.celestialOwned[def.id] };
   }
+
+  function previewAbyssGain(){
+    const goal = C.ABYSS_RESET_GOAL || 1.8e308;
+    if ((state.totalGoldEarned || 0) < goal) return 0;
+    const total = state.totalGoldEarned || 0;
+    if (!Number.isFinite(total) || total <= 0) return 0;
+    const ratio = Math.max(1, total / goal);
+    return Math.max(1, Math.floor(Math.log10(ratio) + 1));
+  }
+
+  function doAbyssResetInternal(){
+    const gain = previewAbyssGain();
+    if (gain <= 0) return { ok:false, reason:'goal' };
+    state.abyss = state.abyss || { shards:0, resetCount:0 };
+    state.abyss.shards = (state.abyss.shards || 0) + gain;
+    state.abyss.resetCount = (state.abyss.resetCount || 0) + 1;
+    state.gold = C.STARTING_GOLD || 50;
+    state.units = (C.UNIT_DEFS || []).reduce((a,u)=>(a[u.id]=0,a),{});
+    state.upgrades = (C.UPGRADE_DEFS || []).reduce((a,u)=>(a[u.id]=0,a),{});
+    state.legacy = 0;
+    state.legacyNodes = (C.LEGACY_DEFS || []).reduce((a,d)=>(a[d.id]=0,a),{});
+    state.totalGoldEarned = 0;
+    state.prestigeEarnedTotal = 0;
+    state.ascPoints = 0;
+    state.ascEarnedTotal = 0;
+    state.ascOwned = (C.ASC_UPGRADES || []).reduce((a,u)=>(a[u.id]=0,a),{});
+    state.celestialPoints = 0;
+    state.celestialEarnedTotal = 0;
+    state.celestialOwned = (C.CELESTIAL_UPGRADES || []).reduce((a,u)=>(a[u.id]=0,a),{});
+    state.challenge = { activeId:null, completed:{}, bestSec:{}, ascendedInChallenge:0 };
+    state.runStats = state.runStats || {};
+    const now = nowSec();
+    state.runStats.currentRunStartedAt = now;
+    state.runStats.currentRunPeakGold = state.gold;
+    state.runStats.currentRunUnitTypes = {};
+    state.runStats.currentRunUpgradeBuys = 0;
+    invalidateAggCache();
+    recalcAndCacheGPS(state);
+    return { ok:true, gain };
+  }
+
   function doAscendInternal(){
     const gain = previewAscGain();
     if (gain <= 0) return { ok:false };
@@ -651,8 +702,10 @@
     previewPrestigeGain,
     computeStartingGoldOnPrestige,
     previewAscGain,
+    previewAbyssGain,
     doPrestigeInternal,
     doAscendInternal,
+    doAbyssResetInternal,
 
     // offline
     applyOfflineProgressWithToast,

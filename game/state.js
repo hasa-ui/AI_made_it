@@ -30,6 +30,7 @@
       notation:'compact',
       notationThreshold:1000,
       activeTab:'play',
+      activeSubTabs:{ prestige:'core', ascension:'core' },
       confirmLegacyBuy:true,
       confirmLegacyBuyMax:true,
       toast:{ achievement:true, offline:true, purchase:true, general:true },
@@ -59,7 +60,12 @@
       completed: {},
       bestSec: {},
       ascendedInChallenge: 0
-    }
+    },
+    abyss: {
+      shards: 0,
+      resetCount: 0
+    },
+    seenUpdateVersion: null
   };
 
   function migrateState(raw){
@@ -90,6 +96,7 @@
     merged.settings = Object.assign({}, deepCopy(defaultState.settings), merged.settings || {});
     merged.settings.toast = Object.assign({}, defaultState.settings.toast, merged.settings.toast || {});
     merged.settings.autoBuy = Object.assign({}, defaultState.settings.autoBuy, merged.settings.autoBuy || {});
+    merged.settings.activeSubTabs = Object.assign({}, defaultState.settings.activeSubTabs, merged.settings.activeSubTabs || {});
     if (typeof merged.settings.autoBuy.intervalMs !== 'number'){
       const oldSec = Number(merged.settings.autoBuy.intervalSec || 0.5);
       merged.settings.autoBuy.intervalMs = Math.max(50, Math.round(oldSec * 1000));
@@ -108,6 +115,8 @@
     merged.challenge.completed = Object.assign({}, merged.challenge.completed || {});
     merged.challenge.bestSec = Object.assign({}, merged.challenge.bestSec || {});
     if (typeof merged.challenge.ascendedInChallenge !== 'number') merged.challenge.ascendedInChallenge = 0;
+    merged.abyss = Object.assign({}, deepCopy(defaultState.abyss), merged.abyss || {});
+    if (typeof merged.seenUpdateVersion !== 'string') merged.seenUpdateVersion = merged.seenUpdateVersion || null;
     return merged;
   }
 

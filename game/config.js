@@ -4,8 +4,8 @@
 
   const C = {
     SAVE_KEY: 'inc.split.full.v4',
-    SAVE_VERSION: 12,
-    APP_VERSION: 'Ver.1.16.3',
+    SAVE_VERSION: 13,
+    APP_VERSION: 'Ver.1.17.0',
     UI_UPDATE_INTERVAL_MS: 50,
     AUTO_SAVE_INTERVAL: 5000,
     MAX_OFFLINE_SECONDS: 60*60*24,
@@ -14,13 +14,16 @@
     STARTING_GOLD: 50,
     ASC_BASE_DIV: 25,
     ASC_SOFTCAP_START: 20,
-    ASC_SOFTCAP_EXPONENT: 0.72
+    ASC_SOFTCAP_EXPONENT: 0.72,
+    ABYSS_RESET_GOAL: Number.MAX_VALUE
   };
 
   C.UNIT_DEFS = [
     { id:'junior', name:'ジュニア採掘機', baseCost:4,   costMult:1.11, baseGPS:0.35, desc:'生産:0.35×所持数' },
     { id:'miner',  name:'採掘機',       baseCost:18,  costMult:1.14, baseGPS:1.6,  desc:'生産:1.6×所持数' },
-    { id:'excav',  name:'エクスカベーター', baseCost:900, costMult:1.2, baseGPS:32,   desc:'生産:32×所持数' }
+    { id:'excav',  name:'エクスカベーター', baseCost:900, costMult:1.2, baseGPS:32,   desc:'生産:32×所持数' },
+    { id:'drillcore', name:'ドリルコア反応炉', baseCost:120000, costMult:1.23, baseGPS:950, desc:'生産:950×所持数' },
+    { id:'voidrig', name:'ヴォイド掘削艦', baseCost:85000000, costMult:1.27, baseGPS:120000, desc:'生産:120000×所持数' }
   ];
 
   C.UPGRADE_DEFS = [
@@ -44,7 +47,12 @@
     { id:'lg_ark_dividend', name:'方舟の配当', desc:'恒久 +50 GPS /Lv', baseCost:800, costMult:2.8, maxLevel:2, x:1560, y:320, type:'flatGPS', payload:{gpsPerLevel:50}, prereq:[{id:'lg_passive',minLevel:1}] },
     { id:'lg_singularity', name:'特異点生成器', desc:'全体 ×10.0 (Lv1)', baseCost:2500, costMult:6.0, maxLevel:1, x:1810, y:180, type:'globalMult', payload:{multPerLevel:9.0}, prereq:[{id:'lg_ark_dividend',minLevel:1}] },
     { id:'lg_seed_mega', name:'種銭の源泉', desc:'開始ゴールド +1000 /Lv', baseCost:5000, costMult:8.0, maxLevel:1, x:2030, y:280, type:'startGold', payload:{amountPerLevel:1000}, prereq:[{id:'lg_singularity',minLevel:1}] },
-    { id:'lg_universal_amplifier', name:'万能増幅器', desc:'全ユニット ×3.0 /Lv', baseCost:8000, costMult:10.0, maxLevel:1, x:2030, y:80, type:'globalMult', payload:{multPerLevel:2.0}, prereq:[{id:'lg_singularity',minLevel:1}] }
+    { id:'lg_universal_amplifier', name:'万能増幅器', desc:'全ユニット ×3.0 /Lv', baseCost:8000, costMult:10.0, maxLevel:1, x:2030, y:80, type:'globalMult', payload:{multPerLevel:2.0}, prereq:[{id:'lg_singularity',minLevel:1}] },
+
+    { id:'lg_void_research', name:'虚空研究群', desc:'全体 ×6.0 /Lv', baseCost:25000, costMult:12.0, maxLevel:1, x:2280, y:170, type:'globalMult', payload:{multPerLevel:5.0}, prereq:[{id:'lg_universal_amplifier',minLevel:1}] },
+    { id:'lg_drillcore_forge', name:'反応炉鍛造', desc:'ドリルコア反応炉 ×9.0 /Lv', baseCost:30000, costMult:12.0, maxLevel:1, x:2520, y:80, type:'unitMult', payload:{unitId:'drillcore', multPerLevel:8.0}, prereq:[{id:'lg_void_research',minLevel:1}] },
+    { id:'lg_voidrig_drive', name:'ヴォイド航法', desc:'ヴォイド掘削艦 ×14.0 /Lv', baseCost:50000, costMult:14.0, maxLevel:1, x:2520, y:280, type:'unitMult', payload:{unitId:'voidrig', multPerLevel:13.0}, prereq:[{id:'lg_void_research',minLevel:1}] },
+    { id:'lg_genesis_seed', name:'創世種子圧縮', desc:'開始ゴールド +5.0e9', baseCost:120000, costMult:18.0, maxLevel:1, x:2760, y:180, type:'startGold', payload:{amountPerLevel:5.0e9}, prereq:[{id:'lg_voidrig_drive',minLevel:1}] }
   ];
 
   C.ASC_UPGRADES = [
@@ -60,7 +68,10 @@
     { id:'asc_keep_legacy_tree', name:'レガシー写像保存', desc:'Ascend時にレガシーツリーを維持', cost:760, type:'special', payload:{kind:'keepLegacyTree'}, maxLevel:1 },
     { id:'asc_unlock_autobuy', name:'自律運用OS', desc:'自動購入機能を解放', cost:1100, type:'special', payload:{kind:'unlockAutobuy'}, maxLevel:1 },
     { id:'asc_cosmic_multiplier', name:'天の倍加', desc:'恒久: 全体 ×10.0', cost:1800, type:'globalMult', payload:{mult:10.0}, maxLevel:1 },
-    { id:'asc_mythic_gps', name:'神話の配当', desc:'恒久: +2500 GPS', cost:2800, type:'flatGPS', payload:{gps:2500}, maxLevel:1 }
+    { id:'asc_mythic_gps', name:'神話の配当', desc:'恒久: +2500 GPS', cost:2800, type:'flatGPS', payload:{gps:2500}, maxLevel:1 },
+    { id:'asc_void_multiplier', name:'虚空倍率機関', desc:'恒久: 全体 ×22.0', cost:4200, type:'globalMult', payload:{mult:22.0}, maxLevel:1 },
+    { id:'asc_void_seed', name:'虚空シード供給', desc:'恒久: 開始ゴールド +8.0e8', cost:5600, type:'startGoldFlat', payload:{gold:8.0e8}, maxLevel:1 },
+    { id:'asc_void_income', name:'虚空配当回廊', desc:'恒久: +1.2e6 GPS', cost:7200, type:'flatGPS', payload:{gps:1.2e6}, maxLevel:1 }
   ];
 
   C.PRESTIGE_LAYERS = [
@@ -84,7 +95,9 @@
     { id:'cel_aether_drift', name:'エーテル漂流炉', desc:'恒久: +4500 GPS', cost:6, type:'flatGPS', payload:{ gps:4500 }, maxLevel:4 },
     { id:'cel_time_fold', name:'時空折り畳み', desc:'恒久: コスト ×0.82', cost:9, type:'costMult', payload:{ mult:0.82 }, maxLevel:2 },
     { id:'cel_resonance_core', name:'共鳴核の再編', desc:'恒久: Prestige効果 +0.08', cost:8, type:'prestigeEffectAdd', payload:{ add:0.08 }, maxLevel:3 },
-    { id:'cel_excav_pulse', name:'深層パルス', desc:'恒久: エクスカベーター ×2.5', cost:7, type:'unitMult', payload:{ unitId:'excav', mult:2.5 }, maxLevel:3 }
+    { id:'cel_excav_pulse', name:'深層パルス', desc:'恒久: エクスカベーター ×2.5', cost:7, type:'unitMult', payload:{ unitId:'excav', mult:2.5 }, maxLevel:3 },
+    { id:'cel_voidrig_flux', name:'虚空フラックス', desc:'恒久: ヴォイド掘削艦 ×4.0', cost:12, type:'unitMult', payload:{ unitId:'voidrig', mult:4.0 }, maxLevel:3 },
+    { id:'cel_event_horizon', name:'事象地平演算', desc:'恒久: 全体 ×2.5', cost:14, type:'globalMult', payload:{ mult:2.5 }, maxLevel:2 }
   ];
 
   C.CHALLENGES = [
@@ -143,6 +156,14 @@
       goalTotalGold: 620000,
       effects:{ singleUnitOnly:true, costMult:1.8, globalMult:0.45 },
       reward:{ type:'prestigeEffectAdd', add:0.08, text:'恒久: Prestige効果 +0.08' }
+    },
+    {
+      id:'ch_event_horizon',
+      name:'Challenge 8: Event Horizon',
+      desc:'全体生産18%・コスト2.6倍・開始資金1固定の極限周回。',
+      goalTotalGold: 2200000,
+      effects:{ globalMult:0.18, costMult:2.6, forceStartGold:1 },
+      reward:{ type:'globalMult', mult:1.45, text:'恒久: 全体 ×1.45' }
     }
   ];
 
@@ -178,7 +199,10 @@
     { id:'ach_celestial_architect', name:'星界設計者', desc:'Celestialアップグレードを8回購入する', type:'celestialUpgradeCount', target:8, bonus:{type:'costMult', mult:0.88} },
     { id:'ach_challenge_hepta', name:'七重試練の制覇者', desc:'全Challenge(7種)をクリアする', type:'challengeClearCount', target:7, bonus:{type:'prestigeEffectAdd', add:0.1} },
     { id:'ach_ascension_galaxy', name:'銀河渡り', desc:'累計Ascension AP 180到達', type:'ascend', target:180, bonus:{type:'flatGPS', gps:6000} },
-    { id:'ach_layer_master', name:'層の監督者', desc:'Prestige層5段階 + Celestial層4段階を解放', type:'dualLayerCount', target:{ prestige:5, celestial:4 }, bonus:{type:'globalMult', mult:1.35} }
+    { id:'ach_layer_master', name:'層の監督者', desc:'Prestige層5段階 + Celestial層4段階を解放', type:'dualLayerCount', target:{ prestige:5, celestial:4 }, bonus:{type:'globalMult', mult:1.35} },
+    { id:'ach_event_horizon', name:'地平線踏破', desc:'Challenge 8 をクリアする', type:'challengeClearCount', target:8, bonus:{type:'globalMult', mult:1.5} },
+    { id:'ach_abyss_ready', name:'深淵の入口', desc:'累計ゴールド 1.0e300 到達', type:'totalGold', target:1.0e300, bonus:{type:'flatGPS', gps:8.0e7} },
+    { id:'ach_abyss_reset', name:'深淵の観測者', desc:'Abyssリセットを1回実行', type:'abyssReset', target:1, bonus:{type:'globalMult', mult:1.8} }
   ];
 
   window.CONFIG = C;
