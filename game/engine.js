@@ -527,8 +527,9 @@
 
   function previewAbyssGain(){
     const goal = C.ABYSS_RESET_GOAL || 1.8e308;
-    if ((state.totalGoldEarned || 0) < goal) return 0;
     const total = state.totalGoldEarned || 0;
+    if (total < goal) return 0;
+    if (total === Infinity) return Math.max(1, Math.floor(Math.log10(Number.MAX_VALUE / goal) + 1));
     if (!Number.isFinite(total) || total <= 0) return 0;
     const ratio = Math.max(1, total / goal);
     return Math.max(1, Math.floor(Math.log10(ratio) + 1));

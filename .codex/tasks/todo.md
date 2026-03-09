@@ -484,3 +484,19 @@
 - `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
 - `node - <<'NODE' ... (vmでconfig/state/engineを読込み、Abyss previewとAbyss reset後Shard増加を検証) ... NODE` : 成功
 - `python -m http.server 4173 --bind 0.0.0.0 --directory /workspace/AI_made_it` + Playwright(Chromium/Firefox): ブラウザ実行環境でクラッシュ/接続リセットが発生しスクリーンショット取得不可
+
+## Plan (2026-03-09 Codex review指摘 #26 対応)
+- [x] index.html の Ascension/Celestial サブタブDOM構造を確認し、親子関係崩れの原因を特定
+- [x] game/engine.js の Abyss プレビュー条件を確認し、Infinity 到達時の扱いを修正
+- [x] 構文チェックと最小再現テストを実行
+- [x] 進捗・検証ログを記録
+
+## Progress Log (2026-03-09 Codex review指摘 #26 対応)
+- 着手: `index.html` を確認し、`#subtab-ascension-celestial` の直前に `#tab-ascension` を閉じる余分な `</div>` があり、サブタブが親コンテナ外に出る構造不整合を確認。
+- index.html: 余分な閉じタグを削除し、`#subtab-ascension-celestial` を `#tab-ascension` 配下へ戻して `showSubTab('ascension', ...)` の制御対象に統一。
+- 着手: `game/engine.js` の `previewAbyssGain` を確認し、`totalGoldEarned === Infinity` で 0 を返してしまうことを確認。
+- game/engine.js: Infinity は「目標到達済み」として扱い、`Number.MAX_VALUE` 相当で比率を評価した最小1以上のプレビューを返すよう修正。
+
+## Verify Log (2026-03-09 Codex review指摘 #26 対応)
+- `node --check game/engine.js && node --check game/ui.js && node --check game/config.js && node --check game/state.js` : 成功
+- `node - <<'NODE' ... previewAbyssGain(Infinity) ... NODE` : 成功（`previewAbyssGain(Infinity)=1` を確認）
