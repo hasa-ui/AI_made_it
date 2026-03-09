@@ -443,3 +443,20 @@
 ## Verify Log (2026-03-08 購入数バリデーション修正)
 - `node - <<'NODE' ...`（config/state/engine をVMで読み込み、`buyUnitInternal('junior', -1)` が `invalid_qty` を返し、`buyUnitInternal('junior', 1)` が成功することを確認）
 - `rg -n "Ver\.1\.16\.2|invalid_qty|APP_VERSION" game/engine.js game/config.js index.html`（修正反映箇所を確認）
+
+## Plan (2026-03-08 重要経路バグ修正: Challenge最速秒表示)
+- [x] Challenge表示ロジックを確認し、bestSec=0時の表示不具合を再現する
+- [x] 最小差分で表示判定を修正し、バージョン/更新履歴を更新する
+- [x] 検証コマンドを実行して結果を記録する
+- [x] 変更内容をコミットし、PRメッセージを作成する
+
+## Progress Log (2026-03-08 重要経路バグ修正: Challenge最速秒表示)
+- 着手: `game/ui.js` の Challengeステータス描画を確認し、`bestSec[ch.id]` を真偽値判定しているため `0` 秒記録が表示されないことを確認。
+- `game/ui.js`: Challengeクリア済み表示の最速秒判定を truthy 判定から `Number.isFinite` 判定へ変更し、0秒記録でも表示されるよう修正。
+- `game/config.js`: APP_VERSION を `Ver.1.16.3` に更新。
+- `index.html`: アップデート情報に Ver.1.16.3 の修正内容を追記。
+
+## Verify Log (2026-03-08 重要経路バグ修正: Challenge最速秒表示)
+- `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
+- `node - <<'NODE' ... (bestSec=0 の場合に "クリア済み (0秒)" が生成されることを確認) ... NODE` : 成功
+- `python -m http.server 4173 --bind 0.0.0.0 --directory /workspace/AI_made_it` + Playwright: Challengeタブで最速0秒が表示される状態のスクリーンショット取得（artifact: browser:/tmp/codex_browser_invocations/954d88a65a24c06e/artifacts/artifacts/ver_1_16_3_challenge_bestsec_zero.png）

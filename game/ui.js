@@ -668,7 +668,9 @@
     for (const ch of (C.CHALLENGES || [])){
       const done = !!(st.challenge.completed && st.challenge.completed[ch.id]);
       const doneEl = document.getElementById(`chDone-${ch.id}`);
-      if (doneEl) doneEl.textContent = done ? `クリア済み${st.challenge.bestSec && st.challenge.bestSec[ch.id] ? ` (${fmtNumber(st.challenge.bestSec[ch.id])}秒)` : ''}` : '未クリア';
+      const bestSec = st.challenge.bestSec ? st.challenge.bestSec[ch.id] : undefined;
+      const hasBestSec = Number.isFinite(bestSec);
+      if (doneEl) doneEl.textContent = done ? `クリア済み${hasBestSec ? ` (${fmtNumber(bestSec)}秒)` : ''}` : '未クリア';
       const startBtn = document.getElementById(`chStart-${ch.id}`);
       const claimBtn = document.getElementById(`chClaim-${ch.id}`);
       if (startBtn) startBtn.disabled = !!(st.challenge.activeId && st.challenge.activeId !== ch.id);
