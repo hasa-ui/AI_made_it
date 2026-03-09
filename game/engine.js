@@ -457,16 +457,36 @@
     }
 
     // buy max
-    let possible = 0, totalCost = 0, tmp = lvl;
-    while (tmp < legacyMaxLevel(def, state)){
-      const c = legacyCostForNextLevel(def, tmp, state);
-      if (state.legacy >= totalCost + c){ totalCost += c; tmp++; possible++; } else break;
+    const maxLevel = legacyMaxLevel(def, state);
+    const remainingByCap = Number.isFinite(maxLevel) ? Math.max(0, maxLevel - lvl) : Infinity;
+    const baseCost = legacyCostForNextLevel(def, lvl, state);
+    if (!Number.isFinite(baseCost) || baseCost <= 0) return { ok:false, reason:'cost' };
+
+    let possible = 0;
+    let totalCost = 0;
+    if (def.costMult === 1){
+      possible = Math.floor(state.legacy / baseCost);
+      if (Number.isFinite(remainingByCap)) possible = Math.min(possible, remainingByCap);
+      totalCost = possible * baseCost;
+    } else {
+      const maxBuyChecks = Number.isFinite(remainingByCap) ? remainingByCap : 4096;
+      let tmp = lvl;
+      for (let i = 0; i < maxBuyChecks; i++){
+        const c = legacyCostForNextLevel(def, tmp, state);
+        if (!Number.isFinite(c) || c <= 0) break;
+        if (state.legacy >= totalCost + c){
+          totalCost += c;
+          tmp++;
+          possible++;
+        } else {
+          break;
+        }
+      }
     }
+
     if (possible <= 0) return { ok:false, reason:'cost' };
-    for (let i=0;i<possible;i++){
-      const c = legacyCostForNextLevel(def, state.legacyNodes[legacyId] || 0, state);
-      state.legacy -= c; state.legacyNodes[legacyId] = (state.legacyNodes[legacyId] || 0) + 1;
-    }
+    state.legacy -= totalCost;
+    state.legacyNodes[legacyId] = lvl + possible;
     invalidateAggCache(); recalcAndCacheGPS(state);
     return { ok:true, bought:possible, cost: totalCost };
   }

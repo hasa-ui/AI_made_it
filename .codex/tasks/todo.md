@@ -570,3 +570,17 @@
 ## Verify Log (2026-03-09 レガシー上限解放アップグレード + レガシー自動購入)
 - `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
 - `python - <<'PY' ... (asc_unlock_legacy_cap追加 / autoBuyLegacy要素 / Ver.1.18.0更新 / モーダル文言更新を検証) ... PY` : 成功
+
+## Plan (2026-03-09 Codex review対応: legacy buy-max反復上限)
+- [x] 指摘箇所の buy-max ループと停止条件を確認
+- [x] 上限解放時でも有限時間で終了する買い切り計算へ修正
+- [x] 構文/挙動検証を実行してログ記録
+
+## Progress Log (2026-03-09 Codex review対応: legacy buy-max反復上限)
+- 着手: `game/engine.js` の `attemptBuyLegacyInternal` buy-max 処理を確認し、`legacyMaxLevel === Infinity` 時に `while` が実質購買可能回数ぶん走る構造を確認。
+- `game/engine.js`: buy-max を O(購入回数) ループから定数時間計算中心へ変更。`costMult === 1` は `floor(legacy / baseCost)` で一括算出し、それ以外は有限上限（cap残数または4096チェック）で安全に見積もる方式へ変更。
+- `game/engine.js`: 実購入処理も1レベルずつ減算するループを廃止し、`state.legacy -= totalCost` と `state.legacyNodes[legacyId] = lvl + possible` の一括適用へ変更。
+
+## Verify Log (2026-03-09 Codex review対応: legacy buy-max反復上限)
+- `node --check game/engine.js && node --check game/ui.js && node --check game/state.js && node --check game/config.js` : 成功
+- `node - <<'NODE'`（`config/state/engine` を VM 読み込みし、`unlockLegacyLevelCap` + `lg_mega` の buy-max が `bought:50000` を 1ms で返すことを検証）`NODE` : 成功
