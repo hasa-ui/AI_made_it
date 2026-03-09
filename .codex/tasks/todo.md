@@ -584,3 +584,18 @@
 ## Verify Log (2026-03-09 Codex review対応: legacy buy-max反復上限)
 - `node --check game/engine.js && node --check game/ui.js && node --check game/state.js && node --check game/config.js` : 成功
 - `node - <<'NODE'`（`config/state/engine` を VM 読み込みし、`unlockLegacyLevelCap` + `lg_mega` の buy-max が `bought:50000` を 1ms で返すことを検証）`NODE` : 成功
+
+## Plan (2026-03-09 アップデート履歴復旧: Ver.1.9.0以降)
+- [x] 現在のアップデート情報表示と欠落範囲を確認
+- [x] Git履歴から Ver.1.9.0 以降の過去アップデート文言を抽出
+- [x] アップデート情報タブへ過去履歴を復旧（最小差分）
+- [x] 検証ログ記録
+
+## Progress Log (2026-03-09 アップデート履歴復旧: Ver.1.9.0以降)
+- 着手: `index.html` のアップデート情報欄が `Ver.1.18.0` の単独表示になっていることを確認。
+- `git show 68410e4:index.html` から、以前存在していた `Ver.1.17.3`〜`Ver.1.9.0` の履歴文言を抽出。
+- `index.html` のアップデート情報リストを復元し、`Ver.1.18.0` + `Ver.1.17.3`〜`Ver.1.9.0` の一覧表示へ復旧。
+
+## Verify Log (2026-03-09 アップデート履歴復旧: Ver.1.9.0以降)
+- `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
+- `python - <<'PY' ... (index.html内に Ver.1.18.0 / Ver.1.17.3 / Ver.1.9.0 が存在することを検証) ... PY` : 成功

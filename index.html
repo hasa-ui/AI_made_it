@@ -319,6 +319,33 @@
           <p class="small muted" style="margin-top:4px;">このゲームは現在<strong>アルファ版</strong>です。仕様やバランスは今後も変更されます。</p>
           <ul class="small muted" style="margin-top:8px; padding-left:20px; line-height:1.8;">
             <li><strong>Ver.1.18.0</strong>：Ascensionショップに高コストの「遺産限界突破理論」を追加し、レガシーツリーのレベル上限を解放。自動購入の対象にレガシーツリーを追加。</li>
+            <li><strong>Ver.1.17.3</strong>：Ascension内のCelestialサブタブが表示されない不具合を修正。Ascension説明文の重複を整理。</li>
+            <li><strong>Ver.1.17.2</strong>：Challenge / 実績 / 統計 / 設定・セーブ / ヘルプ / アップデート情報タブが表示されない不具合を修正（AscensionタブのDOM閉じタグ不整合を解消）。</li>
+            <li><strong>Ver.1.17.1</strong>：アップデート初回表示モーダルでバージョン表記が「Ver Ver.x.y.z」と重複する不具合を修正。</li>
+            <li><strong>Ver.1.17.0</strong>：メインタブを再編し、Prestige/Ascensionにサブタブを導入。新最上位層「Abyssリセット」（1.8e308想定）を追加し、高桁向けにユニット・レガシー・Ascension/Celestial・Challenge・実績・ヘルプを拡張。アップデート初回表示ウィンドウを実装。</li>
+            <li><strong>Ver.1.16.3</strong>：Challengeの最速クリア秒表示で0秒記録が空欄になる不具合を修正し、最速記録表示の判定を数値ベースに改善。</li>
+            <li><strong>Ver.1.16.2</strong>：ユニット購入APIが無効な購入数（0・負数・非整数）を受け付けてしまう不具合を修正し、進行破綻を防ぐ入力バリデーションを追加。</li>
+            <li><strong>Ver.1.16.1</strong>：Challengeのクリア最速記録が0秒だった場合に再クリアでも初回扱いになる不具合を修正し、firstClear判定の整合性を改善。</li>
+            <li><strong>Ver.1.16.0</strong>：UI全体を無骨（インダストリアル）な配色・角丸・ボーダーに刷新し、ボタン/カード/タブの装飾を統一して視認性を調整。</li>
+            <li><strong>Ver.1.15.3</strong>：PlayタブからCelestial層カードを削除した状態でも、Celestialタブの「Celestial層 効果一覧」が正しく更新されるよう描画処理を修正。</li>
+            <li><strong>Ver.1.15.2</strong>：プレイタブからCelestial層の表示を削除し、プレイタブ内の「プレステージ」と「プレステージ層」の表示順を入れ替え。</li>
+            <li><strong>Ver.1.15.1</strong>：集計キャッシュが外部stateの試算結果を使い回してしまう不具合を修正し、シミュレーション計算（開始ゴールド/GPS試算）の整合性を改善。</li>
+            <li><strong>Ver.1.15.0</strong>：実績表示を簡素化。アップグレードタブをプレイタブへ統合。Celestialタブ/Celestial Point/Celestial専用アップグレードを追加。Prestige/Celestial層の効果表示を明確化し、Challengeを7種へ拡張、新実績を追加。</li>
+            <li><strong>Ver.1.14.1</strong>：Prestige実行時、同回で解放されたPrestige層の開始ゴールド補正が反映されない不具合を修正。</li>
+            <li><strong>Ver.1.14.0</strong>：Ascension累計APで解放される新層「Celestial層」を追加。Challenge 4 (Mono Line) と新実績を追加し、ユニット最低コストを1に固定。レガシーツリーのノード座標を再調整。</li>
+            <li><strong>Ver.1.13.2</strong>：存在しないトップ階層ファイル参照（styles.css / config.js / state.js / engine.js / ui.js）を削除し、初回ロード時の404エラーを解消。</li>
+            <li><strong>Ver.1.13.1</strong>：Challenge開始時に、前ランのPrestige進行に由来する開始ゴールド補正が持ち越される不具合を修正。</li>
+            <li><strong>Ver.1.13.0</strong>：Ascensionミニゲーム難易度を緩和。Prestige層(Resonance Layers)・Challengeモード・特殊実績群を追加。</li>
+            <li><strong>Ver.1.12.4</strong>：自動購入の1フレーム上限到達時に未処理の蓄積時間を保持するよう修正し、低FPS時の購入取りこぼしを軽減。</li>
+            <li><strong>Ver.1.12.3</strong>：Ascensionミニゲームにルール説明（通常/反転/時間短縮/報酬）を追加。</li>
+            <li><strong>Ver.1.12.2</strong>：レガシーの「Buy Max」が前提未達ノードも購入できてしまう不具合を修正。</li>
+            <li><strong>Ver.1.12.1</strong>：自動購入ループを修正し、低FPS時やバックグラウンド復帰時に実行間隔の取りこぼしで購入頻度が落ちる問題を改善。</li>
+            <li><strong>Ver.1.12.0</strong>：Ascension増加式を後半で緩やかに調整、後半ショップ価格を増額、ミニゲーム複雑化、統計タブ追加、自動購入50ms対応＆購入方式切替、モバイルズーム改善、特殊実績を追加。</li>
+            <li><strong>Ver.1.11.2</strong>：Ascension時にレガシーツリーをリセットする場合、開始ゴールドが旧ツリー補正を誤って引き継ぐ不具合を修正。</li>
+            <li><strong>Ver.1.11.1</strong>：アップデート履歴をヘルプから独立タブへ移動。アルファ版表記を追加。</li>
+            <li><strong>Ver.1.11.0</strong>：アップデート履歴を追加。次に得られるレガシー見積が購入なしでも更新されるよう修正。</li>
+            <li><strong>Ver.1.10.0</strong>：Ascensionミニゲームと特殊実績を追加。</li>
+            <li><strong>Ver.1.9.0</strong>：レガシーツリーのズーム操作を追加し、Ascensionショップ価格を再調整。</li>
           </ul>
         </div>
       </div>
