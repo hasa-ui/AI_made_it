@@ -982,12 +982,13 @@
     const modal = document.getElementById('updateModal');
     const body = document.getElementById('updateModalBody');
     if (!modal || !body) return;
-    body.textContent = `Ver ${C.APP_VERSION} の主な更新
+    body.textContent = `${C.APP_VERSION} の主な更新
 - Prestige / Ascension サブタブを導入
 - CelestialをAscension配下へ、LegacyをPrestige配下へ移動
 - 新最上位層 Abyssリセットを追加（目標 1.8e308）
 - 高桁向けにユニット・レガシー・ショップ・Challenge・実績を拡張
-- ミニゲーム反転ルールの説明文を実装仕様へ修正`;
+- ミニゲーム反転ルールの説明文を実装仕様へ修正
+- アップデートモーダルのバージョン表示重複（Ver Ver.x.y.z）を修正`;
     modal.style.display = 'flex';
     document.getElementById('closeUpdateModal')?.addEventListener('click', ()=>{
       modal.style.display = 'none';

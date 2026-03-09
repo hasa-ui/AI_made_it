@@ -500,3 +500,17 @@
 ## Verify Log (2026-03-09 Codex review指摘 #26 対応)
 - `node --check game/engine.js && node --check game/ui.js && node --check game/config.js && node --check game/state.js` : 成功
 - `node - <<'NODE' ... previewAbyssGain(Infinity) ... NODE` : 成功（`previewAbyssGain(Infinity)=1` を確認）
+
+## Plan (2026-03-09 重要経路バグ修正: アップデートモーダル版表示)
+- [x] 重要導線（初回表示アップデートモーダル）の表示文言を確認し、不具合を再現
+- [x] 最小差分で表示文言を修正し、バージョン/アップデート履歴を更新
+- [x] 検証コマンド実行とログ記録
+- [x] コミットとPRメッセージ作成
+
+## Progress Log (2026-03-09 重要経路バグ修正: アップデートモーダル版表示)
+- 着手: `game/ui.js` の `showUpdateModalIfNeeded` を確認し、`APP_VERSION` が `Ver.x.y.z` 形式なのに先頭へ `Ver ` を再付与しており、モーダル見出しが `Ver Ver.1.17.0` となる不具合を確認。
+
+## Verify Log (2026-03-09 重要経路バグ修正: アップデートモーダル版表示)
+- `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
+- `node - <<'NODE' ... (showUpdateModalIfNeeded の1行目が `${C.APP_VERSION} の主な更新` であり、`Ver Ver.` が含まれないことを検証) ... NODE` : 成功
+- `python -m http.server 4173 --bind 0.0.0.0 --directory /workspace/AI_made_it` + Playwright: アップデートモーダル表示のスクリーンショット取得（artifact: browser:/tmp/codex_browser_invocations/2a7ab54a3260e42b/artifacts/artifacts/update_modal_ver_1_17_1.png）
