@@ -60,6 +60,8 @@
     refs.startingGoldPreview = document.getElementById('startingGoldPreview');
     refs.ascGainPreview = document.getElementById('ascGainPreview');
     refs.lastSave = document.getElementById('lastSave');
+    refs.abyssShardEl = document.getElementById('abyssShard');
+    refs.abyssGainEl = document.getElementById('abyssGainPreview');
   }
   function cacheRefsIfNeeded(){ if (!refs.goldEl) cacheRefs(); }
 
@@ -425,6 +427,7 @@
       else if (a.type === 'prestigeLayerCount'){ if ((E.getUnlockedPrestigeLayerCount ? E.getUnlockedPrestigeLayerCount(st) : 0) >= a.target) achieved = true; }
       else if (a.type === 'celestialLayerCount'){ if ((E.getUnlockedCelestialLayerCount ? E.getUnlockedCelestialLayerCount(st) : 0) >= a.target) achieved = true; }
       else if (a.type === 'ascendInChallenge'){ if ((st.challenge && st.challenge.ascendedInChallenge || 0) >= a.target) achieved = true; }
+      else if (a.type === 'abyssReset'){ if ((st.abyss && st.abyss.resetCount || 0) >= a.target) achieved = true; }
       else if (a.type === 'celestialUpgradeCount'){
         const total = Object.values(st.celestialOwned || {}).reduce((acc, v)=>acc + (Number(v)||0), 0);
         if (total >= a.target) achieved = true;
@@ -734,6 +737,8 @@
     if (refs.startingGoldPreview) refs.startingGoldPreview.textContent = fmtNumber(E.computeStartingGoldOnPrestige());
     if (refs.ascGainPreview) refs.ascGainPreview.textContent = fmtNumber(E.previewAscGain());
     if (refs.lastSave) refs.lastSave.textContent = new Date(st.lastSavedAt*1000).toLocaleString();
+    if (refs.abyssShardEl) refs.abyssShardEl.textContent = fmtNumber((st.abyss && st.abyss.shards) || 0);
+    if (refs.abyssGainEl) refs.abyssGainEl.textContent = fmtNumber(E.previewAbyssGain ? E.previewAbyssGain() : 0);
     const currentSaveVersionEl = document.getElementById('currentSaveVersionText');
     if (currentSaveVersionEl) currentSaveVersionEl.textContent = String(st.version || '-');
     syncAutoBuyControls();
@@ -808,6 +813,23 @@
     rafId = requestAnimationFrame(mainLoop);
   }
 
+  
+  function showSubTab(parent, sub){
+    const st = E.getState();
+    st.settings = st.settings || {};
+    st.settings.activeSubTabs = Object.assign({ prestige:'core', ascension:'core' }, st.settings.activeSubTabs || {});
+    const active = sub || st.settings.activeSubTabs[parent] || 'core';
+    document.querySelectorAll(`.subTabBtn[data-parent="${parent}"]`).forEach(btn=>{
+      btn.classList.toggle('active', btn.dataset.subtab === active);
+    });
+    document.querySelectorAll(`#tab-${parent} .subTabPane`).forEach(pane=> pane.style.display = 'none');
+    const pane = document.getElementById(`subtab-${parent}-${active}`);
+    if (pane) pane.style.display = 'block';
+    st.settings.activeSubTabs[parent] = active;
+    try { SM.saveState(st); } catch(e){}
+    if (parent === 'prestige' && active === 'legacy'){ svgDirty = true; drawLegacySVG(); }
+  }
+
   // ---------- タブ表示制御 (修正: display='block') ----------
   function showTab(name){
     if (typeof name !== 'string' || name.trim() === '') name = (E.getState().settings && E.getState().settings.activeTab) || 'play';
@@ -823,7 +845,7 @@
     if (!matched){ const fallback = document.getElementById('tab-play') || document.querySelector('.tabPane'); if (fallback){ document.querySelectorAll('.tabPane').forEach(p=>p.style.display='none'); fallback.style.display='block'; name = fallback.id.replace('tab-',''); } }
 
     const insWrap = document.getElementById('tab-inspector');
-    if (insWrap){ if (name === 'legacy'){ insWrap.style.display = 'block'; svgDirty = true; } else { insWrap.style.display = 'none'; } }
+    if (insWrap){ if (name === 'prestige' && ((E.getState().settings && E.getState().settings.activeSubTabs || {}).prestige || 'core') === 'legacy'){ insWrap.style.display = 'block'; svgDirty = true; } else { insWrap.style.display = 'none'; } }
 
     document.querySelectorAll('.tabBtn').forEach(btn=>{
       const bt = (btn.dataset && btn.dataset.tab) ? btn.dataset.tab : (btn.getAttribute('data-tab') || (btn.id && btn.id.replace(/^tabBtn-/, '')));
@@ -831,9 +853,8 @@
     });
 
     if (name === 'play'){ buildUnitsUI(); buildUpgradesUI(); }
-    if (name === 'legacy'){ svgDirty = true; drawLegacySVG(); }
-    if (name === 'ascension') buildAscShop();
-    if (name === 'celestial') buildCelestialShop();
+    if (name === 'prestige'){ showSubTab('prestige'); }
+    if (name === 'ascension'){ buildAscShop(); buildCelestialShop(); showSubTab('ascension'); }
     if (name === 'challenges') buildChallengesUI();
 
     try { const st = E.getState(); st.settings = st.settings || {}; st.settings.activeTab = name; SM.saveState(st); } catch(e){}
@@ -844,6 +865,9 @@
     document.querySelectorAll('.tabBtn').forEach(btn=>{
       btn.addEventListener('click', (ev)=>{ ev.preventDefault(); const t = (btn.dataset && btn.dataset.tab) ? btn.dataset.tab : btn.getAttribute('data-tab'); showTab(t || 'play'); });
     });
+    document.querySelectorAll('.subTabBtn').forEach(btn=>{
+      btn.addEventListener('click', (ev)=>{ ev.preventDefault(); showSubTab(btn.dataset.parent, btn.dataset.subtab); if (btn.dataset.parent==='prestige'){ showTab('prestige'); } });
+    });
 
     document.getElementById('doPrestige')?.addEventListener('click', ()=>{
       const p = E.previewPrestigeGain();
@@ -851,6 +875,14 @@
       if (!confirm(`プレステージを実行しますか？ 獲得レガシー: ${fmtNumber(p)} 開始ゴールド: ${fmtNumber(E.computeStartingGoldOnPrestige())}`)) return;
       const res = E.doPrestigeInternal();
       if (res.ok){ svgDirty=true; syncUIAfterChange(); buildAscShop(); checkAchievementsAfterAction(); showTypedToast('purchase', `プレステージ: レガシー +${fmtNumber(res.gain)}`); }
+    });
+
+    document.getElementById('doAbyss')?.addEventListener('click', ()=>{
+      const g = E.previewAbyssGain ? E.previewAbyssGain() : 0;
+      if (g <= 0){ showTypedToast('general', 'Abyss条件未達（累計 1.8e308 必要）'); return; }
+      if (!confirm(`Abyssリセットを実行しますか？ 実績以外の要素が全てリセットされます。獲得: Abyss Shard +${fmtNumber(g)}`)) return;
+      const res = E.doAbyssResetInternal ? E.doAbyssResetInternal() : { ok:false };
+      if (res.ok){ syncUIAfterChange(); checkAchievementsAfterAction(); showTypedToast('achievement', `Abyss Shard +${fmtNumber(res.gain)}`); }
     });
 
     document.getElementById('doAscend')?.addEventListener('click', ()=>{
@@ -943,6 +975,27 @@
     });
   }
 
+  
+  function showUpdateModalIfNeeded(){
+    const st = E.getState();
+    if ((st.seenUpdateVersion || null) === C.APP_VERSION) return;
+    const modal = document.getElementById('updateModal');
+    const body = document.getElementById('updateModalBody');
+    if (!modal || !body) return;
+    body.textContent = `Ver ${C.APP_VERSION} の主な更新
+- Prestige / Ascension サブタブを導入
+- CelestialをAscension配下へ、LegacyをPrestige配下へ移動
+- 新最上位層 Abyssリセットを追加（目標 1.8e308）
+- 高桁向けにユニット・レガシー・ショップ・Challenge・実績を拡張
+- ミニゲーム反転ルールの説明文を実装仕様へ修正`;
+    modal.style.display = 'flex';
+    document.getElementById('closeUpdateModal')?.addEventListener('click', ()=>{
+      modal.style.display = 'none';
+      st.seenUpdateVersion = C.APP_VERSION;
+      SM.saveState(st);
+    }, { once:true });
+  }
+
   // ---------- 初期化 ----------
   document.addEventListener('DOMContentLoaded', ()=>{
     buildUnitsUI(); buildUpgradesUI(); buildAscShop(); buildCelestialShop(); buildChallengesUI(); buildAchievementsUI(); buildSettingsUI();
@@ -958,6 +1011,7 @@
     applyLegacyZoom();
 
     showTab(E.getState().settings.activeTab || 'play');
+    showUpdateModalIfNeeded();
 
     setInterval(()=>SM.saveState(E.getState()), C.AUTO_SAVE_INTERVAL || 5000);
     lastFrame = performance.now(); lastUiUpdate = performance.now(); requestAnimationFrame(mainLoop);

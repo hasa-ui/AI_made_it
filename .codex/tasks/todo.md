@@ -460,3 +460,43 @@
 - `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
 - `node - <<'NODE' ... (bestSec=0 の場合に "クリア済み (0秒)" が生成されることを確認) ... NODE` : 成功
 - `python -m http.server 4173 --bind 0.0.0.0 --directory /workspace/AI_made_it` + Playwright: Challengeタブで最速0秒が表示される状態のスクリーンショット取得（artifact: browser:/tmp/codex_browser_invocations/954d88a65a24c06e/artifacts/artifacts/ver_1_16_3_challenge_bestsec_zero.png）
+
+## Plan (2026-03-09 サブタブ再編 + 新Prestige層追加)
+- [x] 既存タブ構造/リセット処理/バランス定義の確認と設計反映
+- [x] タブ再編（Ascension/Celestial, Prestige/Legacy のサブタブ化）と表示制御実装
+- [x] 新Prestige層（1.8e308想定）実装と全要素リセット仕様（実績維持）追加
+- [x] 1.8e308到達へ向けた拡張（ユニット/レガシー/Ascension/Celestial/Challenge/実績）とヘルプ・更新情報更新
+- [x] 反転ルール文言修正とアップデート初回表示ウィンドウ実装
+- [x] 検証ログ記録
+
+## Progress Log (2026-03-09 サブタブ再編 + 新Prestige層追加)
+- `index.html`: メインタブを再編（Prestige新設、Celestial単独タブ撤去）し、Prestige/AscensionにサブタブUIを導入。LegacyをPrestige配下、CelestialをAscension配下へ移動。
+- `index.html`: 新最上位層「Abyssリセット」カード（所持Shard/獲得見込/実行ボタン）を追加。
+- `index.html`: ミニゲームの反転ルール文言を実装仕様（対向レーン正解）に修正。
+- `game/styles.css`: サブタブボタンとアップデートモーダルのスタイルを追加。
+- `game/state.js`: サブタブ保存状態・Abyss進行状態・更新通知既読バージョンをセーブ対象へ追加し、マイグレーション対応。
+- `game/engine.js`: Abyss獲得見込/実行処理を追加。Abyss時に実績以外を全リセットする最上位リセットを実装。Abyss Shard恒久効果を集計に追加。
+- `game/config.js`: Ver.1.17.0へ更新。高桁向けにユニット/レガシー/Ascension/Celestial/Challenge/実績を拡張し、Abyss目標定数を追加。
+- `game/ui.js`: サブタブ表示制御、Abyss UI連携、Abyss実績判定、アップデート初回起動モーダル表示を追加。
+- `index.html`: ヘルプとアップデート履歴をVer.1.17.0内容へ更新。
+
+## Verify Log (2026-03-09 サブタブ再編 + 新Prestige層追加)
+- `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
+- `node - <<'NODE' ... (vmでconfig/state/engineを読込み、Abyss previewとAbyss reset後Shard増加を検証) ... NODE` : 成功
+- `python -m http.server 4173 --bind 0.0.0.0 --directory /workspace/AI_made_it` + Playwright(Chromium/Firefox): ブラウザ実行環境でクラッシュ/接続リセットが発生しスクリーンショット取得不可
+
+## Plan (2026-03-09 Codex review指摘 #26 対応)
+- [x] index.html の Ascension/Celestial サブタブDOM構造を確認し、親子関係崩れの原因を特定
+- [x] game/engine.js の Abyss プレビュー条件を確認し、Infinity 到達時の扱いを修正
+- [x] 構文チェックと最小再現テストを実行
+- [x] 進捗・検証ログを記録
+
+## Progress Log (2026-03-09 Codex review指摘 #26 対応)
+- 着手: `index.html` を確認し、`#subtab-ascension-celestial` の直前に `#tab-ascension` を閉じる余分な `</div>` があり、サブタブが親コンテナ外に出る構造不整合を確認。
+- index.html: 余分な閉じタグを削除し、`#subtab-ascension-celestial` を `#tab-ascension` 配下へ戻して `showSubTab('ascension', ...)` の制御対象に統一。
+- 着手: `game/engine.js` の `previewAbyssGain` を確認し、`totalGoldEarned === Infinity` で 0 を返してしまうことを確認。
+- game/engine.js: Infinity は「目標到達済み」として扱い、`Number.MAX_VALUE` 相当で比率を評価した最小1以上のプレビューを返すよう修正。
+
+## Verify Log (2026-03-09 Codex review指摘 #26 対応)
+- `node --check game/engine.js && node --check game/ui.js && node --check game/config.js && node --check game/state.js` : 成功
+- `node - <<'NODE' ... previewAbyssGain(Infinity) ... NODE` : 成功（`previewAbyssGain(Infinity)=1` を確認）

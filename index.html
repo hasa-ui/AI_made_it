@@ -57,9 +57,8 @@
 
   <nav id="mainTabs">
     <button class="tabBtn active" data-tab="play">プレイ</button>
-        <button class="tabBtn" data-tab="legacy">レガシー</button>
+    <button class="tabBtn" data-tab="prestige">プレステージ</button>
     <button class="tabBtn" data-tab="ascension">Ascension</button>
-    <button class="tabBtn" data-tab="celestial">Celestial</button>
     <button class="tabBtn" data-tab="challenges">Challenge</button>
     <button class="tabBtn" data-tab="achievements">実績</button>
     <button class="tabBtn" data-tab="stats">統計</button>
@@ -81,41 +80,70 @@
           <div id="upgradesCard"></div>
         </div>
 
-        <div class="card">
-          <h3>プレステージ</h3>
-          <div class="row">
-            <div>
-              <div class="muted small">次に得られるレガシー（見積）: <span id="prestigeGainPreview" style="color:#2dd4bf; font-weight:bold;">0</span></div>
-              <div class="muted small">開始ゴールド（保証）: <span id="startingGoldPreview">0</span></div>
-            </div>
-            <div style="margin-left:auto">
-              <button id="doPrestige" class="accent">プレステージ実行</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <h3>プレステージ層 (Resonance Layers)</h3>
-          <p class="muted small">現在周回の Prestige 値に応じて段階解放される特別層です。Ascendでリセットされます。</p>
-          <div id="prestigeLayerList" style="margin-top:10px;"></div>
-        </div>
       </div>
 
-      <div id="tab-legacy" class="tabPane">
-        <div class="card">
-          <div class="legacyHeaderRow">
-            <h3>レガシーツリー（クリックで Inspector）</h3>
-            <div class="legacyZoomControls">
-              <button id="legacyZoomOut" class="small alt" type="button">−</button>
-              <button id="legacyZoomReset" class="small alt" type="button">100%</button>
-              <button id="legacyZoomIn" class="small alt" type="button">＋</button>
+      <div id="tab-prestige" class="tabPane">
+        <div class="subTabs" id="prestigeSubTabs">
+          <button class="subTabBtn active" data-parent="prestige" data-subtab="core">プレステージ</button>
+          <button class="subTabBtn" data-parent="prestige" data-subtab="layers">Resonance Layers</button>
+          <button class="subTabBtn" data-parent="prestige" data-subtab="legacy">レガシー</button>
+        </div>
+
+        <div id="subtab-prestige-core" class="subTabPane">
+          <div class="card">
+            <h3>プレステージ</h3>
+            <div class="row">
+              <div>
+                <div class="muted small">次に得られるレガシー（見積）: <span id="prestigeGainPreview" style="color:#2dd4bf; font-weight:bold;">0</span></div>
+                <div class="muted small">開始ゴールド（保証）: <span id="startingGoldPreview">0</span></div>
+              </div>
+              <div style="margin-left:auto">
+                <button id="doPrestige" class="accent">プレステージ実行</button>
+              </div>
             </div>
           </div>
-          <div id="svgWrap"><svg id="legacySvg" preserveAspectRatio="xMidYMid meet"></svg></div>
+
+          <div class="card">
+            <h3>超越プレステージ層（Abyss）</h3>
+            <p class="muted small">累計ゴールドが 1.8e308 に到達すると実行可能。実績を除く進行要素を全リセットし、新通貨「Abyss Shard」を獲得します。</p>
+            <div class="row">
+              <div class="statusItem"><div class="muted small">Abyss Shard</div><div id="abyssShard" style="color:#60a5fa;font-weight:bold;">0</div></div>
+              <div class="statusItem"><div class="muted small">次回獲得見込</div><div id="abyssGainPreview" class="muted small inline">0</div></div>
+            </div>
+            <div class="row" style="margin-top:8px;"><button id="doAbyss" class="warn">Abyssリセット実行</button></div>
+          </div>
+        </div>
+
+        <div id="subtab-prestige-layers" class="subTabPane" style="display:none;">
+          <div class="card">
+            <h3>プレステージ層 (Resonance Layers)</h3>
+            <p class="muted small">現在周回の Prestige 値に応じて段階解放される特別層です。Ascend/Abyssでリセットされます。</p>
+            <div id="prestigeLayerList" style="margin-top:10px;"></div>
+          </div>
+        </div>
+
+        <div id="subtab-prestige-legacy" class="subTabPane" style="display:none;">
+          <div class="card">
+            <div class="legacyHeaderRow">
+              <h3>レガシーツリー（クリックで Inspector）</h3>
+              <div class="legacyZoomControls">
+                <button id="legacyZoomOut" class="small alt" type="button">−</button>
+                <button id="legacyZoomReset" class="small alt" type="button">100%</button>
+                <button id="legacyZoomIn" class="small alt" type="button">＋</button>
+              </div>
+            </div>
+            <div id="svgWrap"><svg id="legacySvg" preserveAspectRatio="xMidYMid meet"></svg></div>
+          </div>
         </div>
       </div>
 
       <div id="tab-ascension" class="tabPane">
+        <div class="subTabs" id="ascSubTabs">
+          <button class="subTabBtn active" data-parent="ascension" data-subtab="core">Ascension</button>
+          <button class="subTabBtn" data-parent="ascension" data-subtab="celestial">Celestial</button>
+        </div>
+
+        <div id="subtab-ascension-core" class="subTabPane">
         <div class="card">
           <h3>Ascension（超越）</h3>
           <p class="muted small" style="line-height:1.6;">
@@ -148,7 +176,7 @@
             <ul style="margin:6px 0 0 18px; padding:0;">
               <li>全10ラウンド。基本は通常ルールで、後半のみ「反転」ラウンドが出現します。</li>
               <li>通常ルール：表示された目標レーン（A〜D）を制限時間内に押すと成功です。</li>
-              <li>反転ルール：目標レーン<strong>以外</strong>を押すと成功（目標レーンを押すとミス）です。</li>
+              <li>反転ルール：目標レーンの<strong>対向レーン</strong>を押すと成功（目標レーンや他レーンはミス）です。</li>
               <li>ラウンドが進むほど制限時間が短くなりますが、緩やかに短縮されます。タイムアウトはミス扱いです。</li>
               <li>挑戦終了時にスコアに応じて AP を還元します（高スコアほど還元量アップ）。</li>
             </ul>
@@ -185,11 +213,9 @@
             <span id="autoBuyStatus" class="muted small">未解放</span>
           </div>
         </div>
-      </div>
-
       
 
-      <div id="tab-celestial" class="tabPane">
+        <div id="subtab-ascension-celestial" class="subTabPane" style="display:none;">
         <div class="card">
           <h3>Celestial Nexus</h3>
           <p class="muted small">Ascend時に獲得する <strong>Celestial Point (CP)</strong> を使って、独創的な恒久アップグレードを購入できます。</p>
@@ -212,6 +238,7 @@
           <h3>Celestialアップグレード</h3>
           <div id="celestialShop"></div>
         </div>
+      </div>
       </div>
 
       <div id="tab-challenges" class="tabPane">
@@ -268,10 +295,10 @@
             <p class="small muted" style="margin-top:4px;">ユニットを購入して「GPS（秒間ゴールド生産量）」を増やし、ゴールドを稼ぎます。アップグレードを購入すると、特定のユニットや全体の生産効率が倍増します。</p>
 
             <h4 style="color:#2dd4bf; margin-top:16px;">♻️ プレステージ (Prestige)</h4>
-            <p class="small muted" style="margin-top:4px;">プレイが行き詰まってきたら「プレステージ」を行いましょう。進行がリセットされる代わりに「レガシー」を獲得します。レガシータブで強力なスキルツリー（永続効果）を解放でき、次の周回が圧倒的に早くなります。</p>
+            <p class="small muted" style="margin-top:4px;">プレイが行き詰まってきたら「プレステージ」を行いましょう。進行がリセットされる代わりに「レガシー」を獲得します。プレステージタブのサブタブからレガシーツリー（永続効果）を成長させられます。</p>
 
             <h4 style="color:#f472b6; margin-top:16px;">✨ Ascension (超越)</h4>
-            <p class="small muted" style="margin-top:4px;">プレステージを何度も繰り返し、さらに先へ進むための究極のリセット機能です。Ascensionポイント(AP)を使って、レガシーとは別枠の強力な「恒久ブースト」をショップで購入できます。</p>
+            <p class="small muted" style="margin-top:4px;">プレステージを何度も繰り返し、さらに先へ進むための究極のリセット機能です。Ascensionポイント(AP)を使って、Ascension/Celestialサブタブで強力な恒久ブーストを購入できます。さらに 1.8e308 到達で「Abyssリセット」が解禁され、実績以外を全リセットして最上位通貨を獲得できます。</p>
 
             <h4 style="color:#ffd166; margin-top:16px;">🏆 実績 (Achievements)</h4>
             <p class="small muted" style="margin-top:4px;">特定の条件を満たすと実績が解除され、ゲーム全体に強力なパッシブボーナスが付与されます。</p>
@@ -291,6 +318,7 @@
           <h3>アップデート情報</h3>
           <p class="small muted" style="margin-top:4px;">このゲームは現在<strong>アルファ版</strong>です。仕様やバランスは今後も変更されます。</p>
           <ul class="small muted" style="margin-top:8px; padding-left:20px; line-height:1.8;">
+            <li><strong>Ver.1.17.0</strong>：メインタブを再編し、Prestige/Ascensionにサブタブを導入。新最上位層「Abyssリセット」（1.8e308想定）を追加し、高桁向けにユニット・レガシー・Ascension/Celestial・Challenge・実績・ヘルプを拡張。アップデート初回表示ウィンドウを実装。</li>
             <li><strong>Ver.1.16.3</strong>：Challengeの最速クリア秒表示で0秒記録が空欄になる不具合を修正し、最速記録表示の判定を数値ベースに改善。</li>
             <li><strong>Ver.1.16.2</strong>：ユニット購入APIが無効な購入数（0・負数・非整数）を受け付けてしまう不具合を修正し、進行破綻を防ぐ入力バリデーションを追加。</li>
             <li><strong>Ver.1.16.1</strong>：Challengeのクリア最速記録が0秒だった場合に再クリアでも初回扱いになる不具合を修正し、firstClear判定の整合性を改善。</li>
@@ -347,6 +375,14 @@
       </div>
     </aside>
   </main>
+
+  <div id="updateModal" class="updateModal" style="display:none;">
+    <div class="updateModalCard">
+      <h3 id="updateModalTitle">アップデート内容</h3>
+      <pre id="updateModalBody" class="small muted" style="white-space:pre-wrap;"></pre>
+      <div class="row" style="justify-content:flex-end;"><button id="closeUpdateModal" class="accent">閉じる</button></div>
+    </div>
+  </div>
 
   <div id="toast" class="toast"></div>
 
