@@ -5,7 +5,7 @@
   const C = {
     SAVE_KEY: 'inc.split.full.v4',
     SAVE_VERSION: 13,
-    APP_VERSION: 'Ver.1.18.0',
+    APP_VERSION: 'Ver.1.18.1',
     UI_UPDATE_INTERVAL_MS: 50,
     AUTO_SAVE_INTERVAL: 5000,
     MAX_OFFLINE_SECONDS: 60*60*24,
@@ -66,7 +66,7 @@
     { id:'asc_passive_reactor', name:'反応炉配当', desc:'恒久: +1200 GPS', cost:340, type:'flatGPS', payload:{gps:1200}, maxLevel:1 },
     { id:'asc_keep_total_gold', name:'記録保全プロトコル', desc:'Ascend時に累計ゴールドを維持', cost:520, type:'special', payload:{kind:'keepTotalGold'}, maxLevel:1 },
     { id:'asc_keep_legacy_tree', name:'レガシー写像保存', desc:'Ascend時にレガシーツリーを維持', cost:760, type:'special', payload:{kind:'keepLegacyTree'}, maxLevel:1 },
-    { id:'asc_unlock_legacy_cap', name:'遺産限界突破理論', desc:'レガシーツリーのレベル上限を解放', cost:15000, type:'special', payload:{kind:'unlockLegacyLevelCap'}, maxLevel:1 },
+    { id:'asc_unlock_legacy_cap', name:'遺産限界突破理論', desc:'レガシーツリーのレベル上限 +1 /Lv', cost:15000, type:'legacyCapBoost', payload:{addMaxLevel:1}, maxLevel:10 },
     { id:'asc_unlock_autobuy', name:'自律運用OS', desc:'自動購入機能を解放', cost:1100, type:'special', payload:{kind:'unlockAutobuy'}, maxLevel:1 },
     { id:'asc_cosmic_multiplier', name:'天の倍加', desc:'恒久: 全体 ×10.0', cost:1800, type:'globalMult', payload:{mult:10.0}, maxLevel:1 },
     { id:'asc_mythic_gps', name:'神話の配当', desc:'恒久: +2500 GPS', cost:2800, type:'flatGPS', payload:{gps:2500}, maxLevel:1 },

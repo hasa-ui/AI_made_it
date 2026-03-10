@@ -599,3 +599,35 @@
 ## Verify Log (2026-03-09 アップデート履歴復旧: Ver.1.9.0以降)
 - `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
 - `python - <<'PY' ... (index.html内に Ver.1.18.0 / Ver.1.17.3 / Ver.1.9.0 が存在することを検証) ... PY` : 成功
+
+## Plan (2026-03-09 レガシー上限の段階的解放化)
+- [x] 既存のレガシー上限解放（無制限化）ロジックの影響範囲を確認
+- [x] Ascensionショップを段階的な上限増加アップグレードへ変更
+- [x] 表示文言（上限値/アップデート情報）とバージョン表記を更新
+- [x] 検証ログ記録
+
+## Progress Log (2026-03-09 レガシー上限の段階的解放化)
+- 着手: 無制限化 special (`unlockLegacyLevelCap`) の利用箇所を `game/config.js` / `game/engine.js` / `game/ui.js` / `index.html` で調査。
+
+- `game/config.js`: `asc_unlock_legacy_cap` を無制限解放specialから段階強化（`legacyCapBoost`, `+1/Lv`, max10）へ変更し、`APP_VERSION` を `Ver.1.18.1` に更新。
+- `game/engine.js`: レガシー最大レベル計算を `base maxLevel + Ascension段階強化分` に変更し、UI参照用に `legacyMaxLevel` を公開。
+- `game/ui.js`: レガシーSVG/Inspectorの最大レベル表示を `ENGINE.legacyMaxLevel` 参照へ変更。更新モーダル文言を今回内容へ更新。
+- `index.html`: アップデート情報を今回分（Ver.1.18.1）のみに更新。
+
+## Verify Log (2026-03-09 レガシー上限の段階的解放化)
+- `node --check game/config.js && node --check game/engine.js && node --check game/ui.js && node --check game/state.js` : 成功
+- `node - <<'NODE' ... (ENGINE.legacyMaxLevelで base=5, asc_unlock_legacy_cap=3時に8へ増加を確認) ... NODE` : 成功
+- browser tool + Playwright でスクリーンショット取得を試行したが、`Page.goto ... ERR_EMPTY_RESPONSE` / `ERR_FILE_NOT_FOUND` で取得不可
+
+## Plan (2026-03-09 アップデート履歴保持の再修正)
+- [x] 前回差分で削除されたアップデート履歴範囲を特定
+- [x] 既存履歴を保持したまま Ver.1.18.1 を先頭追記
+- [x] 検証ログ記録
+
+## Progress Log (2026-03-09 アップデート履歴保持の再修正)
+- `index.html` のアップデート情報リストが Ver.1.18.1 単独になっていたため、直前履歴（Ver.1.18.0〜Ver.1.9.0）を復元しつつ Ver.1.18.1 を先頭追加。
+
+## Verify Log (2026-03-09 アップデート履歴保持の再修正)
+- `python - <<'PY' ... (index.html内に Ver.1.18.1 / Ver.1.18.0 / Ver.1.9.0 が共存することを検証) ... PY` : 成功
+- `node --check game/config.js && node --check game/engine.js && node --check game/ui.js && node --check game/state.js` : 成功
+- browser tool + Playwright でスクリーンショット取得を試行したが `ERR_EMPTY_RESPONSE` で取得不可

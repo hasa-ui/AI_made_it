@@ -315,7 +315,7 @@
         const sub = document.createElementNS('http://www.w3.org/2000/svg','text');
         sub.setAttribute('x', def.x - 80); sub.setAttribute('y', def.y + 12); sub.setAttribute('fill','#9fb0c9'); sub.setAttribute('font-size','12px');
         const nextCost = E.legacyCostForNextLevel(def, E.getState().legacyNodes[def.id] || 0, E.getState());
-        const maxLabel = hasAscSpecial('unlockLegacyLevelCap') ? '∞' : def.maxLevel;
+        const maxLabel = E.legacyMaxLevel(def, E.getState());
         sub.textContent = `Lv:${fmtNumber(lvl)}/${maxLabel}  次:${isFinite(nextCost)?fmtNumber(nextCost):'—'}`; svg.appendChild(sub);
 
         const handler = ()=>{ rect.classList.remove('pulse'); void rect.offsetWidth; rect.classList.add('pulse'); selectLegacyNode(def.id); };
@@ -371,7 +371,7 @@
     document.getElementById('ins_name').textContent = def.name;
     document.getElementById('ins_desc').textContent = def.desc || '';
     document.getElementById('ins_lvl').textContent = fmtNumber(lvl);
-    document.getElementById('ins_max').textContent = hasAscSpecial('unlockLegacyLevelCap') ? '∞' : (def.maxLevel || '—');
+    document.getElementById('ins_max').textContent = E.legacyMaxLevel(def, E.getState());
 
     if (def.prereq && def.prereq.length){
       const names = def.prereq.map(p=>{ const nm = (C.LEGACY_DEFS.find(x=>x.id===p.id)||{}).name || p.id; return `${nm} (Lv${p.minLevel||1})`; });
@@ -996,8 +996,7 @@
     const body = document.getElementById('updateModalBody');
     if (!modal || !body) return;
     body.textContent = `${C.APP_VERSION} の主な更新
-- Ascensionショップに「遺産限界突破理論」を追加（高コスト）し、レガシーツリーのレベル上限を解放
-- 自動購入の対象にレガシーツリーを追加`;
+- Ascensionショップの「遺産限界突破理論」を段階強化式に変更（購入ごとにレガシーツリー上限 +1）`;
     modal.style.display = 'flex';
     document.getElementById('closeUpdateModal')?.addEventListener('click', ()=>{
       modal.style.display = 'none';

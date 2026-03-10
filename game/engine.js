@@ -238,10 +238,21 @@
     return false;
   }
 
+  function legacyCapBonusFromAsc(st){
+    const src = st || state;
+    let bonus = 0;
+    for (const def of (C.ASC_UPGRADES||[])){
+      if (def.type !== 'legacyCapBoost') continue;
+      const lv = (src.ascOwned && src.ascOwned[def.id]) ? src.ascOwned[def.id] : 0;
+      if (lv <= 0) continue;
+      bonus += (def.payload && def.payload.addMaxLevel ? def.payload.addMaxLevel : 0) * lv;
+    }
+    return bonus;
+  }
+
   function legacyMaxLevel(def, st){
     if (!def || typeof def.maxLevel !== 'number') return Infinity;
-    if (hasAscSpecialInState(st || state, 'unlockLegacyLevelCap')) return Infinity;
-    return def.maxLevel;
+    return def.maxLevel + legacyCapBonusFromAsc(st || state);
   }
 
   function legacyCostForNextLevel(def, currentLevel, st){
@@ -715,6 +726,7 @@
     unitCost: (def, owned, st) => unitCost(def, owned, st || state),
     upgradeCostNextLevel,
     legacyCostForNextLevel,
+    legacyMaxLevel: (def, st) => legacyMaxLevel(def, st || state),
     computeBaseGPS: (st) => computeBaseGPS(st || state),
     computeGPSFull: (st) => computeGPSFull(st || state),
     recalcAndCacheGPS: (st) => recalcAndCacheGPS(st || state),
