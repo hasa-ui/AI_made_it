@@ -700,3 +700,15 @@
 ## Verify Log (2026-03-10 Infinity到達時の進行不能修正)
 - ✅ `node --check game/engine.js && node --check game/ui.js && node --check game/config.js && node --check game/state.js`
 - ✅ `timeout 5 node - <<'NODE' ... NODE`（`gold=Infinity` を与えて `buyMaxUnitsInternal` / `buyMaxUpgradeInternal` を実行し、タイムアウトせず戻ることを確認）
+
+## Plan (2026-03-10 Buy Max Infinity時のNaN防止)
+- [x] PR #35 指摘箇所（unit/upgrade Buy Max）を確認し、Infinity時の破綻条件を特定
+- [x] 非有限コスト（Infinity/NaN）を検知したら加算・課金を停止するガードを実装
+- [x] 構文チェックと再現スクリプトで gold が NaN 化しないことを検証
+
+## Progress Log (2026-03-10 Buy Max Infinity時のNaN防止)
+- 着手: `game/engine.js` の `buyMaxUnitsInternal` / `buyMaxUpgradeInternal` を確認し、`state.gold === Infinity` かつ `c` や `exactCost + c` が `Infinity` になると `Infinity - Infinity` で `NaN` 化することを確認。
+- `game/engine.js`: 両ループで `!Number.isFinite(c) || !Number.isFinite(exactCost + c)` を先行判定し、非有限値に到達した時点で break するよう修正。
+
+## Verify Log (2026-03-10 Buy Max Infinity時のNaN防止)
+- `node --check game/engine.js && node - <<'NODE' ... NODE` : 成功（`gold = Infinity` + 極端な `costMult` で unit/upgrade Buy Max を実行し、戻り値が正常かつ `state.gold` が `NaN` にならないことを確認）
