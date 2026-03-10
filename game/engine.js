@@ -384,7 +384,8 @@
     if (n < 0) n = 0;
 
     let exactCost = 0, actualN = 0;
-    for (let i = 0; i <= n + 2; i++){
+    const maxIterations = Number.isFinite(n) ? (n + 2) : 4096;
+    for (let i = 0; i <= maxIterations; i++){
       const c = unitCost(def, owned + i, state);
       if (state.gold >= exactCost + c){ exactCost += c; actualN++; } else break;
     }
@@ -432,7 +433,8 @@
     }
     if (n < 0) n = 0;
     let exactCost = 0, actualN = 0;
-    for (let i=0;i<=n+2;i++){
+    const maxIterations = Number.isFinite(n) ? (n + 2) : 4096;
+    for (let i=0;i<=maxIterations;i++){
       const c = upgradeCostNextLevel(def, lvl + i);
       if (state.gold >= exactCost + c){ exactCost += c; actualN++; } else break;
     }

@@ -685,3 +685,18 @@
 - [x] 検証コマンド実行とログ追記
 - 追記対応: バージョンを `Ver.1.19.1` へ更新し、アップデート情報タブと更新モーダルを今回修正内容に合わせて更新。
 - 追加検証: Playwright再試行時に Chromium SIGSEGV が発生したため、成功済みの再現検証（インポート後リロード保持）と構文チェック結果を採用。
+
+## Plan (2026-03-10 Infinity到達時の進行不能修正)
+- [x] Infinity到達時の進行停止を再現し、原因箇所を特定
+- [x] Buy Maxの無限ループを最小差分で修正
+- [x] 構文チェックと再現テストで修正を検証
+- [x] バージョン表記・アップデート情報・更新モーダルを更新
+
+## Progress Log (2026-03-10 Infinity到達時の進行不能修正)
+- 調査: `game/engine.js` の `buyMaxUnitsInternal` / `buyMaxUpgradeInternal` で、`gold=Infinity` 時に推定購入回数 `n` が `Infinity` となり、`for (i <= n + 2)` が終了しないことを確認。
+- 修正: 両関数に `Number.isFinite(n)` 判定を追加し、非有限値時は反復回数を `4096` に制限。
+- 付随対応: `game/config.js` のバージョンを `Ver.1.19.2` に更新し、`index.html` のアップデート情報と `game/ui.js` の更新モーダル文言を今回内容へ更新。
+
+## Verify Log (2026-03-10 Infinity到達時の進行不能修正)
+- ✅ `node --check game/engine.js && node --check game/ui.js && node --check game/config.js && node --check game/state.js`
+- ✅ `timeout 5 node - <<'NODE' ... NODE`（`gold=Infinity` を与えて `buyMaxUnitsInternal` / `buyMaxUpgradeInternal` を実行し、タイムアウトせず戻ることを確認）

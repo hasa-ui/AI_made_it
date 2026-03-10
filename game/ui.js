@@ -1013,10 +1013,10 @@
     const body = document.getElementById('updateModalBody');
     if (!modal || !body) return;
     body.textContent = `${C.APP_VERSION} の主な更新
-- 設定・セーブ画面の貼り付けインポート後に即時保存するよう修正
-- ファイルインポート後に即時保存するよう修正
-- 全リセット後に即時保存するよう修正
-- オートセーブ前のリロードで進行が巻き戻る問題を解消`;
+- 所持ゴールドがInfinityに達したときに Buy Max が固まる不具合を修正
+- ユニットの最大購入計算に安全な反復上限を追加
+- アップグレードの最大購入計算に安全な反復上限を追加
+- Infinity到達後でも操作不能にならないよう安定性を改善`;
     modal.style.display = 'flex';
     document.getElementById('closeUpdateModal')?.addEventListener('click', ()=>{
       modal.style.display = 'none';
