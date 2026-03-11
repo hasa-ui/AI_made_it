@@ -64,7 +64,8 @@
     },
     abyss: {
       shards: 0,
-      resetCount: 0
+      resetCount: 0,
+      upgrades: (C.ABYSS_UPGRADES || []).reduce((a,u)=>(a[u.id]=0,a),{})
     },
     seenUpdateVersion: null
   };
@@ -118,6 +119,8 @@
     if (typeof merged.challenge.ascendedInChallenge !== 'number') merged.challenge.ascendedInChallenge = 0;
     if (typeof merged.challenge.savedTotalGold !== 'number' && merged.challenge.savedTotalGold !== null) merged.challenge.savedTotalGold = null;
     merged.abyss = Object.assign({}, deepCopy(defaultState.abyss), merged.abyss || {});
+    merged.abyss.upgrades = Object.assign({}, deepCopy(defaultState.abyss.upgrades), merged.abyss.upgrades || {});
+    for (const u of (C.ABYSS_UPGRADES || [])) if (!(u.id in merged.abyss.upgrades)) merged.abyss.upgrades[u.id]=0;
     if (typeof merged.seenUpdateVersion !== 'string') merged.seenUpdateVersion = merged.seenUpdateVersion || null;
     return merged;
   }

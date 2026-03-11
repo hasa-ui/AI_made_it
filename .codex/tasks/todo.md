@@ -712,3 +712,23 @@
 
 ## Verify Log (2026-03-10 Buy Max Infinity時のNaN防止)
 - `node --check game/engine.js && node - <<'NODE' ... NODE` : 成功（`gold = Infinity` + 極端な `costMult` で unit/upgrade Buy Max を実行し、戻り値が正常かつ `state.gold` が `NaN` にならないことを確認）
+
+## Plan (2026-03-11 Infinity表示 / Legacy SVGモバイル改善 / Abyssタブ追加)
+- [x] 既存実装を確認し、変更対象を特定する
+- [x] Infinity到達時の表示を「1.8e308」へ統一する
+- [x] レガシーツリーSVGのモバイル可読性を改善する
+- [x] Abyss専用タブを新設し、独特な機能を追加する
+- [x] バージョン表記・アップデート情報・アップデートモーダルを更新する
+- [x] 検証コマンドを実行して結果を記録する
+
+## Progress Log (2026-03-11 Infinity表示 / Legacy SVGモバイル改善 / Abyssタブ追加)
+- 調査: `index.html`, `game/ui.js`, `game/engine.js`, `game/styles.css`, `game/config.js` を確認。
+- Infinity表示: `fmtNumber` の非有限数処理を見直し、Infinity時に `1.8e308` を返すよう修正。
+- Legacy SVG: モバイル時にノードサイズ/文字サイズを拡大し、SVG最小幅とスクロール性を改善。
+- Abyss: メインタブを追加し、Abyss Shard消費型の「深淵改造」(3種)を実装。
+- セーブ互換: `state` の `abyss.upgrades` をマイグレーション対象に追加。
+- バージョン更新: `Ver.1.20.0` に更新し、アップデート情報リスト/初回モーダル文言を更新。
+
+## Verify Log (2026-03-11 Infinity表示 / Legacy SVGモバイル改善 / Abyssタブ追加)
+- ✅ `node --check game/ui.js && node --check game/engine.js && node --check game/state.js && node --check game/config.js`
+- ✅ `python -m http.server 4173` でローカル起動後、Playwrightでモバイル表示確認とスクリーンショット取得

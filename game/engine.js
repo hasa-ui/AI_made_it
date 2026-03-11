@@ -131,6 +131,15 @@
       costMult *= Math.pow(0.93, abyssShards);
     }
 
+    for (const ab of (C.ABYSS_UPGRADES || [])){
+      const lvl = (st.abyss && st.abyss.upgrades && st.abyss.upgrades[ab.id]) ? st.abyss.upgrades[ab.id] : 0;
+      if (lvl <= 0) continue;
+      if (ab.type === 'globalMult') globalMult *= Math.pow((ab.payload && ab.payload.multPerLevel) || 1, lvl);
+      if (ab.type === 'costMult') costMult *= Math.pow((ab.payload && ab.payload.multPerLevel) || 1, lvl);
+      if (ab.type === 'startGold') startingGoldBonus += ((ab.payload && ab.payload.amountPerLevel) || 0) * lvl;
+      if (ab.type === 'flatGPS') flatGPS += ((ab.payload && ab.payload.gpsPerLevel) || 0) * lvl;
+    }
+
     // --- Challengeクリア報酬 ---
     const completed = (st.challenge && st.challenge.completed) ? st.challenge.completed : {};
     for (const ch of (C.CHALLENGES || [])){
@@ -606,6 +615,37 @@
     return Math.max(1, Math.floor(Math.log10(ratio) + 1));
   }
 
+
+  function abyssUpgradeCost(def, lvl){
+    return Math.max(1, Math.floor((def.baseCost || 1) * Math.pow(def.costMult || 1, lvl || 0)));
+  }
+
+  function getAbyssUpgradeStatus(st){
+    const src = st || state;
+    src.abyss = src.abyss || { shards:0, resetCount:0, upgrades:{} };
+    src.abyss.upgrades = src.abyss.upgrades || {};
+    return (C.ABYSS_UPGRADES || []).map(def=>{
+      const lvl = src.abyss.upgrades[def.id] || 0;
+      const cost = abyssUpgradeCost(def, lvl);
+      return { id:def.id, name:def.name, desc:def.desc, lvl, cost, affordable:(src.abyss.shards || 0) >= cost };
+    });
+  }
+
+  function buyAbyssUpgradeInternal(id){
+    const def = (C.ABYSS_UPGRADES || []).find(x=>x.id===id);
+    if (!def) return { ok:false, reason:'not_found' };
+    state.abyss = state.abyss || { shards:0, resetCount:0, upgrades:{} };
+    state.abyss.upgrades = state.abyss.upgrades || {};
+    const lvl = state.abyss.upgrades[def.id] || 0;
+    const cost = abyssUpgradeCost(def, lvl);
+    if ((state.abyss.shards || 0) < cost) return { ok:false, reason:'shard' };
+    state.abyss.shards -= cost;
+    state.abyss.upgrades[def.id] = lvl + 1;
+    invalidateAggCache();
+    recalcAndCacheGPS(state);
+    return { ok:true, id:def.id, lvl:state.abyss.upgrades[def.id], cost };
+  }
+
   function doAbyssResetInternal(){
     const gain = previewAbyssGain();
     if (gain <= 0) return { ok:false, reason:'goal' };
@@ -785,6 +825,8 @@
     computeStartingGoldOnPrestige,
     previewAscGain,
     previewAbyssGain,
+    getAbyssUpgradeStatus: (st) => getAbyssUpgradeStatus(st || state),
+    buyAbyssUpgradeInternal: (id) => buyAbyssUpgradeInternal(id),
     doPrestigeInternal,
     doAscendInternal,
     doAbyssResetInternal,
