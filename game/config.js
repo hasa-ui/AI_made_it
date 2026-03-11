@@ -5,7 +5,7 @@
   const C = {
     SAVE_KEY: 'inc.split.full.v4',
     SAVE_VERSION: 13,
-    APP_VERSION: 'Ver.1.19.2',
+    APP_VERSION: 'Ver.1.20.0',
     UI_UPDATE_INTERVAL_MS: 50,
     AUTO_SAVE_INTERVAL: 5000,
     MAX_OFFLINE_SECONDS: 60*60*24,
@@ -17,6 +17,13 @@
     ASC_SOFTCAP_EXPONENT: 0.72,
     ABYSS_RESET_GOAL: Number.MAX_VALUE
   };
+
+
+  C.ABYSS_UPGRADES = [
+    { id:'ab_cost', name:'深淵圧縮', desc:'全コストをLvごとに×0.94', baseCost:1, costMult:2.2, type:'costMult', payload:{multPerLevel:0.94} },
+    { id:'ab_flux', name:'虚無フラックス', desc:'全体倍率をLvごとに×1.35', baseCost:1, costMult:2.6, type:'globalMult', payload:{multPerLevel:1.35} },
+    { id:'ab_seed', name:'空虚の種火', desc:'開始ゴールド +2.5e8 /Lv', baseCost:2, costMult:2.8, type:'startGold', payload:{amountPerLevel:2.5e8} }
+  ];
 
   C.UNIT_DEFS = [
     { id:'junior', name:'ジュニア採掘機', baseCost:4,   costMult:1.11, baseGPS:0.35, desc:'生産:0.35×所持数' },

@@ -12,7 +12,9 @@
       const settings = (st && st.settings) ? st.settings : {};
       const notation = settings.notation || 'compact';
       const threshold = (typeof settings.notationThreshold === 'number') ? settings.notationThreshold : 1000;
-      if (!isFinite(n)) return '—';
+      if (n === Infinity) return '1.8e308';
+      if (n === -Infinity) return '-1.8e308';
+      if (!isFinite(n)) return '1.8e308';
       if (notation === 'scientific' && Math.abs(n) >= threshold){
         return Number(n).toExponential(3).replace(/e\+?(-?)(0+)?/,'e$1');
       }
@@ -62,6 +64,9 @@
     refs.lastSave = document.getElementById('lastSave');
     refs.abyssShardEl = document.getElementById('abyssShard');
     refs.abyssGainEl = document.getElementById('abyssGainPreview');
+    refs.abyssTabShardEl = document.getElementById('abyssTabShard');
+    refs.abyssTabGainEl = document.getElementById('abyssTabGain');
+    refs.abyssResetCountEl = document.getElementById('abyssResetCount');
   }
   function cacheRefsIfNeeded(){ if (!refs.goldEl) cacheRefs(); }
 
@@ -301,22 +306,26 @@
           }
         }
       }
+      const mobile = isMobileViewport();
+      const nodeWidth = mobile ? 220 : 180;
+      const nodeHeight = mobile ? 68 : 56;
+      const labelFont = mobile ? '15px' : '12px';
       for (const def of C.LEGACY_DEFS){
         const lvl = E.getState().legacyNodes[def.id] || 0;
         const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
-        rect.setAttribute('x', def.x - 90); rect.setAttribute('y', def.y - 28); rect.setAttribute('width', 180); rect.setAttribute('height',56);
+        rect.setAttribute('x', def.x - (nodeWidth/2)); rect.setAttribute('y', def.y - (nodeHeight/2)); rect.setAttribute('width', nodeWidth); rect.setAttribute('height', nodeHeight);
         const canBuy = E.canBuyLegacyInternal(def.id, E.getState());
         rect.setAttribute('fill', lvl>0 ? '#2b7f5a' : (canBuy ? '#134e66' : '#0a2a36'));
         rect.setAttribute('class','nodeRect'); svg.appendChild(rect); svgNodeEls[def.id] = rect;
 
         const title = document.createElementNS('http://www.w3.org/2000/svg','text');
-        title.setAttribute('x', def.x - 80); title.setAttribute('y', def.y - 6); title.setAttribute('fill','#fff'); title.textContent = def.name; svg.appendChild(title);
+        title.setAttribute('x', def.x - (nodeWidth/2 - 10)); title.setAttribute('y', def.y - 8); title.setAttribute('fill','#fff'); if (mobile) title.setAttribute('font-size','14px'); title.textContent = def.name; svg.appendChild(title);
 
         const sub = document.createElementNS('http://www.w3.org/2000/svg','text');
-        sub.setAttribute('x', def.x - 80); sub.setAttribute('y', def.y + 12); sub.setAttribute('fill','#9fb0c9'); sub.setAttribute('font-size','12px');
+        sub.setAttribute('x', def.x - (nodeWidth/2 - 10)); sub.setAttribute('y', def.y + 14); sub.setAttribute('fill','#9fb0c9'); sub.setAttribute('font-size',labelFont);
         const nextCost = E.legacyCostForNextLevel(def, E.getState().legacyNodes[def.id] || 0, E.getState());
         const maxLabel = E.legacyMaxLevel(def, E.getState());
-        sub.textContent = `Lv:${fmtNumber(lvl)}/${maxLabel}  次:${isFinite(nextCost)?fmtNumber(nextCost):'—'}`; svg.appendChild(sub);
+        sub.textContent = `Lv:${fmtNumber(lvl)}/${maxLabel}  次:${fmtNumber(nextCost)}`; svg.appendChild(sub);
 
         const handler = ()=>{ rect.classList.remove('pulse'); void rect.offsetWidth; rect.classList.add('pulse'); selectLegacyNode(def.id); };
         rect.addEventListener('click', handler); title.addEventListener('click', handler); sub.addEventListener('click', handler);
@@ -379,7 +388,7 @@
     } else document.getElementById('ins_prereq').textContent = 'なし';
 
     const nextCost = E.legacyCostForNextLevel(def, E.getState().legacyNodes[id] || 0, E.getState());
-    document.getElementById('ins_next_cost').textContent = isFinite(nextCost) ? fmtNumber(nextCost) : '—';
+    document.getElementById('ins_next_cost').textContent = fmtNumber(nextCost);
 
     const currEff = computeLegacyEffectForLevel(def, lvl);
     const nextEff = computeLegacyEffectForLevel(def, lvl+1);
@@ -668,6 +677,32 @@
     built.challenges = true;
   }
 
+
+  function buildAbyssUI(){
+    const wrap = document.getElementById('abyssUpgradeList');
+    if (!wrap) return;
+    const list = E.getAbyssUpgradeStatus ? E.getAbyssUpgradeStatus() : [];
+    wrap.innerHTML = '';
+    for (const ab of list){
+      const row = document.createElement('div');
+      row.className = 'upg';
+      row.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><div><strong>${ab.name}</strong><div class="muted small">${ab.desc}</div><div class="muted tiny">Lv ${fmtNumber(ab.lvl)}</div></div><div style="text-align:right"><button id="abyssBuy-${ab.id}" class="small">購入 (${fmtNumber(ab.cost)})</button></div></div>`;
+      wrap.appendChild(row);
+      const btn = document.getElementById(`abyssBuy-${ab.id}`);
+      if (btn){
+        btn.disabled = !ab.affordable;
+        btn.addEventListener('click', ()=>{
+          const res = E.buyAbyssUpgradeInternal ? E.buyAbyssUpgradeInternal(ab.id) : { ok:false };
+          if (!res.ok){ showTypedToast('general', 'Abyss Shardが不足しています'); return; }
+          SM.saveState(E.getState());
+          buildAbyssUI();
+          syncUIAfterChange();
+          showTypedToast('purchase', `${ab.name} を強化しました`);
+        });
+      }
+    }
+  }
+
   function renderChallengeStatus(){
     const st = E.getState();
     st.challenge = st.challenge || { activeId:null, completed:{}, bestSec:{}, ascendedInChallenge:0 };
@@ -747,7 +782,7 @@
       if (def){
         document.getElementById('ins_lvl').textContent = fmtNumber(st.legacyNodes[selectedLegacyId]||0);
         const nxt = E.legacyCostForNextLevel(def, st.legacyNodes[selectedLegacyId]||0);
-        document.getElementById('ins_next_cost').textContent = isFinite(nxt) ? fmtNumber(nxt) : '—';
+        document.getElementById('ins_next_cost').textContent = fmtNumber(nxt);
       }
     }
 
@@ -764,6 +799,9 @@
     if (refs.lastSave) refs.lastSave.textContent = new Date(st.lastSavedAt*1000).toLocaleString();
     if (refs.abyssShardEl) refs.abyssShardEl.textContent = fmtNumber((st.abyss && st.abyss.shards) || 0);
     if (refs.abyssGainEl) refs.abyssGainEl.textContent = fmtNumber(E.previewAbyssGain ? E.previewAbyssGain() : 0);
+    if (refs.abyssTabShardEl) refs.abyssTabShardEl.textContent = fmtNumber((st.abyss && st.abyss.shards) || 0);
+    if (refs.abyssTabGainEl) refs.abyssTabGainEl.textContent = fmtNumber(E.previewAbyssGain ? E.previewAbyssGain() : 0);
+    if (refs.abyssResetCountEl) refs.abyssResetCountEl.textContent = fmtNumber((st.abyss && st.abyss.resetCount) || 0);
     const currentSaveVersionEl = document.getElementById('currentSaveVersionText');
     if (currentSaveVersionEl) currentSaveVersionEl.textContent = String(st.version || '-');
     syncAutoBuyControls();
@@ -881,6 +919,7 @@
     if (name === 'prestige'){ showSubTab('prestige'); }
     if (name === 'ascension'){ buildAscShop(); buildCelestialShop(); showSubTab('ascension'); }
     if (name === 'challenges') buildChallengesUI();
+    if (name === 'abyss') buildAbyssUI();
 
     try { const st = E.getState(); st.settings = st.settings || {}; st.settings.activeTab = name; SM.saveState(st); } catch(e){}
   }
@@ -902,13 +941,15 @@
       if (res.ok){ svgDirty=true; syncUIAfterChange(); buildAscShop(); checkAchievementsAfterAction(); showTypedToast('purchase', `プレステージ: レガシー +${fmtNumber(res.gain)}`); }
     });
 
-    document.getElementById('doAbyss')?.addEventListener('click', ()=>{
+    const runAbyssReset = ()=>{
       const g = E.previewAbyssGain ? E.previewAbyssGain() : 0;
       if (g <= 0){ showTypedToast('general', 'Abyss条件未達（累計 1.8e308 必要）'); return; }
       if (!confirm(`Abyssリセットを実行しますか？ 実績以外の要素が全てリセットされます。獲得: Abyss Shard +${fmtNumber(g)}`)) return;
       const res = E.doAbyssResetInternal ? E.doAbyssResetInternal() : { ok:false };
-      if (res.ok){ syncUIAfterChange(); checkAchievementsAfterAction(); showTypedToast('achievement', `Abyss Shard +${fmtNumber(res.gain)}`); }
-    });
+      if (res.ok){ SM.saveState(E.getState()); buildAbyssUI(); syncUIAfterChange(); checkAchievementsAfterAction(); showTypedToast('achievement', `Abyss Shard +${fmtNumber(res.gain)}`); }
+    };
+    document.getElementById('doAbyss')?.addEventListener('click', runAbyssReset);
+    document.getElementById('doAbyssFromTab')?.addEventListener('click', runAbyssReset);
 
     document.getElementById('doAscend')?.addEventListener('click', ()=>{
       const p = E.previewAscGain();
@@ -1013,10 +1054,9 @@
     const body = document.getElementById('updateModalBody');
     if (!modal || !body) return;
     body.textContent = `${C.APP_VERSION} の主な更新
-- 所持ゴールドがInfinityに達したときに Buy Max が固まる不具合を修正
-- ユニットの最大購入計算に安全な反復上限を追加
-- アップグレードの最大購入計算に安全な反復上限を追加
-- Infinity到達後でも操作不能にならないよう安定性を改善`;
+- Infinity表示を「1.8e308」に統一
+- レガシーツリーSVGのモバイル表示を調整し可読性を改善
+- Abyss専用タブと深淵改造（Abyss Shard消費の恒久強化）を追加`;
     modal.style.display = 'flex';
     document.getElementById('closeUpdateModal')?.addEventListener('click', ()=>{
       modal.style.display = 'none';
