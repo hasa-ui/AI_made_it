@@ -753,3 +753,24 @@
 - [x] セーブ/ロード・インポート経路でInfinity値の保持可否を確認
 - [x] state/uiの最小修正でInfinity/NaNを安全に永続化
 - [x] 検証コマンド実行とログ追記
+
+## Plan (2026-03-12 ゲーム再編 / 上部通貨表示 / モバイルズーム改善 / Abyss修正)
+- [x] 現状調査（Abyssタブ遷移・Abyss機能・レガシーズーム・UI構成）
+- [x] 長大ファイルの再編（保守性改善、既存動作維持）
+- [x] Abyss Shard / Celestial Point のヘッダー常時表示を実装
+- [x] モバイルでのレガシーズーム操作性改善を実装
+- [x] Abyssタブ「Abyss」機能不全の根本原因を修正
+- [x] バージョン/アップデート情報/更新モーダルを更新
+- [x] 検証コマンド実行とログ追記
+
+## Progress Log (2026-03-12 ゲーム再編 / 上部通貨表示 / モバイルズーム改善 / Abyss修正)
+- 着手: index.html / game/ui.js / game/styles.css / game/config.js を確認し、Abyss・ヘッダー通貨表示・レガシーズーム関連の処理経路を特定。
+- 再編: index.html のヘッダー向けインラインCSSを game/styles.css へ移動し、スタイル定義を1箇所に集約（保守性向上）。
+- 仕様追加: ヘッダーに Celestial Point / Abyss Shard の表示枠を追加し、ui.js の同期処理に組み込み。
+- 操作性改善: レガシーツリーのズーム範囲・刻み幅を調整し、モバイル向け2本指ピンチズームを追加。
+- Abyss修正: Abyssリセットボタン（Prestige/Abyssタブ両方）の有効/無効を獲得見込に同期し、機能状態を明示。
+- バージョン更新: APP_VERSION を Ver.1.21.0 に更新し、アップデート履歴と更新モーダルを今回内容へ更新。
+
+## Verify Log (2026-03-12 ゲーム再編 / 上部通貨表示 / モバイルズーム改善 / Abyss修正)
+- `node --check game/ui.js && node --check game/engine.js && node --check game/state.js && node --check game/config.js` : 成功
+- `python -m http.server 4173 --bind 0.0.0.0 --directory /workspace/AI_made_it` + Playwright: ブラウザ起動時にコンテナ環境で Chromium が SIGSEGV となり画面検証/スクリーンショット取得不可

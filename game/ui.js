@@ -63,6 +63,7 @@
     refs.ascGainPreview = document.getElementById('ascGainPreview');
     refs.lastSave = document.getElementById('lastSave');
     refs.abyssShardEl = document.getElementById('abyssShard');
+    refs.abyssHeaderShardEl = document.getElementById('abyssHeaderShard');
     refs.abyssGainEl = document.getElementById('abyssGainPreview');
     refs.abyssTabShardEl = document.getElementById('abyssTabShard');
     refs.abyssTabGainEl = document.getElementById('abyssTabGain');
@@ -80,10 +81,12 @@
   let autoBuyAccumulator = 0;
   let miniGameRuntime = { active:false, round:0, totalRounds:10, score:0, misses:0, streak:0, bestStreak:0, targetLane:0, timerId:null, rule:'normal', roundTimeoutMs:1100 };
   const isMobileViewport = ()=> window.matchMedia && window.matchMedia('(max-width: 900px)').matches;
-  const LEGACY_ZOOM_MIN = 0.75;
-  const LEGACY_ZOOM_MAX = 2.0;
-  const LEGACY_ZOOM_STEP = isMobileViewport() ? 0.1 : 0.2;
+  const LEGACY_ZOOM_MIN = 0.6;
+  const LEGACY_ZOOM_MAX = 2.6;
+  const getLegacyZoomStep = ()=> (isMobileViewport() ? 0.06 : 0.18);
   let legacyZoom = 1;
+  let pinchStartDistance = null;
+  let pinchStartZoom = 1;
 
   function hasAscSpecial(kind){
     const st = E.getState();
@@ -798,10 +801,14 @@
     if (refs.ascGainPreview) refs.ascGainPreview.textContent = fmtNumber(E.previewAscGain());
     if (refs.lastSave) refs.lastSave.textContent = new Date(st.lastSavedAt*1000).toLocaleString();
     if (refs.abyssShardEl) refs.abyssShardEl.textContent = fmtNumber((st.abyss && st.abyss.shards) || 0);
+    if (refs.abyssHeaderShardEl) refs.abyssHeaderShardEl.textContent = fmtNumber((st.abyss && st.abyss.shards) || 0);
     if (refs.abyssGainEl) refs.abyssGainEl.textContent = fmtNumber(E.previewAbyssGain ? E.previewAbyssGain() : 0);
     if (refs.abyssTabShardEl) refs.abyssTabShardEl.textContent = fmtNumber((st.abyss && st.abyss.shards) || 0);
     if (refs.abyssTabGainEl) refs.abyssTabGainEl.textContent = fmtNumber(E.previewAbyssGain ? E.previewAbyssGain() : 0);
     if (refs.abyssResetCountEl) refs.abyssResetCountEl.textContent = fmtNumber((st.abyss && st.abyss.resetCount) || 0);
+    const abyssGain = E.previewAbyssGain ? E.previewAbyssGain() : 0;
+    const abyssBtns = [document.getElementById('doAbyss'), document.getElementById('doAbyssFromTab')];
+    abyssBtns.forEach(btn=>{ if (btn) btn.disabled = abyssGain <= 0; });
     const currentSaveVersionEl = document.getElementById('currentSaveVersionText');
     if (currentSaveVersionEl) currentSaveVersionEl.textContent = String(st.version || '-');
     syncAutoBuyControls();
@@ -850,7 +857,8 @@
       if (refs.totalEl) refs.totalEl.textContent = fmtNumber(st.totalGoldEarned || 0);
       if (refs.legacyEl) refs.legacyEl.textContent = fmtNumber(st.legacy || 0);
       if (refs.ascEl) refs.ascEl.textContent = fmtNumber(st.ascPoints || 0);
-    if (refs.celestialEl) refs.celestialEl.textContent = fmtNumber(st.celestialPoints || 0);
+      if (refs.celestialEl) refs.celestialEl.textContent = fmtNumber(st.celestialPoints || 0);
+      if (refs.abyssHeaderShardEl) refs.abyssHeaderShardEl.textContent = fmtNumber((st.abyss && st.abyss.shards) || 0);
     if (refs.celestialTotalEl) refs.celestialTotalEl.textContent = fmtNumber(st.celestialEarnedTotal || 0);
       if (refs.prestigePreview) refs.prestigePreview.textContent = fmtNumber(E.previewPrestigeGain());
       if (refs.startingGoldPreview) refs.startingGoldPreview.textContent = fmtNumber(E.computeStartingGoldOnPrestige());
@@ -932,6 +940,28 @@
     document.querySelectorAll('.subTabBtn').forEach(btn=>{
       btn.addEventListener('click', (ev)=>{ ev.preventDefault(); showSubTab(btn.dataset.parent, btn.dataset.subtab); if (btn.dataset.parent==='prestige'){ showTab('prestige'); } });
     });
+
+    const svgWrap = document.getElementById('svgWrap');
+    if (svgWrap){
+      const clearPinch = ()=>{ pinchStartDistance = null; };
+      svgWrap.addEventListener('touchstart', (ev)=>{
+        if (ev.touches.length !== 2) return;
+        const dx = ev.touches[0].clientX - ev.touches[1].clientX;
+        const dy = ev.touches[0].clientY - ev.touches[1].clientY;
+        pinchStartDistance = Math.hypot(dx, dy);
+        pinchStartZoom = legacyZoom;
+      }, { passive:true });
+      svgWrap.addEventListener('touchmove', (ev)=>{
+        if (ev.touches.length !== 2 || !pinchStartDistance) return;
+        const dx = ev.touches[0].clientX - ev.touches[1].clientX;
+        const dy = ev.touches[0].clientY - ev.touches[1].clientY;
+        const distance = Math.hypot(dx, dy);
+        if (!distance) return;
+        setLegacyZoom(pinchStartZoom * (distance / pinchStartDistance));
+      }, { passive:true });
+      svgWrap.addEventListener('touchend', clearPinch, { passive:true });
+      svgWrap.addEventListener('touchcancel', clearPinch, { passive:true });
+    }
 
     document.getElementById('doPrestige')?.addEventListener('click', ()=>{
       const p = E.previewPrestigeGain();
@@ -1021,8 +1051,8 @@
       selectedLegacyId = null; for (const id in svgNodeEls) if (svgNodeEls[id]) svgNodeEls[id].classList.remove('selected');
     });
 
-    document.getElementById('legacyZoomIn')?.addEventListener('click', ()=> setLegacyZoom(legacyZoom + LEGACY_ZOOM_STEP));
-    document.getElementById('legacyZoomOut')?.addEventListener('click', ()=> setLegacyZoom(legacyZoom - LEGACY_ZOOM_STEP));
+    document.getElementById('legacyZoomIn')?.addEventListener('click', ()=> setLegacyZoom(legacyZoom + getLegacyZoomStep()));
+    document.getElementById('legacyZoomOut')?.addEventListener('click', ()=> setLegacyZoom(legacyZoom - getLegacyZoomStep()));
     document.getElementById('legacyZoomReset')?.addEventListener('click', ()=> setLegacyZoom(1));
 
     // Save/Load
@@ -1054,9 +1084,10 @@
     const body = document.getElementById('updateModalBody');
     if (!modal || !body) return;
     body.textContent = `${C.APP_VERSION} の主な更新
-- Infinity/NaN を含むセーブデータの保存・読込形式を改善
-- ダウンロード/コピー/インポートでも特殊数値を安全に扱えるよう修正
-- Infinity到達後でも進捗が破損しないよう永続化の安定性を向上`;
+- UIスクリプト構成を整理し、描画/操作の見通しを改善
+- ヘッダーに Celestial Point と Abyss Shard を常時表示
+- レガシーツリーでモバイルのズーム操作（刻み幅・ピンチ）を改善
+- Abyssタブのボタン状態同期と導線を修正`;
     modal.style.display = 'flex';
     document.getElementById('closeUpdateModal')?.addEventListener('click', ()=>{
       modal.style.display = 'none';
