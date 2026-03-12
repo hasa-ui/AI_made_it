@@ -774,3 +774,20 @@
 ## Verify Log (2026-03-12 ゲーム再編 / 上部通貨表示 / モバイルズーム改善 / Abyss修正)
 - `node --check game/ui.js && node --check game/engine.js && node --check game/state.js && node --check game/config.js` : 成功
 - `python -m http.server 4173 --bind 0.0.0.0 --directory /workspace/AI_made_it` + Playwright: ブラウザ起動時にコンテナ環境で Chromium が SIGSEGV となり画面検証/スクリーンショット取得不可
+
+## Plan (2026-03-12 未使用コード整理 / 最適化)
+- [x] エンジン内の未使用コード候補を調査
+- [x] 影響最小で不要コードを削除
+- [x] バージョン表記・アップデート情報・更新モーダルを更新
+- [x] 検証コマンド実行とログ追記
+
+## Progress Log (2026-03-12 未使用コード整理 / 最適化)
+- 調査: `game/engine.js` で未参照の `hasAscSpecialInState` が残存し、同等ロジックの `hasSpecialAscUpgrade` と重複していることを確認。
+- 修正: `game/engine.js` から未使用ヘルパー `hasAscSpecialInState` を削除し、重複コードを解消。
+- バージョン更新: `game/config.js` の `APP_VERSION` を `Ver.1.21.1` に更新。
+- 更新情報反映: `index.html` のアップデート履歴に `Ver.1.21.1` を追加。
+- 更新モーダル反映: `game/ui.js` の初回表示モーダル文言を今回変更内容へ更新。
+
+## Verify Log (2026-03-12 未使用コード整理 / 最適化)
+- `node --check game/engine.js && node --check game/ui.js && node --check game/config.js && node --check game/state.js` : 成功
+- `rg -n "hasAscSpecialInState" game/engine.js` : 該当なし（未使用コード削除確認）

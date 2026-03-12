@@ -255,14 +255,6 @@
     return Math.max(1, Math.floor(cost));
   }
   function upgradeCostNextLevel(def, currentLevel){ return Math.floor(def.baseCost * Math.pow(def.costMult, currentLevel)); }
-  function hasAscSpecialInState(st, kind){
-    for (const def of (C.ASC_UPGRADES||[])){
-      if (def.type !== 'special') continue;
-      if (!def.payload || def.payload.kind !== kind) continue;
-      if ((st.ascOwned[def.id] || 0) > 0) return true;
-    }
-    return false;
-  }
 
   function legacyCapBonusFromAsc(st){
     const src = st || state;

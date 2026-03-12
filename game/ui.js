@@ -1084,10 +1084,8 @@
     const body = document.getElementById('updateModalBody');
     if (!modal || !body) return;
     body.textContent = `${C.APP_VERSION} の主な更新
-- UIスクリプト構成を整理し、描画/操作の見通しを改善
-- ヘッダーに Celestial Point と Abyss Shard を常時表示
-- レガシーツリーでモバイルのズーム操作（刻み幅・ピンチ）を改善
-- Abyssタブのボタン状態同期と導線を修正`;
+- 未使用だった Ascension 特殊判定ヘルパーを削除し、エンジン処理を簡素化
+- 重複ロジックを整理して保守対象を最小化`;
     modal.style.display = 'flex';
     document.getElementById('closeUpdateModal')?.addEventListener('click', ()=>{
       modal.style.display = 'none';
