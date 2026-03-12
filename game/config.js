@@ -5,7 +5,7 @@
   const C = {
     SAVE_KEY: 'inc.split.full.v4',
     SAVE_VERSION: 13,
-    APP_VERSION: 'Ver.1.23.0',
+    APP_VERSION: 'Ver.1.23.1',
     UI_UPDATE_INTERVAL_MS: 50,
     AUTO_SAVE_INTERVAL: 5000,
     MAX_OFFLINE_SECONDS: 60*60*24,
@@ -178,6 +178,7 @@
     },
     {
       id:'ch_dimensional_drain',
+      category:'abyss',
       name:'Challenge 9: Dimensional Drain',
       desc:'Antimatter Dimensions風。所持ユニット総数が増えるほど全体生産が急減（1台ごとに×0.975）。',
       goalTotalGold: 1.0e260,
@@ -186,6 +187,7 @@
     },
     {
       id:'ch_tickspeed_debt',
+      category:'abyss',
       name:'Challenge 10: Tickspeed Debt',
       desc:'Antimatter Dimensions風。ユニット総数が増えるほど購入コスト倍率が累積加速（1 + 総数/700）。',
       goalTotalGold: 1.0e285,
@@ -194,6 +196,7 @@
     },
     {
       id:'ch_abyssal_singularity',
+      category:'abyss',
       name:'Challenge 11: Abyssal Singularity',
       desc:'Antimatter Dimensions風最終試練。最高Tierユニットのみ生産可能、アップグレード不可、開始1G固定。',
       goalTotalGold: 1.8e308,

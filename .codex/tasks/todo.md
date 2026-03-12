@@ -888,3 +888,32 @@
 - [x] Abyss Challenge（Antimatter Dimensions風）を実装
 - [x] バージョン表記・アップデート情報・更新モーダルを更新
 - [x] 検証コマンド実行とスクリーンショット取得、ログ追記
+
+## Plan (2026-03-12 モバイルレガシーツリー操作 / 表記 / Challengeサブタブ)
+- [ ] 影響範囲（レガシーツリー操作・Challenge UI・表示フォーマット）を特定
+- [ ] モバイルでのレガシーツリー操作時にページ全体スクロールを抑制
+- [ ] レガシーツリー内の Infinity 表示を "―" に変更
+- [ ] Abyss Challenge を Challenge タブ内サブタブへ整理
+- [ ] バージョン表記・更新情報・更新モーダルを更新
+- [ ] 検証コマンド実行とログ追記
+
+## Progress Log (2026-03-12 モバイルレガシーツリー操作 / 表記 / Challengeサブタブ)
+- 着手: `game/ui.app.js` `game/styles.css` `game/config.js` `index.html` の関連箇所を確認。
+- 実装: `game/styles.css` の `#svgWrap` に `overscroll-behavior: contain` を追加し、モバイル時 `touch-action:none` へ変更。
+- 実装: `game/ui.app.js` のピンチズーム touch イベントで `preventDefault()` を適用（passive:false）し、レガシーツリー操作時のページスクロールを抑制。
+- 実装: `game/ui.app.js` に `fmtLegacyValue` を追加し、レガシーツリー内（ノード表示・インスペクタ）の Infinity 表示を `―` に統一。
+- 実装: `index.html` の Challenge タブへ「通常Challenge / Abyss Challenge」サブタブを追加し、`game/ui.app.js` で `category:'abyss'` に応じて描画先を分離。
+- 実装: `game/config.js` の Challenge 9-11 に `category:'abyss'` を追加し、`APP_VERSION` を `Ver.1.23.1` に更新。`index.html` と `game/ui.app.js` の更新情報文言を今回内容へ更新。
+
+## Verify Log (2026-03-12 モバイルレガシーツリー操作 / 表記 / Challengeサブタブ)
+- `node --check game/config.js && node --check game/ui.app.js && node --check game/ui.js && node --check game/engine.app.js && node --check game/state.js` : 成功
+- `rg -n "subtab-challenges|category:'abyss'|fmtLegacyValue\(|Ver.1.23.1|touch-action:none|overscroll-behavior:contain" index.html game/config.js game/ui.app.js game/styles.css` : 成功
+- `python -m http.server 4173 --directory /workspace/AI_made_it` + Playwright: モバイル表示で Challenge タブの Abyss Challenge サブタブ表示を確認し、スクリーンショット取得
+
+## Plan 完了状況 (2026-03-12 モバイルレガシーツリー操作 / 表記 / Challengeサブタブ)
+- [x] 影響範囲（レガシーツリー操作・Challenge UI・表示フォーマット）を特定
+- [x] モバイルでのレガシーツリー操作時にページ全体スクロールを抑制
+- [x] レガシーツリー内の Infinity 表示を "―" に変更
+- [x] Abyss Challenge を Challenge タブ内サブタブへ整理
+- [x] バージョン表記・更新情報・更新モーダルを更新
+- [x] 検証コマンド実行とログ追記

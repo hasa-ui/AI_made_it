@@ -10,6 +10,11 @@
   function fmtNumber(n){ return (U.fmtNumber || ((E,n)=>String(n)))(E, n); }
   function showTypedToast(type, msg, timeout=3000){ return (U.showTypedToast || ((E,type,msg)=>{}))(E, type, msg, timeout); }
 
+  function fmtLegacyValue(n){
+    if (!Number.isFinite(n)) return '―';
+    return fmtNumber(n);
+  }
+
   // ---------- DOM キャッシュ ----------
   const refs = {};
   function cacheRefs(){
@@ -199,7 +204,7 @@
         sub.setAttribute('x', def.x - (nodeWidth/2 - 10)); sub.setAttribute('y', def.y + 14); sub.setAttribute('fill','#9fb0c9'); sub.setAttribute('font-size',labelFont);
         const nextCost = E.legacyCostForNextLevel(def, E.getState().legacyNodes[def.id] || 0, E.getState());
         const maxLabel = E.legacyMaxLevel(def, E.getState());
-        sub.textContent = `Lv:${fmtNumber(lvl)}/${maxLabel}  次:${fmtNumber(nextCost)}`; svg.appendChild(sub);
+        sub.textContent = `Lv:${fmtLegacyValue(lvl)}/${fmtLegacyValue(maxLabel)}  次:${fmtLegacyValue(nextCost)}`; svg.appendChild(sub);
 
         const handler = ()=>{ rect.classList.remove('pulse'); void rect.offsetWidth; rect.classList.add('pulse'); selectLegacyNode(def.id); };
         rect.addEventListener('click', handler); title.addEventListener('click', handler); sub.addEventListener('click', handler);
@@ -253,8 +258,8 @@
 
     document.getElementById('ins_name').textContent = def.name;
     document.getElementById('ins_desc').textContent = def.desc || '';
-    document.getElementById('ins_lvl').textContent = fmtNumber(lvl);
-    document.getElementById('ins_max').textContent = E.legacyMaxLevel(def, E.getState());
+    document.getElementById('ins_lvl').textContent = fmtLegacyValue(lvl);
+    document.getElementById('ins_max').textContent = fmtLegacyValue(E.legacyMaxLevel(def, E.getState()));
 
     if (def.prereq && def.prereq.length){
       const names = def.prereq.map(p=>{ const nm = (C.LEGACY_DEFS.find(x=>x.id===p.id)||{}).name || p.id; return `${nm} (Lv${p.minLevel||1})`; });
@@ -262,7 +267,7 @@
     } else document.getElementById('ins_prereq').textContent = 'なし';
 
     const nextCost = E.legacyCostForNextLevel(def, E.getState().legacyNodes[id] || 0, E.getState());
-    document.getElementById('ins_next_cost').textContent = fmtNumber(nextCost);
+    document.getElementById('ins_next_cost').textContent = fmtLegacyValue(nextCost);
 
     const currEff = computeLegacyEffectForLevel(def, lvl);
     const nextEff = computeLegacyEffectForLevel(def, lvl+1);
@@ -539,14 +544,17 @@
 
   function buildChallengesUI(){
     if (built.challenges) return;
-    const wrap = document.getElementById('challengeList');
-    if (!wrap) return;
-    wrap.innerHTML = '';
+    const coreWrap = document.getElementById('challengeList');
+    const abyssWrap = document.getElementById('abyssChallengeList');
+    if (!coreWrap && !abyssWrap) return;
+    if (coreWrap) coreWrap.innerHTML = '';
+    if (abyssWrap) abyssWrap.innerHTML = '';
     for (const ch of (C.CHALLENGES || [])){
       const row = document.createElement('div');
       row.className = 'upgradeRow';
       row.innerHTML = `<div><strong>${ch.name}</strong><div class="muted small">${ch.desc}</div><div class="muted tiny">目標: 累計Gold ${fmtNumber(ch.goalTotalGold || 0)} / 報酬: ${(ch.reward && ch.reward.text) || '恒久ボーナス'}</div></div><div class="row"><button id="chStart-${ch.id}" class="small accent">開始</button><button id="chClaim-${ch.id}" class="small">達成判定</button><button id="chAbandon-${ch.id}" class="small warn">中断</button><span id="chDone-${ch.id}" class="muted small">未クリア</span></div>`;
-      wrap.appendChild(row);
+      const targetWrap = ch.category === 'abyss' ? abyssWrap : coreWrap;
+      if (targetWrap) targetWrap.appendChild(row);
     }
     built.challenges = true;
   }
@@ -657,9 +665,9 @@
     if (selectedLegacyId){
       const def = C.LEGACY_DEFS.find(x=>x.id===selectedLegacyId);
       if (def){
-        document.getElementById('ins_lvl').textContent = fmtNumber(st.legacyNodes[selectedLegacyId]||0);
+        document.getElementById('ins_lvl').textContent = fmtLegacyValue(st.legacyNodes[selectedLegacyId]||0);
         const nxt = E.legacyCostForNextLevel(def, st.legacyNodes[selectedLegacyId]||0);
-        document.getElementById('ins_next_cost').textContent = fmtNumber(nxt);
+        document.getElementById('ins_next_cost').textContent = fmtLegacyValue(nxt);
       }
     }
 
@@ -762,7 +770,7 @@
   function showSubTab(parent, sub){
     const st = E.getState();
     st.settings = st.settings || {};
-    st.settings.activeSubTabs = Object.assign({ prestige:'core', ascension:'core' }, st.settings.activeSubTabs || {});
+    st.settings.activeSubTabs = Object.assign({ prestige:'core', ascension:'core', challenges:'core' }, st.settings.activeSubTabs || {});
     const active = sub || st.settings.activeSubTabs[parent] || 'core';
     document.querySelectorAll(`.subTabBtn[data-parent="${parent}"]`).forEach(btn=>{
       btn.classList.toggle('active', btn.dataset.subtab === active);
@@ -800,7 +808,7 @@
     if (name === 'play'){ buildUnitsUI(); buildUpgradesUI(); }
     if (name === 'prestige'){ showSubTab('prestige'); }
     if (name === 'ascension'){ buildAscShop(); buildCelestialShop(); showSubTab('ascension'); }
-    if (name === 'challenges') buildChallengesUI();
+    if (name === 'challenges'){ buildChallengesUI(); showSubTab('challenges'); }
     if (name === 'abyss') buildAbyssUI();
 
     try { const st = E.getState(); st.settings = st.settings || {}; st.settings.activeTab = name; SM.saveState(st); } catch(e){}
@@ -820,19 +828,21 @@
       const clearPinch = ()=>{ pinchStartDistance = null; };
       svgWrap.addEventListener('touchstart', (ev)=>{
         if (ev.touches.length !== 2) return;
+        ev.preventDefault();
         const dx = ev.touches[0].clientX - ev.touches[1].clientX;
         const dy = ev.touches[0].clientY - ev.touches[1].clientY;
         pinchStartDistance = Math.hypot(dx, dy);
         pinchStartZoom = legacyZoom;
-      }, { passive:true });
+      }, { passive:false });
       svgWrap.addEventListener('touchmove', (ev)=>{
         if (ev.touches.length !== 2 || !pinchStartDistance) return;
+        ev.preventDefault();
         const dx = ev.touches[0].clientX - ev.touches[1].clientX;
         const dy = ev.touches[0].clientY - ev.touches[1].clientY;
         const distance = Math.hypot(dx, dy);
         if (!distance) return;
         setLegacyZoom(pinchStartZoom * (distance / pinchStartDistance));
-      }, { passive:true });
+      }, { passive:false });
       svgWrap.addEventListener('touchend', clearPinch, { passive:true });
       svgWrap.addEventListener('touchcancel', clearPinch, { passive:true });
     }
@@ -946,9 +956,9 @@
     const body = document.getElementById('updateModalBody');
     if (!modal || !body) return;
     body.textContent = `${C.APP_VERSION} の主な更新
-- Abyss到達までを想定した新Challenge 3種（Dimensional Drain / Tickspeed Debt / Abyssal Singularity）を追加
-- Antimatter Dimensions風ギミック（ユニット数デバフ・コスト加速・最高Tierのみ生産）をChallenge効果として実装
-- Challenge全11種クリア向けの新実績を追加`;
+- モバイルでレガシーツリーを操作した際にページ全体がスクロールする問題を修正
+- レガシーツリー内の Infinity 表示を「―」に変更
+- Challengeタブに「通常Challenge / Abyss Challenge」サブタブを追加`;
     modal.style.display = 'flex';
     document.getElementById('closeUpdateModal')?.addEventListener('click', ()=>{
       modal.style.display = 'none';

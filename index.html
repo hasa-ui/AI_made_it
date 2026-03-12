@@ -242,7 +242,16 @@
         <div class="card">
           <h3>Challenge (制約周回)</h3>
           <p class="muted small">Antimatter Dimensions風の「制約付きラン」です。開始時に周回をリセットし、目標累計Goldを達成すると恒久報酬を得られます。</p>
-          <div id="challengeList" style="margin-top:12px;"></div>
+          <div class="subTabs" style="margin-top:8px;">
+            <button class="subTabBtn active" data-parent="challenges" data-subtab="core">通常Challenge</button>
+            <button class="subTabBtn" data-parent="challenges" data-subtab="abyss">Abyss Challenge</button>
+          </div>
+          <div id="subtab-challenges-core" class="subTabPane">
+            <div id="challengeList" style="margin-top:12px;"></div>
+          </div>
+          <div id="subtab-challenges-abyss" class="subTabPane" style="display:none;">
+            <div id="abyssChallengeList" style="margin-top:12px;"></div>
+          </div>
           <pre id="challengeStatus" class="muted small previewbox" style="margin-top:10px;">Challenge未挑戦</pre>
         </div>
       </div>
@@ -332,6 +341,7 @@
           <h3>アップデート情報</h3>
           <p class="small muted" style="margin-top:4px;">このゲームは現在<strong>アルファ版</strong>です。仕様やバランスは今後も変更されます。</p>
           <ul class="small muted" style="margin-top:8px; padding-left:20px; line-height:1.8;">
+            <li><strong>Ver.1.23.1</strong>：モバイルのレガシーツリー操作時にページ全体が動く問題を修正し、レガシーツリー内の上限/到達不能値を「―」表示へ変更。Challengeタブに「Abyss Challenge」サブタブを追加。</li>
             <li><strong>Ver.1.23.0</strong>：Abyss到達まで版のAbyss Challengeを3種追加（AD風ギミック: ユニット数デバフ/ユニット数コスト加速/最高Tierのみ生産）。あわせて全11Challenge制覇実績を追加。</li>
             <li><strong>Ver.1.22.2</strong>：engine.app.js からChallenge進行処理を分離し、ui.app.js からAscensionミニゲーム制御を分離して機能単位の保守性を向上。</li>
             <li><strong>Ver.1.22.1</strong>：engine/uiの共通処理を helper ファイルへ責務分割し、実機能単位で保守しやすい構成に再整理。</li>
