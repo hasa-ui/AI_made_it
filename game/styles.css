@@ -86,3 +86,15 @@ button:not(:disabled):active { filter: brightness(0.94); }
 .subTabBtn.active{background:#374151;border-color:#9ca3af}
 .updateModal{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:9999}
 .updateModalCard{background:#111827;border:1px solid #4b5563;padding:14px;max-width:720px;width:min(92vw,720px);max-height:85vh;overflow:auto}
+
+
+#mainHeader{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;position:sticky;top:0;z-index:50;background:rgba(18,18,18,0.92);backdrop-filter:blur(4px);padding:8px 0}
+#mainTabs{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.tabBtn{padding:8px 12px;border-radius:2px;background:#2b2b2b;color:#e5e7eb;border:1px solid #4b5563;cursor:pointer;font-weight:bold;letter-spacing:.03em}
+.tabBtn.active{background:#3f3f46;color:#fff;transform:none;box-shadow:inset 0 0 0 1px #d1d5db;border-color:#9ca3af}
+.tabPane{display:none}
+.statusBar{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.statusItem{background:#202020;padding:8px 12px;border-radius:2px;min-width:120px;text-align:left;border:1px solid #3f3f46}
+.muted.small.inline{display:inline-block;margin-left:6px;color:var(--muted);font-size:.9rem}
+#headerRight{display:flex;gap:8px;align-items:center}
+@media (max-width:900px){#mainHeader{flex-direction:column;align-items:stretch}#mainTabs{order:2}}

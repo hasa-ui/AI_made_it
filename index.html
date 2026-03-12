@@ -5,18 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>インクリメンタル — 完全版（タブ・設定・Inspector組込）</title>
   <link rel="stylesheet" href="game/styles.css">
-  <style>
-    #mainHeader { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px; }
-    #mainTabs { display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
-    .tabBtn { padding:8px 12px; border-radius:2px; background:#2b2b2b; color:#e5e7eb; border:1px solid #4b5563; cursor:pointer; font-weight:bold; letter-spacing:0.03em; }
-    .tabBtn.active { background:#3f3f46; color:#fff; transform:none; box-shadow:inset 0 0 0 1px #d1d5db; border-color:#9ca3af; }
-    .tabPane{ display:none; }
-    .statusBar{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
-    .statusItem{ background:#202020; padding:8px 12px; border-radius:2px; min-width:120px; text-align:left; border:1px solid #3f3f46; }
-    .muted.small.inline{ display:inline-block; margin-left:6px; color:var(--muted); font-size:0.9rem; }
-    #headerRight{ display:flex; gap:8px; align-items:center; }
-    @media (max-width:900px){ #mainHeader{flex-direction:column; align-items:stretch} #mainTabs{order:2} }
-  </style>
 </head>
 <body>
   <header id="mainHeader">
@@ -50,6 +38,14 @@
         <div class="statusItem">
           <div class="muted small">Ascension (AP)</div>
           <div id="ascAvail" class="muted small inline" style="color:#f472b6; font-weight:bold;">0</div>
+        </div>
+        <div class="statusItem">
+          <div class="muted small">Celestial Point</div>
+          <div id="celestialAvail" class="muted small inline" style="color:#a78bfa; font-weight:bold;">0</div>
+        </div>
+        <div class="statusItem">
+          <div class="muted small">Abyss Shard</div>
+          <div id="abyssHeaderShard" class="muted small inline" style="color:#60a5fa; font-weight:bold;">0</div>
         </div>
       </div>
     </div>
@@ -336,6 +332,7 @@
           <h3>アップデート情報</h3>
           <p class="small muted" style="margin-top:4px;">このゲームは現在<strong>アルファ版</strong>です。仕様やバランスは今後も変更されます。</p>
           <ul class="small muted" style="margin-top:8px; padding-left:20px; line-height:1.8;">
+            <li><strong>Ver.1.21.0</strong>：UIコードを再編して保守性を改善。ヘッダーにCelestial Point/Abyss Shardを常時表示。レガシーツリーのモバイルズーム操作（刻み幅・ピンチ）を改善。Abyssタブの操作導線と状態同期を修正。</li>
             <li><strong>Ver.1.20.1</strong>：Infinity/NaNを含むセーブデータの保存・読込形式を改善。ダウンロード/コピー/インポートでも特殊数値を安全に扱えるよう修正し、Infinity到達後の進捗破損を防止。</li>
             <li><strong>Ver.1.20.0</strong>：Infinity表示を「1.8e308」に統一。レガシーツリーSVGのモバイル表示を改善。Abyss専用タブと深淵改造システムを追加。</li>
             <li><strong>Ver.1.19.2</strong>：所持ゴールドがInfinity到達時に「Buy Max」計算ループが終了せず進行不能になる不具合を修正（ユニット/アップグレードの最大購入計算に安全上限を追加）。</li>
