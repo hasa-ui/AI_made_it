@@ -53,89 +53,26 @@
   function hasAscSpecial(kind){ return (U.hasAscSpecial || ((C,E,k)=>false))(C, E, kind); }
   function isAscShopFullyPurchased(st){ return (U.isAscShopFullyPurchased || ((C,E,st)=>false))(C, E, st); }
   function formatBonusText(b){ return (U.formatBonusText || (x=>'恒久ボーナス'))(b); }
-
-  function ensureMiniGameState(st){
-    st.miniGame = Object.assign({ plays:0, bestScore:0, lastScore:0, lastMisses:0, perfectRuns:0, bestStreak:0 }, st.miniGame || {});
-  }
+  const miniGameController = (window.UIMiniGame && window.UIMiniGame.create)
+    ? window.UIMiniGame.create({
+        E,
+        SM,
+        fmtNumber,
+        showTypedToast,
+        isAscShopFullyPurchased,
+        syncUIAfterChange: ()=>syncUIAfterChange(),
+        checkAchievementsAfterAction: ()=>checkAchievementsAfterAction()
+      })
+    : null;
 
   function renderMiniGameState(){
-    const st = E.getState();
-    ensureMiniGameState(st);
-    const card = document.getElementById('ascMiniGameCard');
-    const summary = document.getElementById('miniGameSummary');
-    const status = document.getElementById('miniGameStatus');
-    const startBtn = document.getElementById('miniGameStart');
-    const laneButtons = document.querySelectorAll('.miniLaneBtn');
-    if (!card || !summary || !status || !startBtn) return;
-
-    const unlocked = isAscShopFullyPurchased(st);
-    card.style.display = unlocked ? 'block' : 'none';
-    if (!unlocked) return;
-
-    summary.textContent = `ベスト: ${fmtNumber(st.miniGame.bestScore)} / 挑戦回数: ${fmtNumber(st.miniGame.plays)} / 最高連鎖: ${fmtNumber(st.miniGame.bestStreak || 0)}`;
-    if (!miniGameRuntime.active){
-      status.textContent = `待機中\n前回スコア: ${fmtNumber(st.miniGame.lastScore)}\n前回ミス: ${fmtNumber(st.miniGame.lastMisses)}\n完全勝利: ${fmtNumber(st.miniGame.perfectRuns)} 回`;
-    }
-    startBtn.disabled = miniGameRuntime.active || (st.ascPoints || 0) < 1;
-    laneButtons.forEach((btn, idx)=>{
-      btn.disabled = !miniGameRuntime.active;
-      const isHint = miniGameRuntime.active && miniGameRuntime.rule === 'normal' && idx === miniGameRuntime.targetLane;
-      btn.classList.toggle('accent', isHint);
-      btn.classList.toggle('warn', miniGameRuntime.active && miniGameRuntime.rule === 'inverse' && idx === miniGameRuntime.targetLane);
-      btn.classList.toggle('alt', !isHint && !(miniGameRuntime.active && miniGameRuntime.rule === 'inverse' && idx === miniGameRuntime.targetLane));
-    });
-  }
-
-  function finishMiniGame(){
-    const st = E.getState();
-    ensureMiniGameState(st);
-    miniGameRuntime.active = false;
-    if (miniGameRuntime.timerId) clearTimeout(miniGameRuntime.timerId);
-    miniGameRuntime.timerId = null;
-
-    const reward = Math.min(6, Math.floor(miniGameRuntime.score / 110));
-    st.ascPoints += reward;
-    st.miniGame.plays += 1;
-    st.miniGame.lastScore = miniGameRuntime.score;
-    st.miniGame.lastMisses = miniGameRuntime.misses;
-    st.miniGame.bestScore = Math.max(st.miniGame.bestScore, miniGameRuntime.score);
-    st.miniGame.bestStreak = Math.max(st.miniGame.bestStreak || 0, miniGameRuntime.bestStreak || 0);
-    if (miniGameRuntime.misses === 0 && miniGameRuntime.score >= 140) st.miniGame.perfectRuns += 1;
-    SM.saveState(st);
-    syncUIAfterChange();
-    checkAchievementsAfterAction();
-    showTypedToast('general', `ミニゲーム終了: スコア ${fmtNumber(miniGameRuntime.score)} / AP +${fmtNumber(reward)}`);
-    renderMiniGameState();
-  }
-
-  function runMiniGameRound(){
-    if (!miniGameRuntime.active) return;
-    if (miniGameRuntime.round >= miniGameRuntime.totalRounds){ finishMiniGame(); return; }
-    miniGameRuntime.targetLane = Math.floor(Math.random() * 4);
-    miniGameRuntime.round += 1;
-    miniGameRuntime.rule = (miniGameRuntime.round % 5 === 0) ? 'inverse' : 'normal';
-    miniGameRuntime.roundTimeoutMs = Math.max(620, 1200 - (miniGameRuntime.round * 45));
-    const status = document.getElementById('miniGameStatus');
-    if (status) status.textContent = `ラウンド ${miniGameRuntime.round}/${miniGameRuntime.totalRounds} (${miniGameRuntime.rule === 'inverse' ? '反転' : '通常'})\nスコア: ${fmtNumber(miniGameRuntime.score)}\n連続正解: ${fmtNumber(miniGameRuntime.streak)}\nミス: ${fmtNumber(miniGameRuntime.misses)}\n制限時間: ${fmtNumber(miniGameRuntime.roundTimeoutMs)}ms`;
-    renderMiniGameState();
-    miniGameRuntime.timerId = setTimeout(()=>{
-      if (!miniGameRuntime.active) return;
-      miniGameRuntime.misses += 1;
-      miniGameRuntime.streak = 0;
-      runMiniGameRound();
-    }, miniGameRuntime.roundTimeoutMs);
+    if (!miniGameController) return;
+    miniGameController.render();
   }
 
   function startMiniGame(){
-    const st = E.getState();
-    ensureMiniGameState(st);
-    if (!isAscShopFullyPurchased(st)){ showTypedToast('general', 'Ascension Shop 全購入後に解放されます'); return; }
-    if ((st.ascPoints || 0) < 1){ showTypedToast('general', '開始には AP が1必要です'); return; }
-    st.ascPoints -= 1;
-    miniGameRuntime = { active:true, round:0, totalRounds:10, score:0, misses:0, streak:0, bestStreak:0, targetLane:0, timerId:null, rule:'normal', roundTimeoutMs:1100 };
-    SM.saveState(st);
-    syncUIAfterChange();
-    runMiniGameRound();
+    if (!miniGameController) return;
+    miniGameController.start();
   }
 
   // ---------- UI 生成関数 ----------
@@ -926,21 +863,9 @@
     document.getElementById('miniGameStart')?.addEventListener('click', ()=> startMiniGame());
     document.querySelectorAll('.miniLaneBtn').forEach(btn=>{
       btn.addEventListener('click', ()=>{
-        if (!miniGameRuntime.active) return;
+        if (!miniGameController) return;
         const lane = Number(btn.dataset.lane || -1);
-        if (miniGameRuntime.timerId) clearTimeout(miniGameRuntime.timerId);
-        const expectedLane = miniGameRuntime.rule === 'inverse'
-          ? ((miniGameRuntime.targetLane + 2) % 4)
-          : miniGameRuntime.targetLane;
-        if (lane === expectedLane){
-          miniGameRuntime.streak += 1;
-          miniGameRuntime.bestStreak = Math.max(miniGameRuntime.bestStreak, miniGameRuntime.streak);
-          miniGameRuntime.score += 16 + (miniGameRuntime.streak * 4);
-        } else {
-          miniGameRuntime.streak = 0;
-          miniGameRuntime.misses += 1;
-        }
-        runMiniGameRound();
+        miniGameController.handleLaneClick(lane);
       });
     });
 
@@ -1018,9 +943,9 @@
     const body = document.getElementById('updateModalBody');
     if (!modal || !body) return;
     body.textContent = `${C.APP_VERSION} の主な更新
-- engine.helpers.js を追加し、計算/進行系ヘルパーを engine本体から分離
-- ui.helpers.js を追加し、表示/通知/判定ヘルパーを ui本体から分離
-- index.html の読み込み順を更新し、分割後も既存挙動を維持`;
+- engine.challenge.js を追加し、Challenge進行アクションを engine.app.js から分離
+- ui.minigame.js を追加し、Ascensionミニゲーム制御を ui.app.js から分離
+- 分割モジュールの読み込み順を更新し、既存挙動を維持`;
     modal.style.display = 'flex';
     document.getElementById('closeUpdateModal')?.addEventListener('click', ()=>{
       modal.style.display = 'none';

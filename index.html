@@ -332,6 +332,7 @@
           <h3>アップデート情報</h3>
           <p class="small muted" style="margin-top:4px;">このゲームは現在<strong>アルファ版</strong>です。仕様やバランスは今後も変更されます。</p>
           <ul class="small muted" style="margin-top:8px; padding-left:20px; line-height:1.8;">
+            <li><strong>Ver.1.22.2</strong>：engine.app.js からChallenge進行処理を分離し、ui.app.js からAscensionミニゲーム制御を分離して機能単位の保守性を向上。</li>
             <li><strong>Ver.1.22.1</strong>：engine/uiの共通処理を helper ファイルへ責務分割し、実機能単位で保守しやすい構成に再整理。</li>
             <li><strong>Ver.1.22.0</strong>：長大化していた engine.js / ui.js を分割し、読み込み構成を整理して保守性を改善。</li>
             <li><strong>Ver.1.21.1</strong>：未使用の Ascension 特殊判定ヘルパーを削除し、エンジン内の重複ロジックを整理して保守性を改善。</li>
@@ -417,9 +418,11 @@
   <script src="game/config.js"></script>
   <script src="game/state.js"></script>
   <script src="game/engine.helpers.js"></script>
+  <script src="game/engine.challenge.js"></script>
   <script src="game/engine.app.js"></script>
   <script src="game/engine.js"></script>
   <script src="game/ui.helpers.js"></script>
+  <script src="game/ui.minigame.js"></script>
   <script src="game/ui.app.js"></script>
   <script src="game/ui.js"></script>
 </body>

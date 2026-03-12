@@ -456,6 +456,18 @@
   function calcCelestialGain(ascGain){ return (H.calcCelestialGain || ((u,a)=>0))(getUnlockedCelestialLayerCount(state), ascGain); }
   function abyssUpgradeCost(def, lvl){ return (H.abyssUpgradeCost || ((d,l)=>1))(def, lvl); }
 
+  const challengeActions = (window.EngineChallengeActions && window.EngineChallengeActions.create)
+    ? window.EngineChallengeActions.create({
+        C,
+        stateRef: { get: ()=>state },
+        nowSec,
+        computeStartingGoldOnPrestige,
+        invalidateAggCache,
+        recalcAndCacheGPS,
+        getActiveChallengeDef
+      })
+    : null;
+
   function previewPrestigeGain(){
     return Math.max(0, (H.calcPrestigeGainFromTotal || ((C,total)=>0))(C, state.totalGoldEarned || 0) - (state.prestigeEarnedTotal || 0));
   }
@@ -621,58 +633,18 @@
 
 
   function startChallengeInternal(id){
-    const ch = (C.CHALLENGES || []).find(x=>x.id===id);
-    if (!ch) return { ok:false, reason:'not_found' };
-    state.challenge = state.challenge || { activeId:null, completed:{}, bestSec:{}, ascendedInChallenge:0, savedTotalGold:null };
-    if (state.challenge.activeId) return { ok:false, reason:'already_active' };
-    state.challenge.savedTotalGold = state.totalGoldEarned || 0;
-    state.challenge.activeId = id;
-    state.units = (C.UNIT_DEFS || []).reduce((a,u)=>(a[u.id]=0,a),{});
-    state.upgrades = (C.UPGRADE_DEFS || []).reduce((a,u)=>(a[u.id]=0,a),{});
-    state.legacy = 0;
-    state.prestigeEarnedTotal = 0;
-    state.totalGoldEarned = 0;
-    invalidateAggCache();
-    state.gold = computeStartingGoldOnPrestige();
-    state.runStats = state.runStats || {};
-    const now = nowSec();
-    state.runStats.currentRunStartedAt = now;
-    state.runStats.currentRunPeakGold = state.gold;
-    state.runStats.currentRunUnitTypes = {};
-    state.runStats.currentRunUpgradeBuys = 0;
-    recalcAndCacheGPS(state);
-    return { ok:true, id };
+    if (!challengeActions) return { ok:false, reason:'unavailable' };
+    return challengeActions.startChallengeInternal(id);
   }
 
   function abandonChallengeInternal(){
-    state.challenge = state.challenge || { activeId:null, completed:{}, bestSec:{}, ascendedInChallenge:0, savedTotalGold:null };
-    const restoredTotalGold = state.challenge.savedTotalGold;
-    state.challenge.activeId = null;
-    if (typeof restoredTotalGold === 'number') state.totalGoldEarned = restoredTotalGold;
-    state.challenge.savedTotalGold = null;
-    invalidateAggCache(); recalcAndCacheGPS(state);
-    return { ok:true };
+    if (!challengeActions) return { ok:false, reason:'unavailable' };
+    return challengeActions.abandonChallengeInternal();
   }
 
   function tryCompleteChallengeInternal(){
-    const ch = getActiveChallengeDef(state);
-    if (!ch) return { ok:false, reason:'no_active' };
-    const goal = ch.goalTotalGold || Infinity;
-    if ((state.totalGoldEarned || 0) < goal) return { ok:false, reason:'goal' };
-    state.challenge = state.challenge || { activeId:null, completed:{}, bestSec:{}, ascendedInChallenge:0, savedTotalGold:null };
-    state.challenge.completed = state.challenge.completed || {};
-    state.challenge.bestSec = state.challenge.bestSec || {};
-    const now = nowSec();
-    const sec = Math.max(0, Math.floor(now - (state.runStats && state.runStats.currentRunStartedAt || now)));
-    const prev = state.challenge.bestSec[ch.id] ?? Infinity;
-    state.challenge.bestSec[ch.id] = Math.min(prev, sec);
-    state.challenge.completed[ch.id] = true;
-    const restoredTotalGold = state.challenge.savedTotalGold;
-    state.challenge.activeId = null;
-    if (typeof restoredTotalGold === 'number') state.totalGoldEarned = restoredTotalGold;
-    state.challenge.savedTotalGold = null;
-    invalidateAggCache(); recalcAndCacheGPS(state);
-    return { ok:true, id:ch.id, firstClear: !Number.isFinite(prev), sec };
+    if (!challengeActions) return { ok:false, reason:'unavailable' };
+    return challengeActions.tryCompleteChallengeInternal();
   }
 
 

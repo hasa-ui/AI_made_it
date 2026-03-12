@@ -840,3 +840,28 @@
 - [x] ui機能の一部を責務別ファイルへ抽出して参照化
 - [x] バージョン表記・アップデート情報・更新モーダルを更新
 - [x] 検証コマンド実行とログ追記
+
+## Plan (2026-03-12 ui.app.js / engine.app.js 追加分割)
+- [ ] 現状依存を確認し、抽出対象機能（engine/ui）を確定
+- [ ] 新規分割ファイルへ機能を移設し、app本体から参照化
+- [ ] バージョン表記・アップデート情報・更新モーダルを更新
+- [ ] 検証コマンド実行とログ追記
+
+## Progress Log (2026-03-12 ui.app.js / engine.app.js 追加分割)
+- 着手: `game/engine.app.js` と `game/ui.app.js` の関数依存を調査し、影響最小で切り出せる機能単位を選定中。
+- 分割: `game/engine.challenge.js` を新設し、Challengeの開始/中断/クリア処理を `engine.app.js` から移設。
+- 分割: `game/ui.minigame.js` を新設し、Ascensionミニゲームの状態管理・進行・入力処理を `ui.app.js` から移設。
+- 参照化: `game/engine.app.js` は `EngineChallengeActions.create(...)` を通して Challenge 処理を委譲する構成に変更。
+- 参照化: `game/ui.app.js` は `UIMiniGame.create(...)` を通してミニゲーム処理を委譲する構成に変更。
+- 読込順更新: `index.html` に `engine.challenge.js` / `ui.minigame.js` の script を追加。
+- バージョン更新: `game/config.js` を `Ver.1.22.2` に更新し、`index.html` のアップデート履歴と `game/ui.app.js` の更新モーダル文言を今回内容に更新。
+
+## Verify Log (2026-03-12 ui.app.js / engine.app.js 追加分割)
+- `node --check game/engine.challenge.js && node --check game/engine.app.js && node --check game/engine.js && node --check game/ui.minigame.js && node --check game/ui.app.js && node --check game/ui.js && node --check game/config.js && node --check game/state.js` : 成功
+- `rg -n "EngineChallengeActions|UIMiniGame|Ver.1.22.2|engine.challenge.js|ui.minigame.js" game index.html` : 成功（分割参照とバージョン反映を確認）
+
+## Plan 完了状況 (2026-03-12 ui.app.js / engine.app.js 追加分割)
+- [x] 現状依存を確認し、抽出対象機能（engine/ui）を確定
+- [x] 新規分割ファイルへ機能を移設し、app本体から参照化
+- [x] バージョン表記・アップデート情報・更新モーダルを更新
+- [x] 検証コマンド実行とログ追記
