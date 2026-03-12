@@ -917,3 +917,19 @@
 - [x] Abyss Challenge を Challenge タブ内サブタブへ整理
 - [x] バージョン表記・更新情報・更新モーダルを更新
 - [x] 検証コマンド実行とログ追記
+
+## Plan (2026-03-12 Abyssチャレンジ目標ゴールド修正)
+- [x] Abyssチャレンジ目標値の定義箇所を特定
+- [x] Challenge 11 の目標ゴールドを1.8e308想定基準へ統一
+- [x] バージョン表記とアップデート情報（タブ/モーダル）を更新
+- [x] 検証ログ記録
+
+## Progress Log (2026-03-12 Abyssチャレンジ目標ゴールド修正)
+- 着手: game/config.js の Challenge 定義を確認し、`1.8e308` がJavaScript数値で Infinity 扱いとなるため達成判定が実質不可能になる経路を確認。
+- game/config.js: `ch_abyssal_singularity.goalTotalGold` を `C.ABYSS_RESET_GOAL` 参照に変更し、Abyss到達ラインと同一基準へ統一。APP_VERSION を `Ver.1.23.2` に更新。
+- index.html: アップデート情報に Ver.1.23.2 の修正内容を追記。
+- game/ui.app.js: アップデートモーダル文言を Ver.1.23.2 の内容へ差し替え。
+
+## Verify Log (2026-03-12 Abyssチャレンジ目標ゴールド修正)
+- `node --check game/config.js && node --check game/ui.app.js && node --check game/engine.challenge.js && node --check game/engine.app.js && node --check game/state.js` : 成功
+- `rg -n "APP_VERSION|ch_abyssal_singularity|goalTotalGold: C.ABYSS_RESET_GOAL|Ver.1.23.2" game/config.js index.html game/ui.app.js` : 成功

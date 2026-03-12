@@ -956,9 +956,8 @@
     const body = document.getElementById('updateModalBody');
     if (!modal || !body) return;
     body.textContent = `${C.APP_VERSION} の主な更新
-- モバイルでレガシーツリーを操作した際にページ全体がスクロールする問題を修正
-- レガシーツリー内の Infinity 表示を「―」に変更
-- Challengeタブに「通常Challenge / Abyss Challenge」サブタブを追加`;
+- Abyss Challenge最終試練（Challenge 11）の目標ゴールド判定を1.8e308想定ラインへ統一
+- 目標値がInfinity化して達成不能になる不具合を修正`;
     modal.style.display = 'flex';
     document.getElementById('closeUpdateModal')?.addEventListener('click', ()=>{
       modal.style.display = 'none';

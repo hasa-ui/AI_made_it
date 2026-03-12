@@ -5,7 +5,7 @@
   const C = {
     SAVE_KEY: 'inc.split.full.v4',
     SAVE_VERSION: 13,
-    APP_VERSION: 'Ver.1.23.1',
+    APP_VERSION: 'Ver.1.23.2',
     UI_UPDATE_INTERVAL_MS: 50,
     AUTO_SAVE_INTERVAL: 5000,
     MAX_OFFLINE_SECONDS: 60*60*24,
@@ -199,7 +199,7 @@
       category:'abyss',
       name:'Challenge 11: Abyssal Singularity',
       desc:'Antimatter Dimensions風最終試練。最高Tierユニットのみ生産可能、アップグレード不可、開始1G固定。',
-      goalTotalGold: 1.8e308,
+      goalTotalGold: C.ABYSS_RESET_GOAL,
       effects:{ onlyHighestUnitProduces:true, disableUpgrades:true, forceStartGold:1 },
       reward:{ type:'globalMult', mult:2.2, text:'恒久: 全体 ×2.20' }
     }
