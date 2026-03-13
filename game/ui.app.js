@@ -87,17 +87,22 @@
     container.innerHTML = '';
     for (const def of C.UNIT_DEFS){
       const div = document.createElement('div'); div.className='unit';
-      div.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0">
-        <div><strong>${def.name}</strong><div class="muted small">${def.desc || ''}</div></div>
-        <div style="text-align:right">
-          <div class="muted small">所持: <span id="owned-${def.id}">0</span> (<span id="contrib-${def.id}">0%</span>)</div>
-          <div class="row" style="margin-top:6px">
+      div.innerHTML = `<div class="unitRow">
+        <div>
+          <strong>${def.name}</strong>
+          <div class="muted small">${def.desc || ''}</div>
+        </div>
+        <div class="unitStats">
+          <div class="metricLine"><span class="metricLabel">所持</span><span id="owned-${def.id}" class="metricValue">0</span></div>
+          <div class="metricLine"><span class="metricLabel">生産寄与</span><span id="contrib-${def.id}" class="metricValue">0%</span></div>
+          <div class="metricLine"><span class="metricLabel">次価格</span><span id="cost-${def.id}" class="metricValue">0</span></div>
+          <div class="row" style="margin-top:4px">
             <button id="buy1-${def.id}">+1</button>
             <button id="buy10-${def.id}" class="small">+10</button>
             <button id="buyMax-${def.id}" class="small">Buy Max</button>
           </div>
-          <div class="muted small" style="margin-top:6px">次価格: <span id="cost-${def.id}">0</span></div>
-        </div></div>`;
+        </div>
+      </div>`;
       container.appendChild(div);
 
       unitButtons[def.id] = {
@@ -119,13 +124,14 @@
     container.innerHTML = '';
     for (const def of C.UPGRADE_DEFS){
       const div = document.createElement('div'); div.className='upg';
-      div.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0">
+      div.innerHTML = `<div class="upgRow">
         <div><strong>${def.name}</strong><div class="muted small">${def.desc||''}</div></div>
-        <div style="text-align:right">
-          <div class="muted small">Lv: <span id="uplvl-${def.id}">0</span></div>
-          <div style="margin-top:6px"><button id="buyUp-${def.id}">Buy Lv+</button><button id="buyMaxUp-${def.id}" class="small">Buy Max</button></div>
-          <div class="muted small" style="margin-top:6px">次価格: <span id="upCost-${def.id}">0</span></div>
-        </div></div>`;
+        <div class="upgStats">
+          <div class="metricLine"><span class="metricLabel">Lv</span><span id="uplvl-${def.id}" class="metricValue">0</span></div>
+          <div class="metricLine"><span class="metricLabel">次価格</span><span id="upCost-${def.id}" class="metricValue">0</span></div>
+          <div class="row" style="margin-top:4px"><button id="buyUp-${def.id}">Buy Lv+</button><button id="buyMaxUp-${def.id}" class="small">Buy Max</button></div>
+        </div>
+      </div>`;
       container.appendChild(div);
 
       upgradeButtons[def.id] = { buy: document.getElementById(`buyUp-${def.id}`), buyMax: document.getElementById(`buyMaxUp-${def.id}`), lvlEl: document.getElementById(`uplvl-${def.id}`), costEl: document.getElementById(`upCost-${def.id}`), nextCost: Infinity };
@@ -956,8 +962,9 @@
     const body = document.getElementById('updateModalBody');
     if (!modal || !body) return;
     body.textContent = `${C.APP_VERSION} の主な更新
-- Abyss Challenge最終試練（Challenge 11）の目標ゴールド判定を1.8e308想定ラインへ統一
-- 目標値がInfinity化して達成不能になる不具合を修正`;
+- プレイ画面を「最初に見る → 比較する → 行動する」の導線で再設計
+- ヘッダーの色に役割を付与（ブランド色/通貨色/状態色）し、意味の重複を整理
+- ユニット・アップグレードを比較情報優先レイアウトへ変更し、長文や欠損表示でも崩れにくい構成へ改善`;
     modal.style.display = 'flex';
     document.getElementById('closeUpdateModal')?.addEventListener('click', ()=>{
       modal.style.display = 'none';
