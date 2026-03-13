@@ -933,3 +933,22 @@
 ## Verify Log (2026-03-12 Abyssチャレンジ目標ゴールド修正)
 - `node --check game/config.js && node --check game/ui.app.js && node --check game/engine.challenge.js && node --check game/engine.app.js && node --check game/state.js` : 成功
 - `rg -n "APP_VERSION|ch_abyssal_singularity|goalTotalGold: C.ABYSS_RESET_GOAL|Ver.1.23.2" game/config.js index.html game/ui.app.js` : 成功
+
+## Plan (2026-03-13 UI情報設計リデザイン)
+- [x] 現行UI構造と情報優先順位の課題を整理
+- [x] 主役要素（所持金/GPS）と視線導線（見る→比較→行動）をUIへ反映
+- [x] 色の役割（ブランド色/操作色/状態色/注意色）を分離
+- [x] 長文・欠損値でも破綻しにくい表示構造へ調整
+- [x] バージョン表記・アップデート情報・更新モーダルを更新
+- [x] 検証ログ記録
+
+## Progress Log (2026-03-13 UI情報設計リデザイン)
+- 着手: `index.html` `game/styles.css` `game/ui.app.js` `game/config.js` を確認し、プレイ体験の主役を「所持金/GPS」、実操作を「ユニット/アップグレード比較後の購入」に再定義。
+- `index.html`: Playタブ先頭に「プレイ導線」カードを追加し、利用者の視線順（見る→比較→行動）を明示。更新履歴へ Ver.1.24.0 を追記。
+- `game/styles.css`: カラー変数を役割別に再定義（brand/action/state/warn/danger）。ユニット/アップグレードを比較情報優先レイアウトで表示するスタイルを追加。
+- `game/ui.app.js`: ユニット・アップグレードDOMを「比較指標（所持/寄与/次価格）→購入アクション」順へ再構成。更新モーダル文言を Ver.1.24.0 向けに更新。
+- `game/config.js`: `APP_VERSION` を `Ver.1.24.0` に更新。
+
+## Verify Log (2026-03-13 UI情報設計リデザイン)
+- `node --check game/config.js && node --check game/ui.app.js && node --check game/ui.js && node --check game/engine.app.js && node --check game/state.js` : 成功
+- `python -m http.server 4173 --directory /workspace/AI_made_it` + Playwright: Playタブの導線カード追加、比較優先レイアウト、役割色反映を確認しスクリーンショット取得
