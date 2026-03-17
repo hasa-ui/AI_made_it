@@ -43,6 +43,9 @@
     celestialPoints: 0,
     celestialEarnedTotal: 0,
     celestialOwned: (C.CELESTIAL_UPGRADES || []).reduce((a,u)=>(a[u.id]=0,a),{}),
+    celestial: {
+      activeBranchId: null
+    },
     settings: {
       notation:'compact',
       notationThreshold:1000,
@@ -111,6 +114,8 @@
     for (const a of (C.CELESTIAL_UPGRADES || [])) if (!(a.id in merged.celestialOwned)) merged.celestialOwned[a.id]=0;
     if (typeof merged.celestialPoints !== 'number') merged.celestialPoints = 0;
     if (typeof merged.celestialEarnedTotal !== 'number') merged.celestialEarnedTotal = 0;
+    merged.celestial = Object.assign({}, deepCopy(defaultState.celestial), merged.celestial || {});
+    if (typeof merged.celestial.activeBranchId !== 'string') merged.celestial.activeBranchId = null;
 
     merged.settings = Object.assign({}, deepCopy(defaultState.settings), merged.settings || {});
     merged.settings.toast = Object.assign({}, defaultState.settings.toast, merged.settings.toast || {});

@@ -527,6 +527,40 @@
     if (tabWrap) tabWrap.innerHTML = html;
   }
 
+  function renderCelestialBranches(){
+    const wrap = document.getElementById('celestialBranchList');
+    const activeEl = document.getElementById('celestialBranchActive');
+    if (!wrap || !activeEl) return;
+    const list = E.getCelestialBranchStatus ? E.getCelestialBranchStatus() : [];
+    const active = list.find(x=>x.active);
+    if (!list.length){
+      wrap.innerHTML = '<div class="muted small">Celestialルート情報がありません</div>';
+      activeEl.textContent = '未選択';
+      return;
+    }
+    activeEl.textContent = active
+      ? `現在のルート: ${active.jpName} / 効果: ${formatBonusText(active.bonus)}`
+      : '現在のルート: 未選択';
+    wrap.innerHTML = '';
+    for (const branch of list){
+      const row = document.createElement('div');
+      row.className = `celestialBranchCard${branch.active ? ' active' : ''}${branch.unlocked ? '' : ' locked'}`;
+      row.innerHTML = `<div><strong>${branch.jpName}</strong><div class="muted small">解放条件: 累計AP ${fmtNumber(branch.need)} / 効果: ${formatBonusText(branch.bonus)}</div><div class="muted tiny">${branch.desc}</div></div><div class="row"><button id="celBranch-${branch.id}" class="small">${branch.active ? '選択中' : '選択'}</button></div>`;
+      wrap.appendChild(row);
+      const btn = document.getElementById(`celBranch-${branch.id}`);
+      if (btn){
+        btn.disabled = !branch.unlocked || branch.active;
+        btn.addEventListener('click', ()=>{
+          const res = E.selectCelestialBranchInternal ? E.selectCelestialBranchInternal(branch.id) : { ok:false };
+          if (!res.ok){ showTypedToast('general', 'そのルートはまだ選択できません'); return; }
+          SM.saveState(E.getState());
+          syncUIAfterChange();
+          showTypedToast('purchase', `${branch.jpName} に切り替えました`);
+        });
+      }
+    }
+  }
+
 
   function buildCelestialShop(){
     if (built.celestial) return;
@@ -537,11 +571,17 @@
       const row = document.createElement('div');
       row.className = 'upg';
       const lvl = (E.getState().celestialOwned && E.getState().celestialOwned[def.id]) || 0;
-      row.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><div><strong>${def.name}</strong><div class="muted small">${def.desc}</div></div><div style="text-align:right"><div class="muted small">Lv: <span id="celLvl-${def.id}">${fmtNumber(lvl)}</span>${def.maxLevel?'/'+def.maxLevel:''}</div><button id="celBuy-${def.id}" class="small" style="margin-top:6px;">購入 (${fmtNumber(def.cost)} CP)</button></div></div>`;
+      const branchLabel = def.branch && def.branch !== 'shared' ? ` / ${def.branch}` : ' / shared';
+      row.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><div><strong>${def.name}</strong><div class="muted small">${def.desc}</div><div class="muted tiny">系統${branchLabel}</div></div><div style="text-align:right"><div class="muted small">Lv: <span id="celLvl-${def.id}">${fmtNumber(lvl)}</span>${def.maxLevel?'/'+def.maxLevel:''}</div><button id="celBuy-${def.id}" class="small" style="margin-top:6px;">購入 (${fmtNumber(def.cost)} CP)</button></div></div>`;
       wrap.appendChild(row);
       document.getElementById(`celBuy-${def.id}`)?.addEventListener('click', ()=>{
         const res = E.buyCelestialUpgradeInternal ? E.buyCelestialUpgradeInternal(def.id) : { ok:false };
-        if (!res || !res.ok) showTypedToast('general', 'CP不足、または最大レベルです');
+        if (!res || !res.ok){
+          const msg = res && res.reason === 'branch_mismatch'
+            ? '対応するCelestialルートを選択してください'
+            : 'CP不足、または最大レベルです';
+          showTypedToast('general', msg);
+        }
         else { SM.saveState(E.getState()); syncUIAfterChange(); checkAchievementsAfterAction(); showTypedToast('purchase', `${def.name} を購入しました`); }
       });
     }
@@ -703,13 +743,17 @@
     renderMiniGameState();
     renderPrestigeLayers();
     renderCelestialLayers();
+    renderCelestialBranches();
     for (const def of (C.CELESTIAL_UPGRADES || [])){
       const lvlEl = document.getElementById(`celLvl-${def.id}`);
       if (lvlEl) lvlEl.textContent = fmtNumber((st.celestialOwned && st.celestialOwned[def.id]) || 0);
       const btn = document.getElementById(`celBuy-${def.id}`);
       if (btn){
         const lvl = (st.celestialOwned && st.celestialOwned[def.id]) || 0;
-        btn.disabled = (def.maxLevel && lvl >= def.maxLevel) || ((st.celestialPoints || 0) < (def.cost || 0));
+        const branchId = def.branch || 'shared';
+        const activeBranchId = st.celestial && st.celestial.activeBranchId;
+        const branchLocked = branchId !== 'shared' && activeBranchId !== branchId;
+        btn.disabled = (def.maxLevel && lvl >= def.maxLevel) || ((st.celestialPoints || 0) < (def.cost || 0)) || branchLocked;
       }
     }
     renderChallengeStatus();
@@ -962,9 +1006,9 @@
     const body = document.getElementById('updateModalBody');
     if (!modal || !body) return;
     body.textContent = `${C.APP_VERSION} の主な更新
-- プレイ画面を「最初に見る → 比較する → 行動する」の導線で再設計
-- ヘッダーの色に役割を付与（ブランド色/通貨色/状態色）し、意味の重複を整理
-- ユニット・アップグレードを比較情報優先レイアウトへ変更し、長文や欠損表示でも崩れにくい構成へ改善`;
+- Celestialルート分岐の土台を追加
+- Nova / Vault / Mirror / Epoch の4系統を層解放と連動して選択可能に変更
+- 選択ルート固有ボーナスと、ルート専用Celestialアップグレードを実装`;
     modal.style.display = 'flex';
     document.getElementById('closeUpdateModal')?.addEventListener('click', ()=>{
       modal.style.display = 'none';
