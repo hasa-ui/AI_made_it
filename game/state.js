@@ -116,6 +116,17 @@
     if (typeof merged.celestialEarnedTotal !== 'number') merged.celestialEarnedTotal = 0;
     merged.celestial = Object.assign({}, deepCopy(defaultState.celestial), merged.celestial || {});
     if (typeof merged.celestial.activeBranchId !== 'string') merged.celestial.activeBranchId = null;
+    if (sourceVersion > 0 && sourceVersion < 14){
+      let refundedCp = 0;
+      for (const def of (C.CELESTIAL_UPGRADES || [])){
+        if (!def.branch || def.branch === 'shared') continue;
+        const lvl = merged.celestialOwned[def.id] || 0;
+        if (lvl <= 0) continue;
+        refundedCp += (def.cost || 0) * lvl;
+        merged.celestialOwned[def.id] = 0;
+      }
+      if (refundedCp > 0) merged.celestialPoints = (merged.celestialPoints || 0) + refundedCp;
+    }
 
     merged.settings = Object.assign({}, deepCopy(defaultState.settings), merged.settings || {});
     merged.settings.toast = Object.assign({}, defaultState.settings.toast, merged.settings.toast || {});

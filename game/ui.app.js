@@ -1006,9 +1006,9 @@
     const body = document.getElementById('updateModalBody');
     if (!modal || !body) return;
     body.textContent = `${C.APP_VERSION} の主な更新
-- Celestialルート分岐の土台を追加
-- Nova / Vault / Mirror / Epoch の4系統を層解放と連動して選択可能に変更
-- 選択ルート固有ボーナスと、ルート専用Celestialアップグレードを実装`;
+- Celestialルート専用アップグレードが切替後も残る不具合を修正
+- 旧セーブのルート専用化アップグレードを CP 返金付きで移行
+- Abyssアップグレードを 8 種構成へ拡張し、深層ビルドの選択肢を追加`;
     modal.style.display = 'flex';
     document.getElementById('closeUpdateModal')?.addEventListener('click', ()=>{
       modal.style.display = 'none';

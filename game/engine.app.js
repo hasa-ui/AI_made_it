@@ -114,9 +114,12 @@
       if (b.type === 'costMult' && typeof b.mult === 'number') costMult *= b.mult;
     }
 
+    const activeBranchId = st && st.celestial ? st.celestial.activeBranchId : null;
     for (const cel of (C.CELESTIAL_UPGRADES || [])){
       const lvl = (st.celestialOwned && st.celestialOwned[cel.id]) ? st.celestialOwned[cel.id] : 0;
       if (lvl <= 0) continue;
+      const branchId = cel.branch || 'shared';
+      if (branchId !== 'shared' && branchId !== activeBranchId) continue;
       if (cel.type === 'globalMult') globalMult *= Math.pow(cel.payload.mult || 1, lvl);
       if (cel.type === 'flatGPS') flatGPS += (cel.payload.gps || 0) * lvl;
       if (cel.type === 'startGold') startingGoldBonus += (cel.payload.amount || 0) * lvl;
@@ -124,8 +127,6 @@
       if (cel.type === 'costMult') costMult *= Math.pow(cel.payload.mult || 1, lvl);
       if (cel.type === 'unitMult' && cel.payload.unitId) unitMults[cel.payload.unitId] = (unitMults[cel.payload.unitId] || 1) * Math.pow(cel.payload.mult || 1, lvl);
     }
-
-    const activeBranchId = st && st.celestial ? st.celestial.activeBranchId : null;
     if (activeBranchId){
       const branch = (C.CELESTIAL_BRANCHES || []).find(x=>x.id === activeBranchId);
       const branchStatus = getCelestialBranchStatus(st).find(x=>x.id === activeBranchId);
@@ -154,6 +155,8 @@
       if (ab.type === 'costMult') costMult *= Math.pow((ab.payload && ab.payload.multPerLevel) || 1, lvl);
       if (ab.type === 'startGold') startingGoldBonus += ((ab.payload && ab.payload.amountPerLevel) || 0) * lvl;
       if (ab.type === 'flatGPS') flatGPS += ((ab.payload && ab.payload.gpsPerLevel) || 0) * lvl;
+      if (ab.type === 'prestigeEffectAdd') prestigeEffectAdd += ((ab.payload && ab.payload.addPerLevel) || 0) * lvl;
+      if (ab.type === 'unitMult' && ab.payload && ab.payload.unitId) unitMults[ab.payload.unitId] = (unitMults[ab.payload.unitId] || 1) * Math.pow(ab.payload.multPerLevel || 1, lvl);
     }
 
     // --- Challengeクリア報酬 ---

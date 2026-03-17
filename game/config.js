@@ -5,7 +5,7 @@
   const C = {
     SAVE_KEY: 'inc.split.full.v4',
     SAVE_VERSION: 14,
-    APP_VERSION: 'Ver.1.25.0',
+    APP_VERSION: 'Ver.1.26.0',
     UI_UPDATE_INTERVAL_MS: 50,
     AUTO_SAVE_INTERVAL: 5000,
     MAX_OFFLINE_SECONDS: 60*60*24,
@@ -22,7 +22,12 @@
   C.ABYSS_UPGRADES = [
     { id:'ab_cost', name:'深淵圧縮', desc:'全コストをLvごとに×0.94', baseCost:1, costMult:2.2, type:'costMult', payload:{multPerLevel:0.94} },
     { id:'ab_flux', name:'虚無フラックス', desc:'全体倍率をLvごとに×1.35', baseCost:1, costMult:2.6, type:'globalMult', payload:{multPerLevel:1.35} },
-    { id:'ab_seed', name:'空虚の種火', desc:'開始ゴールド +2.5e8 /Lv', baseCost:2, costMult:2.8, type:'startGold', payload:{amountPerLevel:2.5e8} }
+    { id:'ab_seed', name:'空虚の種火', desc:'開始ゴールド +2.5e8 /Lv', baseCost:2, costMult:2.8, type:'startGold', payload:{amountPerLevel:2.5e8} },
+    { id:'ab_dividend', name:'深層配当炉', desc:'恒久 +8.0e6 GPS /Lv', baseCost:3, costMult:2.9, type:'flatGPS', payload:{gpsPerLevel:8.0e6} },
+    { id:'ab_resonance', name:'奈落共鳴', desc:'Prestige効果 +0.04 /Lv', baseCost:4, costMult:3.0, type:'prestigeEffectAdd', payload:{addPerLevel:0.04} },
+    { id:'ab_excav_matrix', name:'掘削行列の深層化', desc:'エクスカベーター ×3.2 /Lv', baseCost:4, costMult:3.1, type:'unitMult', payload:{unitId:'excav', multPerLevel:3.2} },
+    { id:'ab_drill_surge', name:'反応炉深圧', desc:'ドリルコア反応炉 ×2.8 /Lv', baseCost:5, costMult:3.3, type:'unitMult', payload:{unitId:'drillcore', multPerLevel:2.8} },
+    { id:'ab_void_bloom', name:'虚空開花', desc:'ヴォイド掘削艦 ×2.4 /Lv', baseCost:6, costMult:3.5, type:'unitMult', payload:{unitId:'voidrig', multPerLevel:2.4} }
   ];
 
   C.UNIT_DEFS = [
