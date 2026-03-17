@@ -4,8 +4,8 @@
 
   const C = {
     SAVE_KEY: 'inc.split.full.v4',
-    SAVE_VERSION: 13,
-    APP_VERSION: 'Ver.1.24.0',
+    SAVE_VERSION: 14,
+    APP_VERSION: 'Ver.1.26.0',
     UI_UPDATE_INTERVAL_MS: 50,
     AUTO_SAVE_INTERVAL: 5000,
     MAX_OFFLINE_SECONDS: 60*60*24,
@@ -22,7 +22,12 @@
   C.ABYSS_UPGRADES = [
     { id:'ab_cost', name:'深淵圧縮', desc:'全コストをLvごとに×0.94', baseCost:1, costMult:2.2, type:'costMult', payload:{multPerLevel:0.94} },
     { id:'ab_flux', name:'虚無フラックス', desc:'全体倍率をLvごとに×1.35', baseCost:1, costMult:2.6, type:'globalMult', payload:{multPerLevel:1.35} },
-    { id:'ab_seed', name:'空虚の種火', desc:'開始ゴールド +2.5e8 /Lv', baseCost:2, costMult:2.8, type:'startGold', payload:{amountPerLevel:2.5e8} }
+    { id:'ab_seed', name:'空虚の種火', desc:'開始ゴールド +2.5e8 /Lv', baseCost:2, costMult:2.8, type:'startGold', payload:{amountPerLevel:2.5e8} },
+    { id:'ab_dividend', name:'深層配当炉', desc:'恒久 +8.0e6 GPS /Lv', baseCost:3, costMult:2.9, type:'flatGPS', payload:{gpsPerLevel:8.0e6} },
+    { id:'ab_resonance', name:'奈落共鳴', desc:'Prestige効果 +0.04 /Lv', baseCost:4, costMult:3.0, type:'prestigeEffectAdd', payload:{addPerLevel:0.04} },
+    { id:'ab_excav_matrix', name:'掘削行列の深層化', desc:'エクスカベーター ×3.2 /Lv', baseCost:4, costMult:3.1, type:'unitMult', payload:{unitId:'excav', multPerLevel:3.2} },
+    { id:'ab_drill_surge', name:'反応炉深圧', desc:'ドリルコア反応炉 ×2.8 /Lv', baseCost:5, costMult:3.3, type:'unitMult', payload:{unitId:'drillcore', multPerLevel:2.8} },
+    { id:'ab_void_bloom', name:'虚空開花', desc:'ヴォイド掘削艦 ×2.4 /Lv', baseCost:6, costMult:3.5, type:'unitMult', payload:{unitId:'voidrig', multPerLevel:2.4} }
   ];
 
   C.UNIT_DEFS = [
@@ -99,16 +104,23 @@
     { id:'cl_epoch', name:'エポック層', need:80, desc:'時代跳躍で Prestige 効果を恒久底上げ', bonus:{ type:'prestigeEffectAdd', add:0.06 } }
   ];
 
+  C.CELESTIAL_BRANCHES = [
+    { id:'nova', name:'Nova Route', jpName:'ノヴァ系', layerId:'cl_nova', desc:'高速周回向け。生産倍率と終盤Tierを伸ばす。', bonus:{ type:'globalMult', mult:1.35 } },
+    { id:'vault', name:'Vault Route', jpName:'ヴォルト系', layerId:'cl_vault', desc:'経済圧縮向け。コスト圧縮と中盤Tier補助を担う。', bonus:{ type:'costMult', mult:0.8 } },
+    { id:'mirror', name:'Mirror Route', jpName:'ミラー系', layerId:'cl_mirror', desc:'初速向け。開始資源と保持寄りの強化を開く。', bonus:{ type:'startGold', amount:2.5e6 } },
+    { id:'epoch', name:'Epoch Route', jpName:'エポック系', layerId:'cl_epoch', desc:'変換効率向け。Prestige効率と高次接続を強化する。', bonus:{ type:'prestigeEffectAdd', add:0.18 } }
+  ];
+
   C.CELESTIAL_UPGRADES = [
-    { id:'cel_prism', name:'プリズム鋳造', desc:'恒久: 全体 ×1.45', cost:3, type:'globalMult', payload:{ mult:1.45 }, maxLevel:4 },
-    { id:'cel_harmonic_seed', name:'ハーモニック種銭', desc:'恒久: 開始ゴールド +25000', cost:5, type:'startGold', payload:{ amount:25000 }, maxLevel:3 },
-    { id:'cel_aether_drift', name:'エーテル漂流炉', desc:'恒久: +4500 GPS', cost:6, type:'flatGPS', payload:{ gps:4500 }, maxLevel:4 },
-    { id:'cel_time_fold', name:'時空折り畳み', desc:'恒久: コスト ×0.82', cost:9, type:'costMult', payload:{ mult:0.82 }, maxLevel:2 },
-    { id:'cel_resonance_core', name:'共鳴核の再編', desc:'恒久: Prestige効果 +0.08', cost:8, type:'prestigeEffectAdd', payload:{ add:0.08 }, maxLevel:3 },
-    { id:'cel_excav_pulse', name:'深層パルス', desc:'恒久: エクスカベーター ×2.5', cost:7, type:'unitMult', payload:{ unitId:'excav', mult:2.5 }, maxLevel:3 },
-    { id:'cel_voidrig_flux', name:'虚空フラックス', desc:'恒久: ヴォイド掘削艦 ×4.0', cost:12, type:'unitMult', payload:{ unitId:'voidrig', mult:4.0 }, maxLevel:3 },
-    { id:'cel_event_horizon', name:'事象地平演算', desc:'恒久: 全体 ×2.5', cost:14, type:'globalMult', payload:{ mult:2.5 }, maxLevel:2 },
-    { id:'cel_asc_expand', name:'星界チューニング規格', desc:'Ascension Shopのレベル上限 +1 /Lv', cost:16, type:'ascShopCapBoost', payload:{ addMaxLevel:1 }, maxLevel:5 }
+    { id:'cel_prism', name:'プリズム鋳造', branch:'shared', desc:'恒久: 全体 ×1.45', cost:3, type:'globalMult', payload:{ mult:1.45 }, maxLevel:4 },
+    { id:'cel_harmonic_seed', name:'ハーモニック種銭', branch:'mirror', desc:'Mirror専用: 開始ゴールド +25000', cost:5, type:'startGold', payload:{ amount:25000 }, maxLevel:3 },
+    { id:'cel_aether_drift', name:'エーテル漂流炉', branch:'nova', desc:'Nova専用: +4500 GPS', cost:6, type:'flatGPS', payload:{ gps:4500 }, maxLevel:4 },
+    { id:'cel_time_fold', name:'時空折り畳み', branch:'vault', desc:'Vault専用: コスト ×0.82', cost:9, type:'costMult', payload:{ mult:0.82 }, maxLevel:2 },
+    { id:'cel_resonance_core', name:'共鳴核の再編', branch:'epoch', desc:'Epoch専用: Prestige効果 +0.08', cost:8, type:'prestigeEffectAdd', payload:{ add:0.08 }, maxLevel:3 },
+    { id:'cel_excav_pulse', name:'深層パルス', branch:'vault', desc:'Vault専用: エクスカベーター ×2.5', cost:7, type:'unitMult', payload:{ unitId:'excav', mult:2.5 }, maxLevel:3 },
+    { id:'cel_voidrig_flux', name:'虚空フラックス', branch:'nova', desc:'Nova専用: ヴォイド掘削艦 ×4.0', cost:12, type:'unitMult', payload:{ unitId:'voidrig', mult:4.0 }, maxLevel:3 },
+    { id:'cel_event_horizon', name:'事象地平演算', branch:'epoch', desc:'Epoch専用: 全体 ×2.5', cost:14, type:'globalMult', payload:{ mult:2.5 }, maxLevel:2 },
+    { id:'cel_asc_expand', name:'星界チューニング規格', branch:'mirror', desc:'Mirror専用: Ascension Shopのレベル上限 +1 /Lv', cost:16, type:'ascShopCapBoost', payload:{ addMaxLevel:1 }, maxLevel:5 }
   ];
 
   C.CHALLENGES = [

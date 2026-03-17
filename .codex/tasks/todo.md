@@ -226,6 +226,43 @@
 - `node --check game/config.js && node --check game/state.js && node --check game/engine.js && node --check game/ui.js` : 成功
 - `python -m http.server 4173 --bind 0.0.0.0 --directory /workspace/AI_made_it` + Playwright: アップデート情報タブに Ver.1.12.4 記載を確認しスクリーンショット取得（artifact: artifacts/ver_1_12_4_update.png）
 
+## Plan (2026-03-17 Celestialルート分岐土台)
+- [x] 仕様書と現行Celestial実装を突き合わせ、Phase 1 相当の最小要件を定義
+- [x] Celestialルート定義とセーブ互換を追加
+- [x] ルート選択UIとルート依存アップグレード解放を実装
+- [x] ルート効果を恒久計算へ反映し、バージョン表記/アップデート情報を更新
+- [x] 検証ログ記録
+
+## Progress Log (2026-03-17 Celestialルート分岐土台)
+- 着手: 仕様書 19-20章、および game/config.js / game/state.js / game/engine.app.js / game/ui.app.js / index.html の Celestial / Abyss 実装を確認。
+- game/config.js: SAVE_VERSION を 14、APP_VERSION を Ver.1.25.0 へ更新し、`CELESTIAL_BRANCHES` を追加。既存Celestialアップグレードを shared / Nova / Vault / Mirror / Epoch の系統へ分類。
+- game/state.js: `state.celestial.activeBranchId` を追加し、旧セーブからのマイグレーションで未設定時は `null` を補完するよう修正。
+- game/engine.helpers.js / game/engine.app.js: Celestialルートの解放状態取得、ルート選択API、ルート専用アップグレード購入制御、選択ルートの恒久ボーナス反映を実装。Abyssリセット時にはルート選択を初期化。
+- index.html / game/ui.app.js / game/styles.css: Celestialサブタブにルート選択カードを追加し、現在ルート表示・解放条件・固有ボーナス・選択操作を実装。ルート不一致時は専用アップグレードを購入不可に変更。
+- index.html / game/ui.app.js: アップデート情報タブと初回表示モーダルを Ver.1.25.0 内容へ更新。
+
+## Verify Log (2026-03-17 Celestialルート分岐土台)
+- `node --check game/config.js && node --check game/state.js && node --check game/engine.helpers.js && node --check game/engine.app.js && node --check game/ui.helpers.js && node --check game/ui.app.js` : 成功
+- `node - <<'NODE' ... NODE` : 成功（Mirror ルート解放 → ルート選択 → `cel_harmonic_seed` 購入 → ルート固有の開始ゴールドボーナス反映を確認）
+
+## Plan (2026-03-17 Celestial分岐不具合修正 / Abyss拡張 / README追記)
+- [x] Celestialルート専用効果の排他不具合と旧セーブ移行不整合を修正
+- [x] 仕様書Phase 1に沿って Abyssアップグレードを増量
+- [x] バージョン表記 / アップデート情報 / README を更新
+- [x] 検証ログ記録
+
+## Progress Log (2026-03-17 Celestial分岐不具合修正 / Abyss拡張 / README追記)
+- 着手: レビュー指摘（engine.app.js / state.js）を確認し、Celestial分岐の排他制御とセーブ移行の欠落を再点検。仕様書 19-20章の Phase 1 から `Abyssアップグレード増量` を次タスクに選定。
+- game/engine.app.js: Celestial集計時、`shared` 以外のアップグレード効果は選択中ルートと一致する場合のみ適用するよう修正し、切替後の積み得を解消。
+- game/state.js: `version < 14` のセーブに対し、ルート専用化された旧Celestialアップグレードをレベル0へ戻し、消費済みCPを所持CPへ返金する移行を追加。
+- game/config.js / game/engine.app.js: Abyssアップグレードを 8 種構成へ拡張し、`flatGPS` / `prestigeEffectAdd` / `unitMult` 系の深層強化を追加。Abyss集計ロジックも新効果型へ対応。
+- index.html / game/ui.app.js: APP_VERSION を Ver.1.26.0 に更新し、アップデート情報タブと初回モーダルを今回内容へ更新。
+- README.md: ゲームの基本ループ、多層構造、現行版の特徴を簡潔に追記。
+
+## Verify Log (2026-03-17 Celestial分岐不具合修正 / Abyss拡張 / README追記)
+- `node --check game/config.js && node --check game/state.js && node --check game/engine.helpers.js && node --check game/engine.app.js && node --check game/ui.helpers.js && node --check game/ui.app.js` : 成功
+- `node - <<'NODE' ... NODE` : 成功（旧セーブ移行時の CP 返金、ルート切替後の専用効果無効化、新規 Abyss Prestige 強化の反映を確認）
+
 ## Plan (2026-03-08 難易度緩和 / Prestige層 / Challenge / 実績追加)
 - [x] 既存のミニゲーム・Prestige計算・実績判定・タブ構造の確認
 - [x] Ascensionミニゲームの難易度緩和と報酬再調整

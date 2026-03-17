@@ -38,6 +38,7 @@
         celestialPoints: 0,
         celestialEarnedTotal: 0,
         celestialOwned: (C.CELESTIAL_UPGRADES || []).reduce((a,u)=>(a[u.id]=0,a),{}),
+        celestial: { activeBranchId:null },
         achievementsOwned: {},
         settings: { notation: 'compact', notationThreshold: 1000, confirmLegacyBuy:true, confirmLegacyBuyMax:true, toast:{achievement:true,offline:true,purchase:true,general:true}, activeSubTabs:{prestige:'core',ascension:'core'} },
         abyss: { shards:0, resetCount:0 },
@@ -113,15 +114,30 @@
       if (b.type === 'costMult' && typeof b.mult === 'number') costMult *= b.mult;
     }
 
+    const activeBranchId = st && st.celestial ? st.celestial.activeBranchId : null;
     for (const cel of (C.CELESTIAL_UPGRADES || [])){
       const lvl = (st.celestialOwned && st.celestialOwned[cel.id]) ? st.celestialOwned[cel.id] : 0;
       if (lvl <= 0) continue;
+      const branchId = cel.branch || 'shared';
+      if (branchId !== 'shared' && branchId !== activeBranchId) continue;
       if (cel.type === 'globalMult') globalMult *= Math.pow(cel.payload.mult || 1, lvl);
       if (cel.type === 'flatGPS') flatGPS += (cel.payload.gps || 0) * lvl;
       if (cel.type === 'startGold') startingGoldBonus += (cel.payload.amount || 0) * lvl;
       if (cel.type === 'prestigeEffectAdd') prestigeEffectAdd += (cel.payload.add || 0) * lvl;
       if (cel.type === 'costMult') costMult *= Math.pow(cel.payload.mult || 1, lvl);
       if (cel.type === 'unitMult' && cel.payload.unitId) unitMults[cel.payload.unitId] = (unitMults[cel.payload.unitId] || 1) * Math.pow(cel.payload.mult || 1, lvl);
+    }
+    if (activeBranchId){
+      const branch = (C.CELESTIAL_BRANCHES || []).find(x=>x.id === activeBranchId);
+      const branchStatus = getCelestialBranchStatus(st).find(x=>x.id === activeBranchId);
+      if (branch && branchStatus && branchStatus.unlocked){
+        const b = branch.bonus || {};
+        if (b.type === 'globalMult' && typeof b.mult === 'number') globalMult *= b.mult;
+        if (b.type === 'flatGPS' && typeof b.gps === 'number') flatGPS += b.gps;
+        if (b.type === 'startGold' && typeof b.amount === 'number') startingGoldBonus += b.amount;
+        if (b.type === 'prestigeEffectAdd' && typeof b.add === 'number') prestigeEffectAdd += b.add;
+        if (b.type === 'costMult' && typeof b.mult === 'number') costMult *= b.mult;
+      }
     }
 
     const abyssShards = (st.abyss && st.abyss.shards) ? st.abyss.shards : 0;
@@ -139,6 +155,8 @@
       if (ab.type === 'costMult') costMult *= Math.pow((ab.payload && ab.payload.multPerLevel) || 1, lvl);
       if (ab.type === 'startGold') startingGoldBonus += ((ab.payload && ab.payload.amountPerLevel) || 0) * lvl;
       if (ab.type === 'flatGPS') flatGPS += ((ab.payload && ab.payload.gpsPerLevel) || 0) * lvl;
+      if (ab.type === 'prestigeEffectAdd') prestigeEffectAdd += ((ab.payload && ab.payload.addPerLevel) || 0) * lvl;
+      if (ab.type === 'unitMult' && ab.payload && ab.payload.unitId) unitMults[ab.payload.unitId] = (unitMults[ab.payload.unitId] || 1) * Math.pow(ab.payload.multPerLevel || 1, lvl);
     }
 
     // --- Challengeクリア報酬 ---
@@ -164,6 +182,7 @@
   function getUnlockedCelestialLayerCount(st){ return (H.getUnlockedCelestialLayerCount || ((C,src)=>0))(C, st || state); }
   function getPrestigeLayerStatus(st){ return (H.getPrestigeLayerStatus || ((C,src)=>[]))(C, st || state); }
   function getCelestialLayerStatus(st){ return (H.getCelestialLayerStatus || ((C,src)=>[]))(C, st || state); }
+  function getCelestialBranchStatus(st){ return (H.getCelestialBranchStatus || ((C,src)=>[]))(C, st || state); }
   function hasSpecialAscUpgrade(st, kind){ return (H.hasSpecialAscUpgrade || ((C,src,k)=>false))(C, st || state, kind); }
   function ascUpgradeMaxLevel(def, st){ return (H.ascUpgradeMaxLevel || ((C,src,d)=> (typeof d?.maxLevel==='number'?d.maxLevel:Infinity)))(C, st || state, def); }
 
@@ -510,6 +529,13 @@
   function buyCelestialUpgradeInternal(id){
     const def = (C.CELESTIAL_UPGRADES || []).find(x=>x.id===id);
     if (!def) return { ok:false, reason:'not_found' };
+    const branchId = def.branch || 'shared';
+    const activeBranchId = state.celestial && state.celestial.activeBranchId;
+    if (branchId !== 'shared'){
+      const branchStatus = getCelestialBranchStatus(state).find(x=>x.id === branchId);
+      if (!branchStatus || !branchStatus.unlocked) return { ok:false, reason:'branch_locked' };
+      if (activeBranchId !== branchId) return { ok:false, reason:'branch_mismatch' };
+    }
     state.celestialOwned = state.celestialOwned || {};
     const lvl = state.celestialOwned[def.id] || 0;
     const maxLevel = (typeof def.maxLevel === 'number') ? def.maxLevel : Infinity;
@@ -521,6 +547,18 @@
     invalidateAggCache();
     recalcAndCacheGPS(state);
     return { ok:true, id:def.id, lvl: state.celestialOwned[def.id] };
+  }
+
+  function selectCelestialBranchInternal(id){
+    const branch = (C.CELESTIAL_BRANCHES || []).find(x=>x.id === id);
+    if (!branch) return { ok:false, reason:'not_found' };
+    const status = getCelestialBranchStatus(state).find(x=>x.id === id);
+    if (!status || !status.unlocked) return { ok:false, reason:'locked' };
+    state.celestial = state.celestial || { activeBranchId:null };
+    state.celestial.activeBranchId = id;
+    invalidateAggCache();
+    recalcAndCacheGPS(state);
+    return { ok:true, id };
   }
 
   function previewAbyssGain(){
@@ -579,6 +617,7 @@
     state.celestialPoints = 0;
     state.celestialEarnedTotal = 0;
     state.celestialOwned = (C.CELESTIAL_UPGRADES || []).reduce((a,u)=>(a[u.id]=0,a),{});
+    state.celestial = { activeBranchId:null };
     state.challenge = { activeId:null, completed:{}, bestSec:{}, ascendedInChallenge:0, savedTotalGold:null };
     state.runStats = state.runStats || {};
     const now = nowSec();
@@ -685,6 +724,7 @@
     buyAscensionUpgradeInternal: (id) => buyAscensionUpgradeInternal(id),
     getAscUpgradeMaxLevel: (def, st) => ascUpgradeMaxLevel(def, st || state),
     buyCelestialUpgradeInternal: (id) => buyCelestialUpgradeInternal(id),
+    selectCelestialBranchInternal: (id) => selectCelestialBranchInternal(id),
     startChallengeInternal: (id) => startChallengeInternal(id),
     abandonChallengeInternal: () => abandonChallengeInternal(),
     tryCompleteChallengeInternal: () => tryCompleteChallengeInternal(),
@@ -693,6 +733,7 @@
     getUnlockedPrestigeLayerCount: (st) => getUnlockedPrestigeLayerCount(st || state),
     getCelestialLayerStatus: (st) => getCelestialLayerStatus(st || state),
     getUnlockedCelestialLayerCount: (st) => getUnlockedCelestialLayerCount(st || state),
+    getCelestialBranchStatus: (st) => getCelestialBranchStatus(st || state),
 
     // prestige / ascend
     previewPrestigeGain,

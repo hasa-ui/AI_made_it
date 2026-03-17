@@ -47,6 +47,24 @@
     }));
   }
 
+  function getCelestialBranchStatus(C, st){
+    const activeBranchId = st && st.celestial ? st.celestial.activeBranchId : null;
+    return (C.CELESTIAL_BRANCHES || []).map(branch=>{
+      const layer = (C.CELESTIAL_LAYERS || []).find(x=>x.id === branch.layerId);
+      const need = layer ? (layer.need || 0) : 0;
+      return {
+        id: branch.id,
+        name: branch.name,
+        jpName: branch.jpName || branch.name,
+        desc: branch.desc || '',
+        bonus: branch.bonus || null,
+        need,
+        unlocked: ((st && st.ascEarnedTotal) || 0) >= need,
+        active: activeBranchId === branch.id
+      };
+    });
+  }
+
   function hasSpecialAscUpgrade(C, st, kind){
     const upgrades = C.ASC_UPGRADES || [];
     for (const def of upgrades){
@@ -124,6 +142,7 @@
     getUnlockedCelestialLayerCount,
     getPrestigeLayerStatus,
     getCelestialLayerStatus,
+    getCelestialBranchStatus,
     hasSpecialAscUpgrade,
     ascUpgradeMaxLevel,
     legacyMaxLevel,

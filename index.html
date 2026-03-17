@@ -240,6 +240,12 @@
           <div id="celestialLayerListTab"></div>
         </div>
         <div class="card">
+          <h3>Celestialルート</h3>
+          <p class="muted small">解放済みの星界層に応じてルートを選択できます。選択中ルートは恒久ボーナスを与え、対応するCelestialアップグレードを購入可能にします。</p>
+          <div id="celestialBranchActive" class="muted small" style="margin-top:8px;">未選択</div>
+          <div id="celestialBranchList" style="margin-top:12px;"></div>
+        </div>
+        <div class="card">
           <h3>Celestialアップグレード</h3>
           <div id="celestialShop"></div>
         </div>
@@ -350,6 +356,8 @@
           <h3>アップデート情報</h3>
           <p class="small muted" style="margin-top:4px;">このゲームは現在<strong>アルファ版</strong>です。仕様やバランスは今後も変更されます。</p>
           <ul class="small muted" style="margin-top:8px; padding-left:20px; line-height:1.8;">
+            <li><strong>Ver.1.26.0</strong>：Celestialルート専用効果の排他制御を修正し、旧セーブで分岐専用化されたアップグレードをCP返金付きで再配置。あわせて Abyssアップグレードを8種構成へ拡張し、深層以降の選択肢を増量。</li>
+            <li><strong>Ver.1.25.0</strong>：Celestialにルート分岐の土台を追加。Nova/Vault/Mirror/Epoch の4系統を層解放に応じて選択可能にし、選択ルート固有ボーナスと専用Celestialアップグレードを実装。</li>
             <li><strong>Ver.1.24.0</strong>：プレイUIを情報優先設計へ再構成。ヘッダーの役割色を整理し、ユニット/アップグレードを「比較情報→行動」の順で読めるレイアウトへ刷新。長文や欠損値でも崩れにくい表示ルールを追加。</li>
             <li><strong>Ver.1.23.2</strong>：Abyss Challenge最終試練（Challenge 11）の目標ゴールド判定をAbyss到達ライン（1.8e308想定）と同じ基準に統一し、Infinity化で達成不能になる問題を修正。</li>
             <li><strong>Ver.1.23.1</strong>：モバイルのレガシーツリー操作時にページ全体が動く問題を修正し、レガシーツリー内の上限/到達不能値を「―」表示へ変更。Challengeタブに「Abyss Challenge」サブタブを追加。</li>
