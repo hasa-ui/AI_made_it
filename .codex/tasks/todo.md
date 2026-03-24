@@ -1,5 +1,22 @@
 # TODO
 
+## Plan (2026-03-24 仕様書更新 / ロードマップ作成)
+- [x] 現行仕様書・実装・補助文書の差分確認
+- [x] `.codex/tasks/todo.md` に進捗ログを追記しつつ `仕様書.md` を現行仕様ベースで更新
+- [x] 更新後の仕様書を基準にロードマップMarkdownを新規作成
+- [x] 文書整合性を検証し、検証ログを追記
+
+## Progress Log (2026-03-24 仕様書更新 / ロードマップ作成)
+- 着手: `仕様書.md`、`README.md`、`index.html`、`game/config.js`、`game/state.js`、`game/engine.app.js`、`game/engine.helpers.js`、`game/engine.challenge.js`、`game/ui.app.js`、`game/ui.minigame.js` を確認。
+- `仕様書.md`: 引用ノイズと将来構想の混在を解消し、`Ver.1.26.0` / `SAVE_VERSION 14` 時点の現行仕様へ全面整理。
+- `仕様書.md`: Prestige / Ascension / Celestial / Challenge / Abyss の数式、リセット範囲、保持条件、現行課題をコード基準で明文化。
+- `ロードマップ.md`: 更新後仕様書を基準に、Phase 1〜5 の実装順・優先度・完了条件を持つロードマップを新規追加。
+
+## Verify Log (2026-03-24 仕様書更新 / ロードマップ作成)
+- `test -f 仕様書.md && test -f ロードマップ.md && echo ok` : 成功
+- `rg -n "Ver\\.1\\.26\\.0|SAVE_VERSION = 14|Number\\.MAX_VALUE|Abyss gain|Celestial|Challenge|Abyss" 仕様書.md ロードマップ.md game/config.js game/state.js game/engine.app.js index.html` : 成功
+- `rg -n "^## " 仕様書.md ロードマップ.md` : 成功
+
 ## Plan
 - [x] 既存のバランス・Ascension・ショップ・購入処理の構造確認
 - [x] 種銭系 / +GPS系 / ジュニア採掘機・採掘機強化 / 序盤エクスカベーター弱体化
