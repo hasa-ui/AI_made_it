@@ -85,6 +85,9 @@
     abyss: {
       shards: 0,
       resetCount: 0,
+      bestChallengeCompletions: 0,
+      bestCelestialLayerCount: 0,
+      features: {},
       upgrades: (C.ABYSS_UPGRADES || []).reduce((a,u)=>(a[u.id]=0,a),{})
     },
     seenUpdateVersion: null
@@ -152,8 +155,22 @@
     if (typeof merged.challenge.ascendedInChallenge !== 'number') merged.challenge.ascendedInChallenge = 0;
     if (typeof merged.challenge.savedTotalGold !== 'number' && merged.challenge.savedTotalGold !== null) merged.challenge.savedTotalGold = null;
     merged.abyss = Object.assign({}, deepCopy(defaultState.abyss), merged.abyss || {});
+    merged.abyss.features = Object.assign({}, deepCopy(defaultState.abyss.features), merged.abyss.features || {});
     merged.abyss.upgrades = Object.assign({}, deepCopy(defaultState.abyss.upgrades), merged.abyss.upgrades || {});
+    if (!Number.isFinite(merged.abyss.bestChallengeCompletions)) merged.abyss.bestChallengeCompletions = 0;
+    if (!Number.isFinite(merged.abyss.bestCelestialLayerCount)) merged.abyss.bestCelestialLayerCount = 0;
     for (const u of (C.ABYSS_UPGRADES || [])) if (!(u.id in merged.abyss.upgrades)) merged.abyss.upgrades[u.id]=0;
+    const currentChallengeCount = Object.keys(merged.challenge.completed || {}).filter(id => merged.challenge.completed[id]).length;
+    merged.abyss.bestChallengeCompletions = Math.max(merged.abyss.bestChallengeCompletions, currentChallengeCount);
+    const currentCelestialLayerCount = (C.CELESTIAL_LAYERS || []).reduce((count, layer)=>{
+      return count + (((merged.ascEarnedTotal || 0) >= (layer.need || 0)) ? 1 : 0);
+    }, 0);
+    merged.abyss.bestCelestialLayerCount = Math.max(merged.abyss.bestCelestialLayerCount, currentCelestialLayerCount);
+    for (const ch of (C.CHALLENGES || [])){
+      const reward = ch.reward || {};
+      if (reward.type !== 'unlockFeature' || !reward.feature) continue;
+      if (merged.challenge.completed && merged.challenge.completed[ch.id]) merged.abyss.features[reward.feature] = true;
+    }
     if (typeof merged.seenUpdateVersion !== 'string') merged.seenUpdateVersion = merged.seenUpdateVersion || null;
     return merged;
   }

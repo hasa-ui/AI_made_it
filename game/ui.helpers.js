@@ -70,6 +70,7 @@
     if (b.type==='unitMult') return `${b.unitId} ×${b.mult}`;
     if (b.type==='prestigeEffectAdd') return `Prestige効果 +${b.add}`;
     if (b.type==='costMult') return `コスト ×${b.mult}`;
+    if (b.type==='unlockFeature') return b.text || '機能解放';
     return '恒久ボーナス';
   }
 

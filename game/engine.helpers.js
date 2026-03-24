@@ -9,6 +9,17 @@
     return (C.CHALLENGES || []).find(ch => ch.id === activeId) || null;
   }
 
+  function getCompletedChallengeCount(C, st){
+    const completed = st && st.challenge && st.challenge.completed ? st.challenge.completed : {};
+    return Object.keys(completed).filter(id => completed[id]).length;
+  }
+
+  function hasAbyssFeature(C, st, featureId){
+    if (!featureId) return false;
+    const features = st && st.abyss && st.abyss.features ? st.abyss.features : {};
+    return !!features[featureId];
+  }
+
   function getUnlockedPrestigeLayerCount(C, st){
     let count = 0;
     for (const layer of (C.PRESTIGE_LAYERS || [])){
@@ -138,6 +149,8 @@
     nowSec,
     deepCopy,
     getActiveChallengeDef,
+    getCompletedChallengeCount,
+    hasAbyssFeature,
     getUnlockedPrestigeLayerCount,
     getUnlockedCelestialLayerCount,
     getPrestigeLayerStatus,

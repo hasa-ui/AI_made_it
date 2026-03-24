@@ -1,0 +1,13 @@
+Original prompt: ロードマップのPhase 1を完了させてください
+
+## 2026-03-24 ロードマップ Phase 1 完了
+- 調査: `ロードマップ.md` と `仕様書.md` を基準に、Phase 1 の未実装を Abyss gain / Abyss専用拡張 / 終盤導線 UI / 機能解放型 Challenge 報酬へ分解。
+- 調査: `game/config.js` `game/state.js` `game/engine.helpers.js` `game/engine.app.js` `game/engine.challenge.js` `game/ui.app.js` `index.html` を確認。
+- 方針: セーブ互換を保ちつつ、Abyss 到達後の「次に何を狙うか」を状態と UI で見える化し、Challenge 報酬の一部を解放型へ差し替える。
+
+## 2026-03-24 Abyss review fixes
+- 調査: reviewer 指摘どおり、Abyss gain が `challenge.completed` と `ascEarnedTotal` の揮発値を直接参照しており、Abyss reset 後の周回で shard gain が後退することを確認。
+- 実装: `abyss.bestChallengeCompletions` と `abyss.bestCelestialLayerCount` を追加し、Abyss reset 前に milestone を snapshot して gain 計算へ反映するよう修正。
+- 実装: 旧セーブ移行時も現行の Challenge/Celestial 進行から新フィールドを補完するよう `state.js` を更新。
+- 実装: Abyss roadmap に Celestial 節目 objective を追加し、gain source と UI を一致させた。
+- 検証: Node の vm テストで `5 -> 5` の shard gain 維持と `celestial` objective の出現を確認。Playwright クライアントはこの環境で `browser.newPage: Target page, context or browser has been closed` により実行不可。

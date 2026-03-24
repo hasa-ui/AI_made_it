@@ -611,22 +611,92 @@
     if (!wrap) return;
     const list = E.getAbyssUpgradeStatus ? E.getAbyssUpgradeStatus() : [];
     wrap.innerHTML = '';
+    const roleOrder = Array.isArray(C.ABYSS_ROLE_ORDER) ? C.ABYSS_ROLE_ORDER : [];
+    const visibleRoles = new Map();
+    const lockedFeatures = new Map();
     for (const ab of list){
-      const row = document.createElement('div');
-      row.className = 'upg';
-      row.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><div><strong>${ab.name}</strong><div class="muted small">${ab.desc}</div><div class="muted tiny">Lv ${fmtNumber(ab.lvl)}</div></div><div style="text-align:right"><button id="abyssBuy-${ab.id}" class="small">購入 (${fmtNumber(ab.cost)})</button></div></div>`;
-      wrap.appendChild(row);
+      if (!ab.unlocked){
+        if (ab.unlockFeature && !lockedFeatures.has(ab.unlockFeature)) lockedFeatures.set(ab.unlockFeature, ab);
+        continue;
+      }
+      const role = ab.role || 'その他';
+      if (!visibleRoles.has(role)) visibleRoles.set(role, []);
+      visibleRoles.get(role).push(ab);
+    }
+    const orderedRoles = [...roleOrder, ...Array.from(visibleRoles.keys()).filter(role=>!roleOrder.includes(role))];
+    for (const role of orderedRoles){
+      const entries = visibleRoles.get(role);
+      if (!entries || !entries.length) continue;
+      const group = document.createElement('div');
+      group.className = 'upg';
+      group.style.paddingBottom = '8px';
+      group.innerHTML = `<div class="muted tiny" style="margin-bottom:8px;">${role}</div>`;
+      for (const ab of entries){
+        const row = document.createElement('div');
+        row.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><div><strong>${ab.name}</strong><div class="muted small">${ab.desc}</div><div class="muted tiny">Lv ${fmtNumber(ab.lvl)}</div></div><div style="text-align:right"><button id="abyssBuy-${ab.id}" class="small">購入 (${fmtNumber(ab.cost)})</button></div></div>`;
+        group.appendChild(row);
+      }
+      wrap.appendChild(group);
+    }
+    if (lockedFeatures.size){
+      const lockCard = document.createElement('div');
+      lockCard.className = 'upg';
+      lockCard.innerHTML = `<div class="muted tiny" style="margin-bottom:8px;">未解放の深淵機能</div>`;
+      for (const ab of lockedFeatures.values()){
+        const row = document.createElement('div');
+        row.innerHTML = `<div style="padding:6px 0"><strong>${ab.unlockFeatureName || '機能解放'}</strong><div class="muted small">${ab.name} などのアップグレードを解放</div><div class="muted tiny">条件: ${(C.ABYSS_FEATURES && C.ABYSS_FEATURES[ab.unlockFeature] && C.CHALLENGES.find(ch=>ch.id === C.ABYSS_FEATURES[ab.unlockFeature].unlockChallengeId)?.name) || '対応Challengeクリア'}</div></div>`;
+        lockCard.appendChild(row);
+      }
+      wrap.appendChild(lockCard);
+    }
+    for (const ab of list.filter(x=>x.unlocked)){
       const btn = document.getElementById(`abyssBuy-${ab.id}`);
-      if (btn){
-        btn.disabled = !ab.affordable;
-        btn.addEventListener('click', ()=>{
-          const res = E.buyAbyssUpgradeInternal ? E.buyAbyssUpgradeInternal(ab.id) : { ok:false };
-          if (!res.ok){ showTypedToast('general', 'Abyss Shardが不足しています'); return; }
-          SM.saveState(E.getState());
-          buildAbyssUI();
-          syncUIAfterChange();
-          showTypedToast('purchase', `${ab.name} を強化しました`);
-        });
+      if (!btn) continue;
+      btn.disabled = !ab.affordable;
+      btn.addEventListener('click', ()=>{
+        const res = E.buyAbyssUpgradeInternal ? E.buyAbyssUpgradeInternal(ab.id) : { ok:false };
+        if (!res.ok){
+          const msg = res.reason === 'feature_locked' ? '対応するChallenge報酬を解放してください' : 'Abyss Shardが不足しています';
+          showTypedToast('general', msg);
+          return;
+        }
+        SM.saveState(E.getState());
+        buildAbyssUI();
+        syncUIAfterChange();
+        showTypedToast('purchase', `${ab.name} を強化しました`);
+      });
+    }
+    renderAbyssRoadmap();
+  }
+
+  function renderAbyssRoadmap(){
+    const st = E.getState();
+    const objectiveWrap = document.getElementById('abyssObjectiveList');
+    const breakdownWrap = document.getElementById('abyssGainBreakdown');
+    if (!objectiveWrap && !breakdownWrap) return;
+    const arrived = ((st.abyss && (((st.abyss.resetCount || 0) > 0) || ((st.abyss.shards || 0) > 0))) || (E.previewAbyssGain && E.previewAbyssGain() > 0));
+    if (objectiveWrap){
+      if (!arrived){
+        objectiveWrap.innerHTML = '<div class="muted small">Abyss到達後に、次の目標がここへ表示されます。</div>';
+      } else {
+        const objectives = E.getAbyssObjectives ? E.getAbyssObjectives(st) : [];
+        objectiveWrap.innerHTML = objectives.map(obj=>`<div class="achItem ${obj.done ? 'achUnlocked' : 'achLocked'}"><div><strong>${obj.title}</strong><div class="muted small">${obj.desc}</div><div class="muted tiny">進捗: ${fmtNumber(obj.current)} / ${fmtNumber(obj.target)} / 報酬: ${obj.reward}</div></div><div class="muted small">${obj.done ? '達成' : '進行中'}</div></div>`).join('');
+      }
+    }
+    if (breakdownWrap){
+      if (!arrived){
+        breakdownWrap.textContent = 'Abyss到達後に gain の内訳が表示されます。';
+      } else if (!(E.hasAbyssFeature && E.hasAbyssFeature('abyss_gain_breakdown', st))){
+        const feature = C.ABYSS_FEATURES && C.ABYSS_FEATURES.abyss_gain_breakdown;
+        const challengeName = feature ? ((C.CHALLENGES || []).find(ch=>ch.id === feature.unlockChallengeId)?.name || feature.unlockChallengeId) : 'Challenge 8';
+        breakdownWrap.textContent = `${challengeName} をクリアすると Abyss gain の内訳が表示されます。`;
+      } else {
+        const info = E.getAbyssGainBreakdown ? E.getAbyssGainBreakdown(st) : { current:0, parts:[] };
+        const lines = [`現在のAbyss gain: ${fmtNumber(info.current)}`];
+        for (const part of (info.parts || [])){
+          lines.push(`${part.label}: +${fmtNumber(part.value)}`);
+        }
+        breakdownWrap.textContent = lines.join('\n');
       }
     }
   }
@@ -758,6 +828,8 @@
     }
     renderChallengeStatus();
     renderStatsTab();
+    renderAbyssRoadmap();
+    if ((st.settings && st.settings.activeTab) === 'abyss') buildAbyssUI();
   }
 
   // ---------- mainLoop ----------
@@ -778,6 +850,10 @@
     if (chRes && chRes.ok){
       SM.saveState(st);
       showTypedToast('achievement', `Challenge達成: ${chRes.id}`);
+      if (chRes.unlockedFeature){
+        const feature = C.ABYSS_FEATURES && C.ABYSS_FEATURES[chRes.unlockedFeature];
+        showTypedToast('purchase', `機能解放: ${(feature && feature.name) || chRes.unlockedFeature}`);
+      }
       checkAchievementsAfterAction();
       syncUIAfterChange();
     }
@@ -940,7 +1016,16 @@
       });
       document.getElementById(`chClaim-${ch.id}`)?.addEventListener('click', ()=>{
         const res = E.tryCompleteChallengeInternal ? E.tryCompleteChallengeInternal() : { ok:false };
-        if (res.ok){ SM.saveState(E.getState()); syncUIAfterChange(); checkAchievementsAfterAction(); showTypedToast('achievement', `${ch.name} クリア`); }
+        if (res.ok){
+          SM.saveState(E.getState());
+          syncUIAfterChange();
+          checkAchievementsAfterAction();
+          showTypedToast('achievement', `${ch.name} クリア`);
+          if (res.unlockedFeature){
+            const feature = C.ABYSS_FEATURES && C.ABYSS_FEATURES[res.unlockedFeature];
+            showTypedToast('purchase', `機能解放: ${(feature && feature.name) || res.unlockedFeature}`);
+          }
+        }
         else showTypedToast('general', '目標未達です');
       });
       document.getElementById(`chAbandon-${ch.id}`)?.addEventListener('click', ()=>{
@@ -1006,9 +1091,9 @@
     const body = document.getElementById('updateModalBody');
     if (!modal || !body) return;
     body.textContent = `${C.APP_VERSION} の主な更新
-- Celestialルート専用アップグレードが切替後も残る不具合を修正
-- 旧セーブのルート専用化アップグレードを CP 返金付きで移行
-- Abyssアップグレードを 8 種構成へ拡張し、深層ビルドの選択肢を追加`;
+- Abyss gain を再設計し、Challenge / Celestial / 周回数 / Infinity 到達で段階的に伸びるよう変更
+- 機能解放型の Challenge 報酬と、役割別 Abyss アップグレードを追加
+- Abyss タブに短期目標ナビゲーターと gain 内訳表示を追加`;
     modal.style.display = 'flex';
     document.getElementById('closeUpdateModal')?.addEventListener('click', ()=>{
       modal.style.display = 'none';

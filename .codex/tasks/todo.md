@@ -1006,3 +1006,48 @@
 ## Verify Log (2026-03-13 UI情報設計リデザイン)
 - `node --check game/config.js && node --check game/ui.app.js && node --check game/ui.js && node --check game/engine.app.js && node --check game/state.js` : 成功
 - `python -m http.server 4173 --directory /workspace/AI_made_it` + Playwright: Playタブの導線カード追加、比較優先レイアウト、役割色反映を確認しスクリーンショット取得
+
+## Plan (2026-03-24 ロードマップ Phase 1 完了)
+- [ ] Phase 1 対象の Abyss / Challenge / UI / 文書の現状差分を確認
+- [ ] Abyss gain 式を再設計し、Abyss周回に段階的な伸びを持たせる
+- [ ] 役割別 Abyss アップグレードと、機能解放型 Challenge 報酬を追加
+- [ ] Abyss 到達後の短期目標を UI に表示
+- [ ] 仕様書・ロードマップ・バージョン表記・アップデート情報・更新モーダルを更新
+- [ ] 検証コマンド実行とログ追記
+
+## Progress Log (2026-03-24 ロードマップ Phase 1 完了)
+- 着手: `ロードマップ.md` `仕様書.md` `game/config.js` `game/state.js` `game/engine.helpers.js` `game/engine.app.js` `game/engine.challenge.js` `game/ui.app.js` `index.html` を確認し、Phase 1 の未完了が「Abyss gain 再設計」「役割別 Abyss 拡張」「Abyss 後目標 UI」「機能解放型 Challenge 報酬」に集中していることを確認。
+
+## Plan (2026-03-24 commit review 7cf6d8a4)
+- [x] 差分ファイルと Abyss / Challenge 周辺ロジックを確認
+- [x] 変更点の再現条件を Node で検証
+- [x] 指摘事項を優先度付きで整理
+
+## Progress Log (2026-03-24 commit review 7cf6d8a4)
+- `git show` / `git diff` で `game/config.js` `game/engine.app.js` `game/engine.challenge.js` `game/state.js` `game/ui.app.js` `index.html` の変更を確認。
+- Abyss gain 再設計が `challenge.completed` / `ascEarnedTotal` に依存していること、Abyss roadmap が Celestial 条件を表示しないことを重点確認。
+
+## Verify Log (2026-03-24 commit review 7cf6d8a4)
+- `node --check game/config.js && node --check game/state.js && node --check game/engine.helpers.js && node --check game/engine.challenge.js && node --check game/engine.app.js && node --check game/ui.helpers.js && node --check game/ui.app.js` : 成功
+- `node - <<'NODE' ...`（Abyss gain を 8 Challenge + 4 Celestial layer + Infinity で 5、Abyss reset 後の同条件未再達成時に 2 へ低下することを確認） : 成功
+- `node - <<'NODE' ...`（`ascEarnedTotal = 100` でも `E.getAbyssObjectives()` に Celestial 由来の次目標が含まれないことを確認） : 成功
+
+## Plan (2026-03-24 Abyss review fixes)
+- [x] 該当ロジックと永続化状態を確認し、保持すべき Abyss 累積値を定義
+- [x] `game/state.js` と `game/engine.app.js` を最小差分で修正し、Abyss gain 回帰を防ぐ
+- [x] Abyss roadmap に Celestial 節目を追加し、gain 内訳と整合させる
+- [x] 再現ケースを Node で検証し、ログを `.codex/tasks/todo.md` と `progress.md` に追記
+
+## Progress Log (2026-03-24 Abyss review fixes)
+- 着手: review 指摘の再現条件をコード上で確認し、Abyss reset で消える `challenge.completed` / `ascEarnedTotal` を直接参照していることが shard gain 回帰の原因だと特定。
+- 方針: `abyss` 配下に Abyss 間で保持する最大 Challenge クリア数と最大 Celestial 層数を追加し、gain 計算と roadmap の次目標の両方を同じ保持値から導出する。
+- 実装: `game/state.js` に `abyss.bestChallengeCompletions` / `abyss.bestCelestialLayerCount` を追加し、旧セーブ移行時も現在の `challenge.completed` と `ascEarnedTotal` から初期化するよう更新。
+- 実装: `game/engine.app.js` で Abyss gain 計算を保持済み milestone と現在値の最大値ベースへ変更し、Abyss reset 前に snapshot を保存するよう修正。
+- 実装: Abyss roadmap に `celestial` objective を追加し、Celestial 層 milestone が次の shard 増加条件として見えるよう調整。
+
+## Verify Log (2026-03-24 Abyss review fixes)
+- `node --check game/state.js && node --check game/engine.app.js` : 成功
+- `node - <<'NODE' ... NODE`（vm で `config/helpers/state/challenge/engine` を読込み、8 Challenge + 4 Celestial layer + Infinity の状態で `previewAbyssGain() === 5`、`doAbyssResetInternal()` 後に再度 `Infinity` を与えても `previewAbyssGain() === 5` を確認） : 成功
+- `node - <<'NODE' ... NODE`（同条件で `getAbyssObjectives()` を確認し、`id === 'celestial'` の objective が追加されていることを確認） : 成功
+- `python3 -m http.server 4173 --directory /root/AI_made_it` : 成功
+- `node /root/.codex/skills/develop-web-game/scripts/web_game_playwright_client.js ...` / `npx -y -p playwright node /root/.codex/skills/develop-web-game/scripts/web_game_playwright_client.js ...` : 失敗（この環境では `playwright` モジュール解決後も `browser.newPage: Target page, context or browser has been closed` でブラウザ起動確認不可）

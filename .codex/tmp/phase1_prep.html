@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>phase1 prep</title>
+</head>
+<body>
+  <p>prepared</p>
+  <script>
+    (function(){
+      const save = {
+        version: 15,
+        totalGoldEarned: "__NUM__:Infinity",
+        ascEarnedTotal: 80,
+        challenge: {
+          completed: {
+            ch_taxed_growth: true,
+            ch_no_upgrades: true,
+            ch_cost_spike: true,
+            ch_monoline: true,
+            ch_fragile_rush: true,
+            ch_ascetic_engine: true,
+            ch_quantum_lock: true,
+            ch_event_horizon: true,
+            ch_dimensional_drain: true,
+            ch_tickspeed_debt: true
+          }
+        },
+        abyss: {
+          shards: 48,
+          resetCount: 4,
+          features: {
+            abyss_gain_breakdown: true,
+            abyss_conversion_upgrades: true,
+            abyss_cycle_upgrades: true
+          },
+          upgrades: {
+            ab_cycle_memory: 1,
+            ab_overflow_lens: 1,
+            ab_restart_relay: 1,
+            ab_void_map: 1
+          }
+        },
+        settings: {
+          activeTab: "abyss"
+        },
+        seenUpdateVersion: "Ver.1.27.0"
+      };
+      localStorage.setItem("inc.split.full.v4", JSON.stringify(save));
+    })();
+  </script>
+</body>
+</html>

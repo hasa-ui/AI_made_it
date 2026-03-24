@@ -41,7 +41,14 @@
         celestial: { activeBranchId:null },
         achievementsOwned: {},
         settings: { notation: 'compact', notationThreshold: 1000, confirmLegacyBuy:true, confirmLegacyBuyMax:true, toast:{achievement:true,offline:true,purchase:true,general:true}, activeSubTabs:{prestige:'core',ascension:'core'} },
-        abyss: { shards:0, resetCount:0 },
+        abyss: {
+          shards:0,
+          resetCount:0,
+          bestChallengeCompletions:0,
+          bestCelestialLayerCount:0,
+          features:{},
+          upgrades:(C.ABYSS_UPGRADES || []).reduce((a,u)=>(a[u.id]=0,a),{})
+        },
         seenUpdateVersion: null
       };
     }
@@ -51,6 +58,147 @@
   let aggCache = null;
   let aggCacheDirty = true;
   function invalidateAggCache(){ aggCacheDirty = true; aggCache = null; }
+
+  function getCompletedChallengeCount(st){ return (H.getCompletedChallengeCount || ((C,src)=>0))(C, st || state); }
+  function hasAbyssFeature(st, featureId){ return (H.hasAbyssFeature || ((C,src,id)=>false))(C, st || state, featureId); }
+  function isAbyssUpgradeUnlocked(st, def){
+    if (!def || !def.unlockFeature) return true;
+    return hasAbyssFeature(st, def.unlockFeature);
+  }
+  function getAbyssMilestoneProgress(st){
+    const src = st || state;
+    const abyss = src.abyss || {};
+    return {
+      completedChallenges: Math.max(abyss.bestChallengeCompletions || 0, getCompletedChallengeCount(src)),
+      unlockedCelestialLayers: Math.max(abyss.bestCelestialLayerCount || 0, getUnlockedCelestialLayerCount(src))
+    };
+  }
+  function recordAbyssMilestoneProgress(st){
+    const src = st || state;
+    src.abyss = src.abyss || { shards:0, resetCount:0, bestChallengeCompletions:0, bestCelestialLayerCount:0, features:{}, upgrades:{} };
+    src.abyss.bestChallengeCompletions = Math.max(src.abyss.bestChallengeCompletions || 0, getCompletedChallengeCount(src));
+    src.abyss.bestCelestialLayerCount = Math.max(src.abyss.bestCelestialLayerCount || 0, getUnlockedCelestialLayerCount(src));
+  }
+
+  function getAbyssGainBreakdownInternal(st){
+    const src = st || state;
+    const goal = C.ABYSS_RESET_GOAL || Number.MAX_VALUE;
+    const total = src.totalGoldEarned || 0;
+    const ready = total >= goal;
+    const isOverflow = total === Infinity;
+    const milestoneProgress = getAbyssMilestoneProgress(src);
+    const completedChallenges = milestoneProgress.completedChallenges;
+    const unlockedCelestialLayers = milestoneProgress.unlockedCelestialLayers;
+    const resetCount = (src.abyss && src.abyss.resetCount) || 0;
+    let upgradeFlat = 0;
+    let overflowUpgrade = 0;
+    for (const def of (C.ABYSS_UPGRADES || [])){
+      if (!isAbyssUpgradeUnlocked(src, def)) continue;
+      const lvl = (src.abyss && src.abyss.upgrades && src.abyss.upgrades[def.id]) ? src.abyss.upgrades[def.id] : 0;
+      if (lvl <= 0) continue;
+      if (def.type === 'abyssGainFlat') upgradeFlat += ((def.payload && def.payload.amountPerLevel) || 0) * lvl;
+      if (def.type === 'abyssGainIfInfinite' && isOverflow) overflowUpgrade += ((def.payload && def.payload.amountPerLevel) || 0) * lvl;
+    }
+    const base = ready ? 1 : 0;
+    const challengeBonus = ready ? Math.floor(completedChallenges / 4) : 0;
+    const celestialBonus = ready ? Math.floor(unlockedCelestialLayers / 3) : 0;
+    const resetBonus = ready ? Math.floor(resetCount / 4) : 0;
+    const overflowBonus = ready && isOverflow ? 1 : 0;
+    const current = ready
+      ? Math.max(1, base + challengeBonus + celestialBonus + resetBonus + overflowBonus + upgradeFlat + overflowUpgrade)
+      : 0;
+    return {
+      ready,
+      current,
+      isOverflow,
+      total,
+      goal,
+      completedChallenges,
+      unlockedCelestialLayers,
+      resetCount,
+      parts: [
+        { key:'base', label:'到達基礎値', value:base },
+        { key:'challenge', label:'Challenge節目', value:challengeBonus },
+        { key:'celestial', label:'Celestial層節目', value:celestialBonus },
+        { key:'reset', label:'Abyss周回節目', value:resetBonus },
+        { key:'overflow', label:'Infinity到達', value:overflowBonus },
+        { key:'upgrade_flat', label:'変換アップグレード', value:upgradeFlat },
+        { key:'upgrade_overflow', label:'Overflow専用アップグレード', value:overflowUpgrade }
+      ]
+    };
+  }
+
+  function getAbyssObjectivesInternal(st){
+    const src = st || state;
+    const breakdown = getAbyssGainBreakdownInternal(src);
+    const objectives = [];
+    const totalChallenges = (C.CHALLENGES || []).length;
+    const maxChallengeTarget = Math.floor(totalChallenges / 4) * 4;
+    const nextChallengeTarget = maxChallengeTarget > 0
+      ? Math.min(maxChallengeTarget, (Math.floor(breakdown.completedChallenges / 4) + 1) * 4)
+      : totalChallenges;
+    objectives.push({
+      id:'challenge',
+      title:'Challenge節目',
+      current: breakdown.completedChallenges,
+      target: nextChallengeTarget,
+      reward:'Abyss gain +1',
+      done: maxChallengeTarget === 0 || breakdown.completedChallenges >= nextChallengeTarget,
+      desc: maxChallengeTarget === 0 || breakdown.completedChallenges >= nextChallengeTarget
+        ? 'Challenge由来の gain 節目は達成済み'
+        : `次の gain 節目は ${nextChallengeTarget} 件クリア`
+    });
+    const totalCelestialLayers = (C.CELESTIAL_LAYERS || []).length;
+    const maxCelestialTarget = Math.floor(totalCelestialLayers / 3) * 3;
+    const nextCelestialTarget = maxCelestialTarget > 0
+      ? Math.min(maxCelestialTarget, (Math.floor(breakdown.unlockedCelestialLayers / 3) + 1) * 3)
+      : totalCelestialLayers;
+    objectives.push({
+      id:'celestial',
+      title:'Celestial節目',
+      current: breakdown.unlockedCelestialLayers,
+      target: nextCelestialTarget,
+      reward:'Abyss gain +1',
+      done: maxCelestialTarget === 0 || breakdown.unlockedCelestialLayers >= nextCelestialTarget,
+      desc: maxCelestialTarget === 0 || breakdown.unlockedCelestialLayers >= nextCelestialTarget
+        ? 'Celestial由来の gain 節目は達成済み'
+        : `次の gain 節目は Celestial ${nextCelestialTarget} 層解放`
+    });
+    objectives.push({
+      id:'overflow',
+      title:'オーバーフロー観測',
+      current: breakdown.isOverflow ? 1 : 0,
+      target: 1,
+      reward:'Abyss gain +1',
+      done: breakdown.isOverflow,
+      desc: breakdown.isOverflow ? 'Infinity 到達済み' : '累計Goldを Infinity まで押し上げる'
+    });
+    const nextResetTarget = (Math.floor(breakdown.resetCount / 4) + 1) * 4;
+    objectives.push({
+      id:'reset',
+      title:'周回蓄積',
+      current: breakdown.resetCount,
+      target: nextResetTarget,
+      reward:'Abyss gain +1',
+      done: breakdown.resetCount >= nextResetTarget,
+      desc:`Abyss Reset ${nextResetTarget} 回で次の基礎 gain`
+    });
+    const nextFeature = Object.entries(C.ABYSS_FEATURES || {}).find(([featureId]) => !hasAbyssFeature(src, featureId));
+    if (nextFeature){
+      const [featureId, def] = nextFeature;
+      const ch = (C.CHALLENGES || []).find(x=>x.id === def.unlockChallengeId);
+      objectives.push({
+        id:`feature-${featureId}`,
+        title:def.name || '機能解放',
+        current: hasAbyssFeature(src, featureId) ? 1 : 0,
+        target: 1,
+        reward:def.desc || '機能解放',
+        done:false,
+        desc: ch ? `${ch.name} をクリアして解放` : '対応Challengeクリアで解放'
+      });
+    }
+    return objectives;
+  }
 
   // --- core aggregate computation (heavy) ---
   function computeLegacyAggregatesInternal(st){
@@ -141,6 +289,7 @@
     }
 
     const abyssShards = (st.abyss && st.abyss.shards) ? st.abyss.shards : 0;
+    const abyssResetCount = (st.abyss && st.abyss.resetCount) ? st.abyss.resetCount : 0;
     if (abyssShards > 0){
       globalMult *= Math.pow(2.25, abyssShards);
       startingGoldBonus += abyssShards * 5.0e7;
@@ -149,12 +298,15 @@
     }
 
     for (const ab of (C.ABYSS_UPGRADES || [])){
+      if (!isAbyssUpgradeUnlocked(st, ab)) continue;
       const lvl = (st.abyss && st.abyss.upgrades && st.abyss.upgrades[ab.id]) ? st.abyss.upgrades[ab.id] : 0;
       if (lvl <= 0) continue;
       if (ab.type === 'globalMult') globalMult *= Math.pow((ab.payload && ab.payload.multPerLevel) || 1, lvl);
       if (ab.type === 'costMult') costMult *= Math.pow((ab.payload && ab.payload.multPerLevel) || 1, lvl);
       if (ab.type === 'startGold') startingGoldBonus += ((ab.payload && ab.payload.amountPerLevel) || 0) * lvl;
+      if (ab.type === 'startGoldPerAbyssReset') startingGoldBonus += ((ab.payload && ab.payload.amountPerReset) || 0) * lvl * abyssResetCount;
       if (ab.type === 'flatGPS') flatGPS += ((ab.payload && ab.payload.gpsPerLevel) || 0) * lvl;
+      if (ab.type === 'flatGPSPerAbyssReset') flatGPS += ((ab.payload && ab.payload.gpsPerReset) || 0) * lvl * abyssResetCount;
       if (ab.type === 'prestigeEffectAdd') prestigeEffectAdd += ((ab.payload && ab.payload.addPerLevel) || 0) * lvl;
       if (ab.type === 'unitMult' && ab.payload && ab.payload.unitId) unitMults[ab.payload.unitId] = (unitMults[ab.payload.unitId] || 1) * Math.pow(ab.payload.multPerLevel || 1, lvl);
     }
@@ -562,31 +714,42 @@
   }
 
   function previewAbyssGain(){
-    const goal = C.ABYSS_RESET_GOAL || 1.8e308;
-    const total = state.totalGoldEarned || 0;
-    if (total < goal) return 0;
-    if (total === Infinity) return Math.max(1, Math.floor(Math.log10(Number.MAX_VALUE / goal) + 1));
-    if (!Number.isFinite(total) || total <= 0) return 0;
-    const ratio = Math.max(1, total / goal);
-    return Math.max(1, Math.floor(Math.log10(ratio) + 1));
+    return getAbyssGainBreakdownInternal(state).current;
   }
 
 
   function getAbyssUpgradeStatus(st){
     const src = st || state;
-    src.abyss = src.abyss || { shards:0, resetCount:0, upgrades:{} };
+    src.abyss = src.abyss || { shards:0, resetCount:0, features:{}, upgrades:{} };
+    src.abyss.features = src.abyss.features || {};
     src.abyss.upgrades = src.abyss.upgrades || {};
     return (C.ABYSS_UPGRADES || []).map(def=>{
+      const unlocked = isAbyssUpgradeUnlocked(src, def);
       const lvl = src.abyss.upgrades[def.id] || 0;
       const cost = (H.abyssUpgradeCost || ((d,l)=>1))(def, lvl);
-      return { id:def.id, name:def.name, desc:def.desc, lvl, cost, affordable:(src.abyss.shards || 0) >= cost };
+      const featureDef = def.unlockFeature ? (C.ABYSS_FEATURES && C.ABYSS_FEATURES[def.unlockFeature]) : null;
+      return {
+        id:def.id,
+        name:def.name,
+        role:def.role || 'その他',
+        desc:def.desc,
+        lvl,
+        cost,
+        unlocked,
+        unlockFeature:def.unlockFeature || null,
+        unlockFeatureName: featureDef ? featureDef.name : null,
+        unlockChallengeId: featureDef ? featureDef.unlockChallengeId : null,
+        affordable: unlocked && (src.abyss.shards || 0) >= cost
+      };
     });
   }
 
   function buyAbyssUpgradeInternal(id){
     const def = (C.ABYSS_UPGRADES || []).find(x=>x.id===id);
     if (!def) return { ok:false, reason:'not_found' };
-    state.abyss = state.abyss || { shards:0, resetCount:0, upgrades:{} };
+    if (!isAbyssUpgradeUnlocked(state, def)) return { ok:false, reason:'feature_locked' };
+    state.abyss = state.abyss || { shards:0, resetCount:0, features:{}, upgrades:{} };
+    state.abyss.features = state.abyss.features || {};
     state.abyss.upgrades = state.abyss.upgrades || {};
     const lvl = state.abyss.upgrades[def.id] || 0;
     const cost = (H.abyssUpgradeCost || ((d,l)=>1))(def, lvl);
@@ -601,7 +764,10 @@
   function doAbyssResetInternal(){
     const gain = previewAbyssGain();
     if (gain <= 0) return { ok:false, reason:'goal' };
-    state.abyss = state.abyss || { shards:0, resetCount:0 };
+    recordAbyssMilestoneProgress(state);
+    state.abyss = state.abyss || { shards:0, resetCount:0, bestChallengeCompletions:0, bestCelestialLayerCount:0, features:{}, upgrades:{} };
+    state.abyss.features = state.abyss.features || {};
+    state.abyss.upgrades = state.abyss.upgrades || (C.ABYSS_UPGRADES || []).reduce((a,u)=>(a[u.id]=0,a),{});
     state.abyss.shards = (state.abyss.shards || 0) + gain;
     state.abyss.resetCount = (state.abyss.resetCount || 0) + 1;
     state.gold = C.STARTING_GOLD || 50;
@@ -741,6 +907,9 @@
     previewAscGain,
     previewAbyssGain,
     getAbyssUpgradeStatus: (st) => getAbyssUpgradeStatus(st || state),
+    getAbyssGainBreakdown: (st) => getAbyssGainBreakdownInternal(st || state),
+    getAbyssObjectives: (st) => getAbyssObjectivesInternal(st || state),
+    hasAbyssFeature: (featureId, st) => hasAbyssFeature(st || state, featureId),
     buyAbyssUpgradeInternal: (id) => buyAbyssUpgradeInternal(id),
     doPrestigeInternal,
     doAscendInternal,
