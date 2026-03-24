@@ -38,3 +38,10 @@ Original prompt: ロードマップのPhase 1を完了させてください
 - 実装: `game/ui.app.js` に `finalizeChallengeCompletion()` を追加し、Challenge クリア後の `saveState`・`syncUIAfterChange`・achievement 判定・解放 toast を共通化。
 - 実装: main loop の自動クリアと手動 `達成判定` の両方を同 helper 経由へ変更し、クリア状態の UI 反映を最優先で確定させるよう修正。
 - 検証: `node --check game/ui.app.js` と小さな Node harness で、共通 helper の呼び出し順と両経路からの接続を確認。
+
+## 2026-03-24 ロードマップ Phase 2 完了
+- 実装: `Ver.1.29.0` として Celestial Phase 2 を実装。Nova / Vault / Mirror / Epoch それぞれへ専用アップグレードを2種ずつ追加し、4ルートの中後半ビルド差を拡張。
+- 実装: Celestial ルート定義に推奨スタイル / ガイド / 到達目標を追加し、Celestial 画面で現在有効な専用効果と、購入済みだが待機中の専用強化を見える化。
+- 実装: ルート別 Celestial 投資実績を4件追加し、分岐ごとの攻略目標を実績報酬としても提示。
+- 文書: `ロードマップ.md` の Phase 2 を完了済みに更新し、`仕様書.md` の Celestial / 実績 / 現行課題を現仕様へ反映。ヘルプ・アップデート情報・更新モーダルも `Ver.1.29.0` 内容へ更新。
+- 検証: `node --check`、旧セーブ import の Celestial upgrade 補完確認、`activeBranchId` 切替で Nova 専用倍率と Mirror 専用開始ゴールドの有効状態が入れ替わる vm テストを実行して成功。
