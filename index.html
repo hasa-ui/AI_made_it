@@ -274,13 +274,18 @@
       <div id="tab-abyss" class="tabPane" style="display:none;">
         <div class="card">
           <h3>Abyss</h3>
-          <p class="muted small">深淵専用の機能です。Abyss Shardを使って恒久強化を購入できます。</p>
+          <p class="muted small">深淵専用の機能です。Abyss Shardを使って恒久強化を購入できます。Abyss gain は Challenge / Celestial / 周回数 / Infinity 到達で段階的に増加します。</p>
           <div class="row">
             <div class="statusItem"><div class="muted small">所持 Abyss Shard</div><div id="abyssTabShard" style="color:#60a5fa;font-weight:bold;">0</div></div>
             <div class="statusItem"><div class="muted small">累計 Abyss Reset</div><div id="abyssResetCount" class="muted small inline">0</div></div>
             <div class="statusItem"><div class="muted small">次回獲得見込</div><div id="abyssTabGain" class="muted small inline">0</div></div>
           </div>
           <div class="row" style="margin-top:8px;"><button id="doAbyssFromTab" class="warn">Abyssリセット実行</button></div>
+        </div>
+        <div class="card">
+          <h3>深淵ナビゲーター</h3>
+          <div id="abyssObjectiveList" style="margin-top:10px;"></div>
+          <pre id="abyssGainBreakdown" class="muted small previewbox" style="margin-top:10px;">Abyss到達後に gain の内訳が表示されます。</pre>
         </div>
         <div class="card">
           <h3>深淵改造</h3>
@@ -356,6 +361,7 @@
           <h3>アップデート情報</h3>
           <p class="small muted" style="margin-top:4px;">このゲームは現在<strong>アルファ版</strong>です。仕様やバランスは今後も変更されます。</p>
           <ul class="small muted" style="margin-top:8px; padding-left:20px; line-height:1.8;">
+            <li><strong>Ver.1.27.0</strong>：ロードマップ Phase 1 を完了。Abyss gain を再設計し、Challenge / Celestial / Infinity 到達 / 周回数で段階的に増加するよう変更。Abyssタブに短期目標ナビゲーターを追加し、一部Challenge報酬を機能解放型へ差し替え。役割別 Abyss アップグレードも追加。</li>
             <li><strong>Ver.1.26.0</strong>：Celestialルート専用効果の排他制御を修正し、旧セーブで分岐専用化されたアップグレードをCP返金付きで再配置。あわせて Abyssアップグレードを8種構成へ拡張し、深層以降の選択肢を増量。</li>
             <li><strong>Ver.1.25.0</strong>：Celestialにルート分岐の土台を追加。Nova/Vault/Mirror/Epoch の4系統を層解放に応じて選択可能にし、選択ルート固有ボーナスと専用Celestialアップグレードを実装。</li>
             <li><strong>Ver.1.24.0</strong>：プレイUIを情報優先設計へ再構成。ヘッダーの役割色を整理し、ユニット/アップグレードを「比較情報→行動」の順で読めるレイアウトへ刷新。長文や欠損値でも崩れにくい表示ルールを追加。</li>

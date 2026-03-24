@@ -1006,3 +1006,14 @@
 ## Verify Log (2026-03-13 UI情報設計リデザイン)
 - `node --check game/config.js && node --check game/ui.app.js && node --check game/ui.js && node --check game/engine.app.js && node --check game/state.js` : 成功
 - `python -m http.server 4173 --directory /workspace/AI_made_it` + Playwright: Playタブの導線カード追加、比較優先レイアウト、役割色反映を確認しスクリーンショット取得
+
+## Plan (2026-03-24 ロードマップ Phase 1 完了)
+- [ ] Phase 1 対象の Abyss / Challenge / UI / 文書の現状差分を確認
+- [ ] Abyss gain 式を再設計し、Abyss周回に段階的な伸びを持たせる
+- [ ] 役割別 Abyss アップグレードと、機能解放型 Challenge 報酬を追加
+- [ ] Abyss 到達後の短期目標を UI に表示
+- [ ] 仕様書・ロードマップ・バージョン表記・アップデート情報・更新モーダルを更新
+- [ ] 検証コマンド実行とログ追記
+
+## Progress Log (2026-03-24 ロードマップ Phase 1 完了)
+- 着手: `ロードマップ.md` `仕様書.md` `game/config.js` `game/state.js` `game/engine.helpers.js` `game/engine.app.js` `game/engine.challenge.js` `game/ui.app.js` `index.html` を確認し、Phase 1 の未完了が「Abyss gain 再設計」「役割別 Abyss 拡張」「Abyss 後目標 UI」「機能解放型 Challenge 報酬」に集中していることを確認。

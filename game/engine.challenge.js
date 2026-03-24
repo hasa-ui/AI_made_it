@@ -64,13 +64,21 @@
       const prev = state.challenge.bestSec[ch.id] ?? Infinity;
       state.challenge.bestSec[ch.id] = Math.min(prev, sec);
       state.challenge.completed[ch.id] = true;
+      state.abyss = state.abyss || { shards:0, resetCount:0, features:{}, upgrades:{} };
+      state.abyss.features = state.abyss.features || {};
+      const reward = ch.reward || {};
+      let unlockedFeature = null;
+      if (reward.type === 'unlockFeature' && reward.feature){
+        state.abyss.features[reward.feature] = true;
+        unlockedFeature = reward.feature;
+      }
       const restoredTotalGold = state.challenge.savedTotalGold;
       state.challenge.activeId = null;
       if (typeof restoredTotalGold === 'number') state.totalGoldEarned = restoredTotalGold;
       state.challenge.savedTotalGold = null;
       invalidateAggCache();
       recalcAndCacheGPS(state);
-      return { ok:true, id:ch.id, firstClear: !Number.isFinite(prev), sec };
+      return { ok:true, id:ch.id, firstClear: !Number.isFinite(prev), sec, unlockedFeature };
     }
 
     return { startChallengeInternal, abandonChallengeInternal, tryCompleteChallengeInternal };

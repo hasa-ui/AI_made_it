@@ -4,8 +4,8 @@
 
   const C = {
     SAVE_KEY: 'inc.split.full.v4',
-    SAVE_VERSION: 14,
-    APP_VERSION: 'Ver.1.26.0',
+    SAVE_VERSION: 15,
+    APP_VERSION: 'Ver.1.27.0',
     UI_UPDATE_INTERVAL_MS: 50,
     AUTO_SAVE_INTERVAL: 5000,
     MAX_OFFLINE_SECONDS: 60*60*24,
@@ -18,16 +18,39 @@
     ABYSS_RESET_GOAL: Number.MAX_VALUE
   };
 
+  C.ABYSS_FEATURES = {
+    abyss_gain_breakdown: {
+      name:'深淵解析',
+      desc:'Abyss gain の内訳表示を解放',
+      unlockChallengeId:'ch_event_horizon'
+    },
+    abyss_conversion_upgrades: {
+      name:'深淵変換理論',
+      desc:'Abyss gain を伸ばす変換アップグレードを解放',
+      unlockChallengeId:'ch_dimensional_drain'
+    },
+    abyss_cycle_upgrades: {
+      name:'循環再起動設計',
+      desc:'Abyss周回を加速する再始動アップグレードを解放',
+      unlockChallengeId:'ch_tickspeed_debt'
+    }
+  };
+
+  C.ABYSS_ROLE_ORDER = ['基盤', '再始動', '変換', '特化'];
 
   C.ABYSS_UPGRADES = [
-    { id:'ab_cost', name:'深淵圧縮', desc:'全コストをLvごとに×0.94', baseCost:1, costMult:2.2, type:'costMult', payload:{multPerLevel:0.94} },
-    { id:'ab_flux', name:'虚無フラックス', desc:'全体倍率をLvごとに×1.35', baseCost:1, costMult:2.6, type:'globalMult', payload:{multPerLevel:1.35} },
-    { id:'ab_seed', name:'空虚の種火', desc:'開始ゴールド +2.5e8 /Lv', baseCost:2, costMult:2.8, type:'startGold', payload:{amountPerLevel:2.5e8} },
-    { id:'ab_dividend', name:'深層配当炉', desc:'恒久 +8.0e6 GPS /Lv', baseCost:3, costMult:2.9, type:'flatGPS', payload:{gpsPerLevel:8.0e6} },
-    { id:'ab_resonance', name:'奈落共鳴', desc:'Prestige効果 +0.04 /Lv', baseCost:4, costMult:3.0, type:'prestigeEffectAdd', payload:{addPerLevel:0.04} },
-    { id:'ab_excav_matrix', name:'掘削行列の深層化', desc:'エクスカベーター ×3.2 /Lv', baseCost:4, costMult:3.1, type:'unitMult', payload:{unitId:'excav', multPerLevel:3.2} },
-    { id:'ab_drill_surge', name:'反応炉深圧', desc:'ドリルコア反応炉 ×2.8 /Lv', baseCost:5, costMult:3.3, type:'unitMult', payload:{unitId:'drillcore', multPerLevel:2.8} },
-    { id:'ab_void_bloom', name:'虚空開花', desc:'ヴォイド掘削艦 ×2.4 /Lv', baseCost:6, costMult:3.5, type:'unitMult', payload:{unitId:'voidrig', multPerLevel:2.4} }
+    { id:'ab_cost', name:'深淵圧縮', role:'基盤', desc:'全コストをLvごとに×0.94', baseCost:1, costMult:2.2, type:'costMult', payload:{multPerLevel:0.94} },
+    { id:'ab_flux', name:'虚無フラックス', role:'基盤', desc:'全体倍率をLvごとに×1.35', baseCost:1, costMult:2.6, type:'globalMult', payload:{multPerLevel:1.35} },
+    { id:'ab_seed', name:'空虚の種火', role:'再始動', desc:'開始ゴールド +2.5e8 /Lv', baseCost:2, costMult:2.8, type:'startGold', payload:{amountPerLevel:2.5e8} },
+    { id:'ab_dividend', name:'深層配当炉', role:'再始動', desc:'恒久 +8.0e6 GPS /Lv', baseCost:3, costMult:2.9, type:'flatGPS', payload:{gpsPerLevel:8.0e6} },
+    { id:'ab_resonance', name:'奈落共鳴', role:'変換', desc:'Prestige効果 +0.04 /Lv', baseCost:4, costMult:3.0, type:'prestigeEffectAdd', payload:{addPerLevel:0.04} },
+    { id:'ab_cycle_memory', name:'循環記憶素子', role:'変換', unlockFeature:'abyss_conversion_upgrades', desc:'Abyss gain +1 /Lv', baseCost:4, costMult:3.1, type:'abyssGainFlat', payload:{amountPerLevel:1} },
+    { id:'ab_overflow_lens', name:'オーバーフローレンズ', role:'変換', unlockFeature:'abyss_conversion_upgrades', desc:'累計Goldが Infinity の時、Abyss gain +1 /Lv', baseCost:6, costMult:3.4, type:'abyssGainIfInfinite', payload:{amountPerLevel:1} },
+    { id:'ab_restart_relay', name:'再起動リレー', role:'再始動', unlockFeature:'abyss_cycle_upgrades', desc:'Abyss Resetごとに +2.5e7 GPS /Lv', baseCost:5, costMult:3.2, type:'flatGPSPerAbyssReset', payload:{gpsPerReset:2.5e7} },
+    { id:'ab_void_map', name:'虚空航路図', role:'再始動', unlockFeature:'abyss_cycle_upgrades', desc:'Abyss Resetごとに 開始ゴールド +4.0e8 /Lv', baseCost:7, costMult:3.5, type:'startGoldPerAbyssReset', payload:{amountPerReset:4.0e8} },
+    { id:'ab_excav_matrix', name:'掘削行列の深層化', role:'特化', desc:'エクスカベーター ×3.2 /Lv', baseCost:4, costMult:3.1, type:'unitMult', payload:{unitId:'excav', multPerLevel:3.2} },
+    { id:'ab_drill_surge', name:'反応炉深圧', role:'特化', desc:'ドリルコア反応炉 ×2.8 /Lv', baseCost:5, costMult:3.3, type:'unitMult', payload:{unitId:'drillcore', multPerLevel:2.8} },
+    { id:'ab_void_bloom', name:'虚空開花', role:'特化', desc:'ヴォイド掘削艦 ×2.4 /Lv', baseCost:6, costMult:3.5, type:'unitMult', payload:{unitId:'voidrig', multPerLevel:2.4} }
   ];
 
   C.UNIT_DEFS = [
@@ -186,7 +209,7 @@
       desc:'全体生産18%・コスト2.6倍・開始資金1固定の極限周回。',
       goalTotalGold: 2200000,
       effects:{ globalMult:0.18, costMult:2.6, forceStartGold:1 },
-      reward:{ type:'globalMult', mult:1.45, text:'恒久: 全体 ×1.45' }
+      reward:{ type:'unlockFeature', feature:'abyss_gain_breakdown', text:'機能: Abyss gain 内訳表示を解放' }
     },
     {
       id:'ch_dimensional_drain',
@@ -195,7 +218,7 @@
       desc:'Antimatter Dimensions風。所持ユニット総数が増えるほど全体生産が急減（1台ごとに×0.975）。',
       goalTotalGold: 1.0e260,
       effects:{ globalMultPerOwned:0.975 },
-      reward:{ type:'costMult', mult:0.82, text:'恒久: コスト ×0.82' }
+      reward:{ type:'unlockFeature', feature:'abyss_conversion_upgrades', text:'機能: Abyss変換アップグレードを解放' }
     },
     {
       id:'ch_tickspeed_debt',
@@ -204,7 +227,7 @@
       desc:'Antimatter Dimensions風。ユニット総数が増えるほど購入コスト倍率が累積加速（1 + 総数/700）。',
       goalTotalGold: 1.0e285,
       effects:{ costRampByOwnedDiv:700 },
-      reward:{ type:'prestigeEffectAdd', add:0.14, text:'恒久: Prestige効果 +0.14' }
+      reward:{ type:'unlockFeature', feature:'abyss_cycle_upgrades', text:'機能: Abyss再始動アップグレードを解放' }
     },
     {
       id:'ch_abyssal_singularity',
