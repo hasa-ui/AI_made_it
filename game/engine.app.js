@@ -41,7 +41,14 @@
         celestial: { activeBranchId:null },
         achievementsOwned: {},
         settings: { notation: 'compact', notationThreshold: 1000, confirmLegacyBuy:true, confirmLegacyBuyMax:true, toast:{achievement:true,offline:true,purchase:true,general:true}, activeSubTabs:{prestige:'core',ascension:'core'} },
-        abyss: { shards:0, resetCount:0, features:{}, upgrades:(C.ABYSS_UPGRADES || []).reduce((a,u)=>(a[u.id]=0,a),{}) },
+        abyss: {
+          shards:0,
+          resetCount:0,
+          bestChallengeCompletions:0,
+          bestCelestialLayerCount:0,
+          features:{},
+          upgrades:(C.ABYSS_UPGRADES || []).reduce((a,u)=>(a[u.id]=0,a),{})
+        },
         seenUpdateVersion: null
       };
     }
@@ -58,6 +65,20 @@
     if (!def || !def.unlockFeature) return true;
     return hasAbyssFeature(st, def.unlockFeature);
   }
+  function getAbyssMilestoneProgress(st){
+    const src = st || state;
+    const abyss = src.abyss || {};
+    return {
+      completedChallenges: Math.max(abyss.bestChallengeCompletions || 0, getCompletedChallengeCount(src)),
+      unlockedCelestialLayers: Math.max(abyss.bestCelestialLayerCount || 0, getUnlockedCelestialLayerCount(src))
+    };
+  }
+  function recordAbyssMilestoneProgress(st){
+    const src = st || state;
+    src.abyss = src.abyss || { shards:0, resetCount:0, bestChallengeCompletions:0, bestCelestialLayerCount:0, features:{}, upgrades:{} };
+    src.abyss.bestChallengeCompletions = Math.max(src.abyss.bestChallengeCompletions || 0, getCompletedChallengeCount(src));
+    src.abyss.bestCelestialLayerCount = Math.max(src.abyss.bestCelestialLayerCount || 0, getUnlockedCelestialLayerCount(src));
+  }
 
   function getAbyssGainBreakdownInternal(st){
     const src = st || state;
@@ -65,8 +86,9 @@
     const total = src.totalGoldEarned || 0;
     const ready = total >= goal;
     const isOverflow = total === Infinity;
-    const completedChallenges = getCompletedChallengeCount(src);
-    const unlockedCelestialLayers = getUnlockedCelestialLayerCount(src);
+    const milestoneProgress = getAbyssMilestoneProgress(src);
+    const completedChallenges = milestoneProgress.completedChallenges;
+    const unlockedCelestialLayers = milestoneProgress.unlockedCelestialLayers;
     const resetCount = (src.abyss && src.abyss.resetCount) || 0;
     let upgradeFlat = 0;
     let overflowUpgrade = 0;
@@ -125,6 +147,22 @@
       desc: maxChallengeTarget === 0 || breakdown.completedChallenges >= nextChallengeTarget
         ? 'Challenge由来の gain 節目は達成済み'
         : `次の gain 節目は ${nextChallengeTarget} 件クリア`
+    });
+    const totalCelestialLayers = (C.CELESTIAL_LAYERS || []).length;
+    const maxCelestialTarget = Math.floor(totalCelestialLayers / 3) * 3;
+    const nextCelestialTarget = maxCelestialTarget > 0
+      ? Math.min(maxCelestialTarget, (Math.floor(breakdown.unlockedCelestialLayers / 3) + 1) * 3)
+      : totalCelestialLayers;
+    objectives.push({
+      id:'celestial',
+      title:'Celestial節目',
+      current: breakdown.unlockedCelestialLayers,
+      target: nextCelestialTarget,
+      reward:'Abyss gain +1',
+      done: maxCelestialTarget === 0 || breakdown.unlockedCelestialLayers >= nextCelestialTarget,
+      desc: maxCelestialTarget === 0 || breakdown.unlockedCelestialLayers >= nextCelestialTarget
+        ? 'Celestial由来の gain 節目は達成済み'
+        : `次の gain 節目は Celestial ${nextCelestialTarget} 層解放`
     });
     objectives.push({
       id:'overflow',
@@ -726,7 +764,8 @@
   function doAbyssResetInternal(){
     const gain = previewAbyssGain();
     if (gain <= 0) return { ok:false, reason:'goal' };
-    state.abyss = state.abyss || { shards:0, resetCount:0, features:{}, upgrades:{} };
+    recordAbyssMilestoneProgress(state);
+    state.abyss = state.abyss || { shards:0, resetCount:0, bestChallengeCompletions:0, bestCelestialLayerCount:0, features:{}, upgrades:{} };
     state.abyss.features = state.abyss.features || {};
     state.abyss.upgrades = state.abyss.upgrades || (C.ABYSS_UPGRADES || []).reduce((a,u)=>(a[u.id]=0,a),{});
     state.abyss.shards = (state.abyss.shards || 0) + gain;
