@@ -129,15 +129,43 @@
     }
     return null;
   }
+  function isCelestialUpgradeEffectActive(def, st){
+    const src = st || E.getState();
+    const lvl = (src.celestialOwned && src.celestialOwned[def.id]) || 0;
+    if (lvl <= 0) return false;
+    if (def.type === 'ascShopCapBoost') return true;
+    const branchId = def.branch || 'shared';
+    if (branchId === 'shared') return true;
+    return !!(src.celestial && src.celestial.activeBranchId === branchId);
+  }
+  function getCelestialBranchEffectBuckets(branchId, st){
+    const src = st || E.getState();
+    const activeLabels = [];
+    const dormantLabels = [];
+    for (const def of (C.CELESTIAL_UPGRADES || [])){
+      if ((def.branch || 'shared') !== branchId) continue;
+      const lvl = (src.celestialOwned && src.celestialOwned[def.id]) || 0;
+      if (lvl <= 0) continue;
+      const label = `${def.name} Lv${fmtNumber(lvl)}`;
+      if (isCelestialUpgradeEffectActive(def, src)) activeLabels.push(label);
+      else dormantLabels.push(label);
+    }
+    return { activeLabels, dormantLabels };
+  }
   function getCelestialUpgradeState(def, st){
     const src = st || E.getState();
     const lvl = (src.celestialOwned && src.celestialOwned[def.id]) || 0;
     const branchId = def.branch || 'shared';
-    if (branchId === 'shared') return { label:'常時有効', inactive:false };
-    if ((src.celestial && src.celestial.activeBranchId) === branchId) return { label: lvl > 0 ? '現在有効' : '選択中', inactive:false };
-    if (lvl > 0) return { label:'購入済み・待機中', inactive:true };
-    const branch = getCelestialBranchDef(branchId);
-    return { label:`${(branch && branch.jpName) || branchId} を選択で有効`, inactive:true };
+    if (lvl <= 0){
+      if (branchId === 'shared') return { label:'未購入', inactive:true };
+      const branch = getCelestialBranchDef(branchId);
+      return { label:`${(branch && branch.jpName) || branchId} を選択で有効`, inactive:true };
+    }
+    if (isCelestialUpgradeEffectActive(def, src)){
+      if (branchId === 'shared' || def.type === 'ascShopCapBoost') return { label:'購入済み・常時有効', inactive:false };
+      return { label:'現在有効', inactive:false };
+    }
+    return { label:'購入済み・待機中', inactive:true };
   }
   function ensureSettingsDefaults(st){
     st.settings = Object.assign({}, SETTINGS_DEFAULTS, st.settings || {});
@@ -654,18 +682,24 @@
       return;
     }
     if (active){
-      const activeLabels = getCelestialBranchPurchasedLabels(active.id, st);
-      activeEl.innerHTML = `<strong>現在のルート: ${active.jpName}</strong><div class="muted tiny">有効ボーナス: ${formatBonusText(active.bonus)}</div><div class="muted tiny">推奨スタイル: ${active.playstyle || active.desc}</div><div class="muted tiny">有効中の専用強化: ${activeLabels.length ? activeLabels.join(' / ') : '未購入'}</div>`;
+      const buckets = getCelestialBranchEffectBuckets(active.id, st);
+      activeEl.innerHTML = `<strong>現在のルート: ${active.jpName}</strong><div class="muted tiny">有効ボーナス: ${formatBonusText(active.bonus)}</div><div class="muted tiny">推奨スタイル: ${active.playstyle || active.desc}</div><div class="muted tiny">有効中の専用強化: ${buckets.activeLabels.length ? buckets.activeLabels.join(' / ') : '未購入'}</div>`;
     } else {
       activeEl.textContent = '現在のルート: 未選択';
     }
     wrap.innerHTML = '';
     for (const branch of list){
       const goal = getCelestialBranchGoalStatus(branch, st);
-      const purchasedLabels = getCelestialBranchPurchasedLabels(branch.id, st);
-      const effectState = branch.active
-        ? `現在有効: ${purchasedLabels.length ? purchasedLabels.join(' / ') : '専用強化は未購入'}`
-        : `保存済み: ${purchasedLabels.length ? `${purchasedLabels.join(' / ')}（切替で有効）` : 'なし'}`;
+      const buckets = getCelestialBranchEffectBuckets(branch.id, st);
+      const effectFragments = [];
+      if (branch.active){
+        effectFragments.push(`現在有効: ${buckets.activeLabels.length ? buckets.activeLabels.join(' / ') : '専用強化は未購入'}`);
+      } else {
+        if (buckets.activeLabels.length) effectFragments.push(`現在も有効: ${buckets.activeLabels.join(' / ')}`);
+        if (buckets.dormantLabels.length) effectFragments.push(`切替で有効: ${buckets.dormantLabels.join(' / ')}`);
+        if (!effectFragments.length) effectFragments.push('保存済み: なし');
+      }
+      const effectState = effectFragments.join(' / ');
       const goalText = goal
         ? (goal.done
           ? `到達目標: 達成済み (${fmtNumber(goal.target)} Lv) / 報酬: ${goal.reward}`
@@ -1207,7 +1241,7 @@
       try{ const json = SM.stringifyState(E.getState(), 2); if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(json).then(()=>showTypedToast('general','コピーしました')); else document.getElementById('pasteJson').value = json; } catch(e){}
     });
     document.getElementById('importPasteBtn')?.addEventListener('click', ()=>{
-      try{ const obj = SM.parseStateText(document.getElementById('pasteJson').value.trim()); if (shouldConfirm('confirmImportOverwrite') && !confirm('上書きしますか？')) return; const migrated = SM.importState(obj); E.setState(migrated); SM.saveState(E.getState()); svgDirty=true; syncUIAfterChange(); buildAchievementsUI(); buildSettingsUI(); showTypedToast('general','インポート完了'); } catch(e){ alert('インポートエラー: '+e.message); } 
+      try{ const obj = SM.parseStateText(document.getElementById('pasteJson').value.trim()); if (shouldConfirm('confirmImportOverwrite') && !confirm('上書きしますか？')) return; const migrated = SM.importState(obj); E.setState(migrated); SM.saveState(E.getState()); svgDirty=true; syncUIAfterChange(); buildAchievementsUI(); buildSettingsUI(); checkAchievementsAfterAction(); showTypedToast('general','インポート完了'); } catch(e){ alert('インポートエラー: '+e.message); } 
     });
     document.getElementById('reset')?.addEventListener('click', ()=>{
       if (shouldConfirm('confirmHardReset') && !confirm('本当に全てのデータをリセットしますか？')) return;
@@ -1216,7 +1250,7 @@
     document.getElementById('triggerFileInput')?.addEventListener('click', ()=> document.getElementById('fileInput').click());
     document.getElementById('fileInput')?.addEventListener('change', (ev)=>{
       const f = ev.target.files && ev.target.files[0]; if (!f) return;
-      const r = new FileReader(); r.onload = ()=>{ try{ const obj = SM.parseStateText(r.result); if (shouldConfirm('confirmImportOverwrite') && !confirm('上書きしますか？')) { ev.target.value=''; return; } const migrated = SM.importState(obj); E.setState(migrated); SM.saveState(E.getState()); svgDirty=true; syncUIAfterChange(); buildAchievementsUI(); buildSettingsUI(); showTypedToast('general','ファイル読み込み完了'); } catch(e){ alert('インポートエラー: '+e.message); } }; r.readAsText(f); ev.target.value = ''; 
+      const r = new FileReader(); r.onload = ()=>{ try{ const obj = SM.parseStateText(r.result); if (shouldConfirm('confirmImportOverwrite') && !confirm('上書きしますか？')) { ev.target.value=''; return; } const migrated = SM.importState(obj); E.setState(migrated); SM.saveState(E.getState()); svgDirty=true; syncUIAfterChange(); buildAchievementsUI(); buildSettingsUI(); checkAchievementsAfterAction(); showTypedToast('general','ファイル読み込み完了'); } catch(e){ alert('インポートエラー: '+e.message); } }; r.readAsText(f); ev.target.value = ''; 
     });
   }
 
@@ -1250,6 +1284,7 @@
 
     E.recalcAndCacheGPS(E.getState());
     syncUIAfterChange();
+    checkAchievementsAfterAction();
     bindGlobalEvents();
     applyLegacyZoom();
 

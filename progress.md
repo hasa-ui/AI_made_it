@@ -45,3 +45,9 @@ Original prompt: ロードマップのPhase 1を完了させてください
 - 実装: ルート別 Celestial 投資実績を4件追加し、分岐ごとの攻略目標を実績報酬としても提示。
 - 文書: `ロードマップ.md` の Phase 2 を完了済みに更新し、`仕様書.md` の Celestial / 実績 / 現行課題を現仕様へ反映。ヘルプ・アップデート情報・更新モーダルも `Ver.1.29.0` 内容へ更新。
 - 検証: `node --check`、旧セーブ import の Celestial upgrade 補完確認、`activeBranchId` 切替で Nova 専用倍率と Mirror 専用開始ゴールドの有効状態が入れ替わる vm テストを実行して成功。
+
+## 2026-03-24 Phase 2 review fixes
+- 修正: `game/ui.app.js` の Celestial 効果状態判定を「branch 一致」ではなく「実際にその効果が有効か」で見るよう変更。未購入 shared upgrade は `未購入`、`星界チューニング規格` は Mirror 外でも `購入済み・常時有効` と表示するよう補正。
+- 修正: Celestial ルートカードの保存済み専用強化表示も同じ判定へ揃え、`現在も有効` と `切替で有効` を分離。
+- 修正: 起動直後とテキスト/ファイル import 直後に `checkAchievementsAfterAction()` を実行し、ルート別 Celestial 実績が既存セーブでも即時バックフィルされるよう変更。
+- 検証: `node --check game/ui.app.js` と helper 抽出 harness で、状態ラベルの具体例 (`cel_prism` / `cel_asc_expand`) と startup/import 後の achievement 再評価フックを確認。
