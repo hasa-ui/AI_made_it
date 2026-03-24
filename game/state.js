@@ -53,6 +53,14 @@
       activeSubTabs:{ prestige:'core', ascension:'core' },
       confirmLegacyBuy:true,
       confirmLegacyBuyMax:true,
+      confirmAscShopBuy:true,
+      confirmPrestige:true,
+      confirmAscend:true,
+      confirmAbyssReset:true,
+      confirmChallengeStart:true,
+      confirmChallengeAbandon:true,
+      confirmImportOverwrite:true,
+      confirmHardReset:true,
       toast:{ achievement:true, offline:true, purchase:true, general:true },
       autoBuy:{ enabled:false, units:true, upgrades:true, legacy:false, intervalMs:500, purchaseMode:'single' }
     },
@@ -112,6 +120,18 @@
 
     merged.ascOwned = merged.ascOwned || {};
     for (const a of C.ASC_UPGRADES) if (!(a.id in merged.ascOwned)) merged.ascOwned[a.id]=0;
+    if (sourceVersion > 0 && sourceVersion < 16){
+      let refundedAp = 0;
+      for (const def of C.ASC_UPGRADES){
+        const baseMaxLevel = (typeof def.maxLevel === 'number') ? def.maxLevel : Infinity;
+        if (!Number.isFinite(baseMaxLevel) || baseMaxLevel > 1) continue;
+        const owned = merged.ascOwned[def.id] || 0;
+        if (owned <= baseMaxLevel) continue;
+        refundedAp += (owned - baseMaxLevel) * (def.cost || 0);
+        merged.ascOwned[def.id] = baseMaxLevel;
+      }
+      if (refundedAp > 0) merged.ascPoints = (merged.ascPoints || 0) + refundedAp;
+    }
 
     merged.celestialOwned = merged.celestialOwned || {};
     for (const a of (C.CELESTIAL_UPGRADES || [])) if (!(a.id in merged.celestialOwned)) merged.celestialOwned[a.id]=0;

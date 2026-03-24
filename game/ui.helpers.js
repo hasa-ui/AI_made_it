@@ -43,19 +43,32 @@
   }
 
   function hasAscSpecial(C, E, kind){
-    const st = E.getState();
     for (const def of C.ASC_UPGRADES){
       if (def.type !== 'special') continue;
       if (!def.payload || def.payload.kind !== kind) continue;
-      if ((st.ascOwned[def.id] || 0) > 0) return true;
+      if (getAscUpgradeOwnedLevel(C, E, def) > 0) return true;
     }
     return false;
+  }
+
+  function getAscUpgradeOwnedLevel(C, E, def, st){
+    const src = st || E.getState();
+    if (!def) return 0;
+    const owned = (src.ascOwned && src.ascOwned[def.id]) || 0;
+    if (owned > 0) return owned;
+    if (def.type !== 'special' || !def.payload || !def.payload.kind) return owned;
+    for (const abyssDef of (C.ABYSS_UPGRADES || [])){
+      if (abyssDef.type !== 'persistentUnlock') continue;
+      if (!abyssDef.payload || abyssDef.payload.kind !== def.payload.kind) continue;
+      if ((((src.abyss && src.abyss.upgrades) || {})[abyssDef.id]) || 0) return 1;
+    }
+    return owned;
   }
 
   function isAscShopFullyPurchased(C, E, st){
     const src = st || E.getState();
     for (const def of C.ASC_UPGRADES){
-      const current = src.ascOwned[def.id] || 0;
+      const current = getAscUpgradeOwnedLevel(C, E, def, src);
       const required = E.getAscUpgradeMaxLevel ? E.getAscUpgradeMaxLevel(def, src) : (def.maxLevel || 1);
       if (current < required) return false;
     }
@@ -74,5 +87,5 @@
     return '恒久ボーナス';
   }
 
-  window.UIHelpers = { fmtNumber, showTypedToast, hasAscSpecial, isAscShopFullyPurchased, formatBonusText };
+  window.UIHelpers = { fmtNumber, showTypedToast, hasAscSpecial, getAscUpgradeOwnedLevel, isAscShopFullyPurchased, formatBonusText };
 })();
