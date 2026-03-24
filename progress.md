@@ -25,3 +25,10 @@ Original prompt: ロードマップのPhase 1を完了させてください
 - 実装: Abyssアップグレード `自律継承アーカイブ` を追加し、Abyss reset 後も自動購入解放を保持できるよう `persistentUnlock` 判定と maxLevel 1 の Abyss upgrade 対応を実装。
 - 文書: `Ver.1.28.0` としてアップデート情報タブ・初回モーダル・仕様書を更新。
 - 検証: Node の vm テストで overcap refund・新設定キー補完・Abyss自動化保持を確認。Playwright は今回も `browser.newPage: Target page, context or browser has been closed` により実行不可。
+
+## 2026-03-24 persistent autobuy ownership review fix
+- 調査: `ab_auto_archive` は `hasAscSpecial('unlockAutobuy')` だけを true にしており、Ascension Shop の owned 判定・購入処理・full purchase 判定は `ascOwned.asc_unlock_autobuy` を直接見ているため不整合があることを確認。
+- 実装: `game/ui.helpers.js` に Ascension upgrade の実効 ownership helper を追加し、永続 unlock を special Ascension upgrade の所持として扱うよう統一。
+- 実装: `game/ui.app.js` の Ascension Shop 表示とボタン状態を実効 ownership ベースへ変更し、`自律運用OS` が冗長購入候補として残らないよう修正。
+- 実装: `game/engine.app.js` の購入処理でも同じ実効 ownership を反映し、`ab_auto_archive` 所持後は `asc_unlock_autobuy` を購入できず AP も消費しないよう修正。
+- 検証: `node --check` と vm テストで、永続 autobuy 解放が full-shop 判定を満たし、`buyAscensionUpgradeInternal('asc_unlock_autobuy')` が `reason:'max'` で拒否されることを確認。

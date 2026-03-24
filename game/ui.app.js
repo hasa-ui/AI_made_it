@@ -90,6 +90,7 @@
   ];
 
   function hasAscSpecial(kind){ return (U.hasAscSpecial || ((C,E,k)=>false))(C, E, kind); }
+  function getAscUpgradeOwnedLevel(def, st){ return (U.getAscUpgradeOwnedLevel || ((C,E,d,src)=>((src || E.getState()).ascOwned || {})[d.id] || 0))(C, E, def, st); }
   function isAscShopFullyPurchased(st){ return (U.isAscShopFullyPurchased || ((C,E,st)=>false))(C, E, st); }
   function formatBonusText(b){ return (U.formatBonusText || (x=>'恒久ボーナス'))(b); }
   function ensureSettingsDefaults(st){
@@ -192,7 +193,7 @@
     const el = document.getElementById('ascShop'); if (!el) return;
     el.innerHTML = '';
     for (const a of C.ASC_UPGRADES){
-      const lvl = E.getState().ascOwned[a.id] || 0;
+      const lvl = getAscUpgradeOwnedLevel(a, E.getState());
       const div = document.createElement('div'); div.className='upg';
       div.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0">
         <div><strong>${a.name}</strong><div class="muted small">${a.desc||''}</div></div>
@@ -843,7 +844,7 @@
       const l = document.getElementById(`ascLvl-${a.id}`);
       const m = document.getElementById(`ascMax-${a.id}`);
       const buyBtn = document.getElementById(`ascBuy-${a.id}`);
-      const curLv = st.ascOwned[a.id] || 0;
+      const curLv = getAscUpgradeOwnedLevel(a, st);
       const maxLv = E.getAscUpgradeMaxLevel ? E.getAscUpgradeMaxLevel(a, st) : (a.maxLevel || 1);
       if (l) l.textContent = fmtNumber(curLv);
       if (m) m.textContent = fmtNumber(maxLv);

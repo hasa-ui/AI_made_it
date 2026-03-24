@@ -660,7 +660,17 @@
   function buyAscensionUpgradeInternal(id){
     const def = (C.ASC_UPGRADES||[]).find(a=>a.id===id);
     if (!def) return { ok:false };
-    const lvl = state.ascOwned[id] || 0;
+    let lvl = state.ascOwned[id] || 0;
+    if (lvl <= 0 && def.type === 'special' && def.payload && def.payload.kind){
+      for (const abyssDef of (C.ABYSS_UPGRADES || [])){
+        if (abyssDef.type !== 'persistentUnlock') continue;
+        if (!abyssDef.payload || abyssDef.payload.kind !== def.payload.kind) continue;
+        if ((((state.abyss && state.abyss.upgrades) || {})[abyssDef.id]) || 0){
+          lvl = 1;
+          break;
+        }
+      }
+    }
     if (lvl >= ascUpgradeMaxLevel(def, state)) return { ok:false, reason:'max' };
     if (state.ascPoints < def.cost) return { ok:false, reason:'cost' };
     state.ascPoints -= def.cost;

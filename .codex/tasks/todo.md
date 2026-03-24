@@ -1117,3 +1117,19 @@
 ## Verify Log (2026-03-24 commit review c768f20f)
 - `node --check game/engine.app.js && node --check game/engine.challenge.js && node --check game/engine.helpers.js && node --check game/state.js && node --check game/ui.app.js` : 成功
 - `node - <<'NODE' ... NODE`（vm で `doAbyssResetInternal()` 実行後に Abyss Challenge の `completed` / `bestSec` が残り、`ascendedInChallenge` も保持されることを確認） : 成功
+
+## Plan (2026-03-24 persistent autobuy ownership review fix)
+- [x] reviewer 指摘箇所と Ascension/Abyss の ownership 判定経路を確認する
+- [x] 永続 autobuy 解放が UI・購入処理・フル購入判定で一貫して owned 扱いになるよう最小修正する
+- [x] Node で構文確認と再現ケース検証を実行し、結果を記録する
+
+## Progress Log (2026-03-24 persistent autobuy ownership review fix)
+- 着手: `game/ui.helpers.js` の `hasAscSpecial()` が `ab_auto_archive` を見ている一方で、Ascension Shop のレベル表示・購入可否・full purchase 判定は `ascOwned.asc_unlock_autobuy` しか見ていないことを確認。
+- 方針: 永続解放を「UIだけの特例」ではなく、Ascension upgrade の実効 ownership として扱う helper を追加し、参照元をそこへ寄せる。
+- `game/ui.helpers.js`: `getAscUpgradeOwnedLevel()` を追加し、対応する `persistentUnlock` Abyss upgrade を owned なら special Ascension upgrade を実効レベル 1 扱いにするよう修正。`hasAscSpecial()` と `isAscShopFullyPurchased()` も同 helper を使うよう統一。
+- `game/ui.app.js`: Ascension Shop の表示レベルとボタン disable 判定を実効 ownership ベースへ変更し、Abyss 側で自動購入保持を得ている場合に `自律運用OS` が購入済み相当で表示されるよう修正。
+- `game/engine.app.js`: `buyAscensionUpgradeInternal()` でも永続解放を実効 ownership として扱い、`asc_unlock_autobuy` への冗長購入で AP を消費できないよう修正。
+
+## Verify Log (2026-03-24 persistent autobuy ownership review fix)
+- `node --check game/ui.helpers.js && node --check game/ui.app.js && node --check game/engine.app.js` : 成功
+- `node - <<'NODE' ... NODE`（vm で `ab_auto_archive=1` かつ `asc_unlock_autobuy=0` の状態を作り、`UIHelpers.getAscUpgradeOwnedLevel()` が 1、`UIHelpers.isAscShopFullyPurchased()` が true、`buyAscensionUpgradeInternal('asc_unlock_autobuy')` が `{ ok:false, reason:'max' }` を返して AP を消費しないことを確認） : 成功
