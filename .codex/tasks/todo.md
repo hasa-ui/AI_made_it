@@ -1051,3 +1051,33 @@
 - `node - <<'NODE' ... NODE`（同条件で `getAbyssObjectives()` を確認し、`id === 'celestial'` の objective が追加されていることを確認） : 成功
 - `python3 -m http.server 4173 --directory /root/AI_made_it` : 成功
 - `node /root/.codex/skills/develop-web-game/scripts/web_game_playwright_client.js ...` / `npx -y -p playwright node /root/.codex/skills/develop-web-game/scripts/web_game_playwright_client.js ...` : 失敗（この環境では `playwright` モジュール解決後も `browser.newPage: Target page, context or browser has been closed` でブラウザ起動確認不可）
+
+## Plan (2026-03-24 ロードマップ更新 / Abyss Challenge保持)
+- [x] ロードマップ/仕様書と Challenge/Abyss ロジックを確認し、更新方針を確定する
+- [x] `ロードマップ.md` と必要な仕様書記述を更新し、完了済み項目を明記する
+- [x] Abyss reset 時に Abyss Challenge のクリア判定が保持されるよう実装し、関連する Challenge 状態処理の危険箇所を最小修正する
+- [x] Node で再現ケースを検証し、`.codex/tasks/todo.md` と `progress.md` に記録する
+
+## Progress Log (2026-03-24 ロードマップ更新 / Abyss Challenge保持)
+- 着手: `ロードマップ.md` `仕様書.md` `game/config.js` `game/state.js` `game/engine.app.js` `game/engine.challenge.js` `game/ui.app.js` を確認し、Phase 1 の主要項目が既に実装済みであることを確認。
+- 調査: `doAbyssResetInternal()` が `state.challenge` を丸ごと初期化しており、Abyss Challenge（9〜11）の `completed` / `bestSec` まで消していることを確認。
+- 方針: ロードマップには Phase 1 完了を追記し、Abyss reset では core Challenge をリセットしつつ Abyss Challenge のクリア情報だけを抽出保持する。
+- `ロードマップ.md`: Phase 1 に完了状態を追加し、Abyss gain 再設計 / 役割別 Abyss アップグレード / Abyss roadmap / 機能解放型 Challenge 報酬を完了済みとして明記。
+- `仕様書.md`: Abyss reset の保持/リセット範囲を現仕様へ合わせ、Abyss Challenge のクリア判定と最速秒が保持されることを追記。
+- `game/engine.app.js`: Abyss reset 専用の Challenge 状態再構築 helper を追加し、Abyss Challenge の `completed` / `bestSec` のみ保持、`activeId` / `savedTotalGold` は破棄するよう修正。
+- `game/engine.helpers.js` `game/state.js` `game/ui.app.js`: Challenge クリア数を定義済み Challenge 一覧ベースで集計するよう揃え、未知キー混入セーブで進捗や実績が水増しされる余地を除去。
+- `game/engine.challenge.js`: Challenge 報酬で `abyss` 状態を初期化する際の shape を現行 state 定義へ合わせて補正。
+
+## Verify Log (2026-03-24 ロードマップ更新 / Abyss Challenge保持)
+- `node --check game/state.js && node --check game/engine.helpers.js && node --check game/engine.challenge.js && node --check game/engine.app.js && node --check game/ui.app.js` : 成功
+- `node - <<'NODE' ... NODE`（vm で `state.challenge.completed/bestSec` に core 1件 + abyss 2件を入れ、`doAbyssResetInternal()` 後に abyss Challenge のみ `completed/bestSec` が保持され、`activeId/savedTotalGold` が消えることを確認） : 成功
+- `node - <<'NODE' ... NODE`（`challenge.completed` に未知キーを混ぜたセーブを `importState()` し、`abyss.bestChallengeCompletions` と `getAbyssGainBreakdown().completedChallenges` が定義済み Challenge のみ数えることを確認） : 成功
+- `python3 -m http.server 4173 --directory /root/AI_made_it` : 成功
+- `npx -y -p playwright node /root/.codex/skills/develop-web-game/scripts/web_game_playwright_client.js ...` : 失敗（この環境では `page.addInitScript: Target page, context or browser has been closed` でブラウザ自動検証不可）
+## 2026-03-24 08:56:24 Review debca9c40cc806f9aedbe19a0bc7a2d39a1ba12b
+- [x] 差分確認
+- [x] 関連コード確認
+- [x] 検証実行
+- [x] レポート作成
+
+- `node --check game/state.js && node --check game/engine.app.js && node - <<'NODE' ... NODE` : 成功

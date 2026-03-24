@@ -160,7 +160,9 @@
     if (!Number.isFinite(merged.abyss.bestChallengeCompletions)) merged.abyss.bestChallengeCompletions = 0;
     if (!Number.isFinite(merged.abyss.bestCelestialLayerCount)) merged.abyss.bestCelestialLayerCount = 0;
     for (const u of (C.ABYSS_UPGRADES || [])) if (!(u.id in merged.abyss.upgrades)) merged.abyss.upgrades[u.id]=0;
-    const currentChallengeCount = Object.keys(merged.challenge.completed || {}).filter(id => merged.challenge.completed[id]).length;
+    const currentChallengeCount = (C.CHALLENGES || []).reduce((count, ch)=>{
+      return count + ((merged.challenge.completed && merged.challenge.completed[ch.id]) ? 1 : 0);
+    }, 0);
     merged.abyss.bestChallengeCompletions = Math.max(merged.abyss.bestChallengeCompletions, currentChallengeCount);
     const currentCelestialLayerCount = (C.CELESTIAL_LAYERS || []).reduce((count, layer)=>{
       return count + (((merged.ascEarnedTotal || 0) >= (layer.need || 0)) ? 1 : 0);

@@ -64,7 +64,7 @@
       const prev = state.challenge.bestSec[ch.id] ?? Infinity;
       state.challenge.bestSec[ch.id] = Math.min(prev, sec);
       state.challenge.completed[ch.id] = true;
-      state.abyss = state.abyss || { shards:0, resetCount:0, features:{}, upgrades:{} };
+      state.abyss = state.abyss || { shards:0, resetCount:0, bestChallengeCompletions:0, bestCelestialLayerCount:0, features:{}, upgrades:{} };
       state.abyss.features = state.abyss.features || {};
       const reward = ch.reward || {};
       let unlockedFeature = null;
