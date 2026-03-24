@@ -79,6 +79,25 @@
     src.abyss.bestChallengeCompletions = Math.max(src.abyss.bestChallengeCompletions || 0, getCompletedChallengeCount(src));
     src.abyss.bestCelestialLayerCount = Math.max(src.abyss.bestCelestialLayerCount || 0, getUnlockedCelestialLayerCount(src));
   }
+  function buildChallengeStateAfterAbyssReset(st){
+    const src = st || state;
+    const prevChallenge = src.challenge || {};
+    const retainedCompleted = {};
+    const retainedBestSec = {};
+    for (const ch of (C.CHALLENGES || [])){
+      if (ch.category !== 'abyss') continue;
+      if (prevChallenge.completed && prevChallenge.completed[ch.id]) retainedCompleted[ch.id] = true;
+      const bestSec = prevChallenge.bestSec ? prevChallenge.bestSec[ch.id] : undefined;
+      if (Number.isFinite(bestSec)) retainedBestSec[ch.id] = bestSec;
+    }
+    return {
+      activeId:null,
+      completed:retainedCompleted,
+      bestSec:retainedBestSec,
+      ascendedInChallenge: prevChallenge.ascendedInChallenge || 0,
+      savedTotalGold:null
+    };
+  }
 
   function getAbyssGainBreakdownInternal(st){
     const src = st || state;
@@ -784,7 +803,7 @@
     state.celestialEarnedTotal = 0;
     state.celestialOwned = (C.CELESTIAL_UPGRADES || []).reduce((a,u)=>(a[u.id]=0,a),{});
     state.celestial = { activeBranchId:null };
-    state.challenge = { activeId:null, completed:{}, bestSec:{}, ascendedInChallenge:0, savedTotalGold:null };
+    state.challenge = buildChallengeStateAfterAbyssReset(state);
     state.runStats = state.runStats || {};
     const now = nowSec();
     state.runStats.currentRunStartedAt = now;

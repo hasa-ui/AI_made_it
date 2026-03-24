@@ -318,7 +318,7 @@
       else if (a.type === 'ascRunDurationMax'){ if (st.lastAscensionRun && (st.lastAscensionRun.durationSec||Infinity) <= a.target) achieved = true; }
       else if (a.type === 'ascNoUpgrade'){ if (st.lastAscensionRun && st.lastAscensionRun.noUpgrade) achieved = true; }
       else if (a.type === 'ascSingleUnitType'){ if (st.lastAscensionRun && (st.lastAscensionRun.unitTypesUsed||0) === 1) achieved = true; }
-      else if (a.type === 'challengeClearCount'){ const count = Object.keys((st.challenge && st.challenge.completed) || {}).filter(k => st.challenge.completed[k]).length; if (count >= a.target) achieved = true; }
+      else if (a.type === 'challengeClearCount'){ const completed = (st.challenge && st.challenge.completed) || {}; const count = (C.CHALLENGES || []).reduce((acc, ch)=>acc + (completed[ch.id] ? 1 : 0), 0); if (count >= a.target) achieved = true; }
       else if (a.type === 'prestigeLayerCount'){ if ((E.getUnlockedPrestigeLayerCount ? E.getUnlockedPrestigeLayerCount(st) : 0) >= a.target) achieved = true; }
       else if (a.type === 'celestialLayerCount'){ if ((E.getUnlockedCelestialLayerCount ? E.getUnlockedCelestialLayerCount(st) : 0) >= a.target) achieved = true; }
       else if (a.type === 'ascendInChallenge'){ if ((st.challenge && st.challenge.ascendedInChallenge || 0) >= a.target) achieved = true; }
@@ -715,8 +715,12 @@
 ユニット数デバフ: ${active.effects && active.effects.globalMultPerOwned ? `あり (×${active.effects.globalMultPerOwned}/台)` : 'なし'}
 ユニット数コスト加速: ${active.effects && active.effects.costRampByOwnedDiv ? `あり (1 + 総数/${active.effects.costRampByOwnedDiv})` : 'なし'}
 累計Gold復元待機: ${fmtNumber(st.challenge.savedTotalGold || 0)}`;
-      else status.textContent = `待機中
-クリア数: ${fmtNumber(Object.keys(st.challenge.completed || {}).filter(k=>st.challenge.completed[k]).length)} / ${fmtNumber((C.CHALLENGES || []).length)}`;
+      else {
+        const completed = st.challenge.completed || {};
+        const clearCount = (C.CHALLENGES || []).reduce((acc, ch)=>acc + (completed[ch.id] ? 1 : 0), 0);
+        status.textContent = `待機中
+クリア数: ${fmtNumber(clearCount)} / ${fmtNumber((C.CHALLENGES || []).length)}`;
+      }
     }
     for (const ch of (C.CHALLENGES || [])){
       const done = !!(st.challenge.completed && st.challenge.completed[ch.id]);

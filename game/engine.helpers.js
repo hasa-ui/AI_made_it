@@ -11,7 +11,7 @@
 
   function getCompletedChallengeCount(C, st){
     const completed = st && st.challenge && st.challenge.completed ? st.challenge.completed : {};
-    return Object.keys(completed).filter(id => completed[id]).length;
+    return (C.CHALLENGES || []).reduce((count, ch)=>count + (completed[ch.id] ? 1 : 0), 0);
   }
 
   function hasAbyssFeature(C, st, featureId){

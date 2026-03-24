@@ -11,3 +11,10 @@ Original prompt: ロードマップのPhase 1を完了させてください
 - 実装: 旧セーブ移行時も現行の Challenge/Celestial 進行から新フィールドを補完するよう `state.js` を更新。
 - 実装: Abyss roadmap に Celestial 節目 objective を追加し、gain source と UI を一致させた。
 - 検証: Node の vm テストで `5 -> 5` の shard gain 維持と `celestial` objective の出現を確認。Playwright クライアントはこの環境で `browser.newPage: Target page, context or browser has been closed` により実行不可。
+
+## 2026-03-24 ロードマップ更新 / Abyss Challenge保持
+- 文書: `ロードマップ.md` の Phase 1 を完了済みとして更新し、実施項目と完了条件に達成注記を追加。
+- 文書: `仕様書.md` の Abyss reset 範囲を現仕様へ更新し、Abyss Challenge のクリア判定 / 最速秒が Abyss reset 後も保持されることを明記。
+- 実装: `doAbyssResetInternal()` で Challenge 状態を丸ごと消すのをやめ、Abyss Challenge（category:`abyss`）の `completed` / `bestSec` のみ保持する helper を追加。
+- 実装: Challenge クリア数の集計を `C.CHALLENGES` ベースへ統一し、未知キー混入セーブで実績や Abyss gain のカウントが膨らまないよう修正。
+- 検証: Node の vm テストで「Abyss reset 後に abyss Challenge だけ残ること」と「未知キーが Challenge 数へ加算されないこと」を確認。Playwright は今回も `page.addInitScript: Target page, context or browser has been closed` で実行不可。
