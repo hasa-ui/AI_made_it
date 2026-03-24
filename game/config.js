@@ -4,8 +4,8 @@
 
   const C = {
     SAVE_KEY: 'inc.split.full.v4',
-    SAVE_VERSION: 15,
-    APP_VERSION: 'Ver.1.27.0',
+    SAVE_VERSION: 16,
+    APP_VERSION: 'Ver.1.28.0',
     UI_UPDATE_INTERVAL_MS: 50,
     AUTO_SAVE_INTERVAL: 5000,
     MAX_OFFLINE_SECONDS: 60*60*24,
@@ -48,6 +48,7 @@
     { id:'ab_overflow_lens', name:'オーバーフローレンズ', role:'変換', unlockFeature:'abyss_conversion_upgrades', desc:'累計Goldが Infinity の時、Abyss gain +1 /Lv', baseCost:6, costMult:3.4, type:'abyssGainIfInfinite', payload:{amountPerLevel:1} },
     { id:'ab_restart_relay', name:'再起動リレー', role:'再始動', unlockFeature:'abyss_cycle_upgrades', desc:'Abyss Resetごとに +2.5e7 GPS /Lv', baseCost:5, costMult:3.2, type:'flatGPSPerAbyssReset', payload:{gpsPerReset:2.5e7} },
     { id:'ab_void_map', name:'虚空航路図', role:'再始動', unlockFeature:'abyss_cycle_upgrades', desc:'Abyss Resetごとに 開始ゴールド +4.0e8 /Lv', baseCost:7, costMult:3.5, type:'startGoldPerAbyssReset', payload:{amountPerReset:4.0e8} },
+    { id:'ab_auto_archive', name:'自律継承アーカイブ', role:'再始動', unlockFeature:'abyss_cycle_upgrades', desc:'Abyss後も自動購入の解放状態を保持する', baseCost:9, costMult:1, maxLevel:1, type:'persistentUnlock', payload:{kind:'unlockAutobuy'} },
     { id:'ab_excav_matrix', name:'掘削行列の深層化', role:'特化', desc:'エクスカベーター ×3.2 /Lv', baseCost:4, costMult:3.1, type:'unitMult', payload:{unitId:'excav', multPerLevel:3.2} },
     { id:'ab_drill_surge', name:'反応炉深圧', role:'特化', desc:'ドリルコア反応炉 ×2.8 /Lv', baseCost:5, costMult:3.3, type:'unitMult', payload:{unitId:'drillcore', multPerLevel:2.8} },
     { id:'ab_void_bloom', name:'虚空開花', role:'特化', desc:'ヴォイド掘削艦 ×2.4 /Lv', baseCost:6, costMult:3.5, type:'unitMult', payload:{unitId:'voidrig', multPerLevel:2.4} }

@@ -40,7 +40,23 @@
         celestialOwned: (C.CELESTIAL_UPGRADES || []).reduce((a,u)=>(a[u.id]=0,a),{}),
         celestial: { activeBranchId:null },
         achievementsOwned: {},
-        settings: { notation: 'compact', notationThreshold: 1000, confirmLegacyBuy:true, confirmLegacyBuyMax:true, toast:{achievement:true,offline:true,purchase:true,general:true}, activeSubTabs:{prestige:'core',ascension:'core'} },
+        settings: {
+          notation: 'compact',
+          notationThreshold: 1000,
+          confirmLegacyBuy:true,
+          confirmLegacyBuyMax:true,
+          confirmAscShopBuy:true,
+          confirmPrestige:true,
+          confirmAscend:true,
+          confirmAbyssReset:true,
+          confirmChallengeStart:true,
+          confirmChallengeAbandon:true,
+          confirmImportOverwrite:true,
+          confirmHardReset:true,
+          toast:{achievement:true,offline:true,purchase:true,general:true},
+          autoBuy:{ enabled:false, units:true, upgrades:true, legacy:false, intervalMs:500, purchaseMode:'single' },
+          activeSubTabs:{prestige:'core',ascension:'core'}
+        },
         abyss: {
           shards:0,
           resetCount:0,
@@ -658,6 +674,7 @@
   function calcAscGainFromPrestige(prestigeEarned){ return (H.calcAscGainFromPrestige || ((C,p)=>0))(C, prestigeEarned); }
   function calcCelestialGain(ascGain){ return (H.calcCelestialGain || ((u,a)=>0))(getUnlockedCelestialLayerCount(state), ascGain); }
   function abyssUpgradeCost(def, lvl){ return (H.abyssUpgradeCost || ((d,l)=>1))(def, lvl); }
+  function abyssUpgradeMaxLevel(def){ return (def && typeof def.maxLevel === 'number') ? def.maxLevel : Infinity; }
 
   const challengeActions = (window.EngineChallengeActions && window.EngineChallengeActions.create)
     ? window.EngineChallengeActions.create({
@@ -745,6 +762,7 @@
     return (C.ABYSS_UPGRADES || []).map(def=>{
       const unlocked = isAbyssUpgradeUnlocked(src, def);
       const lvl = src.abyss.upgrades[def.id] || 0;
+      const maxLevel = abyssUpgradeMaxLevel(def);
       const cost = (H.abyssUpgradeCost || ((d,l)=>1))(def, lvl);
       const featureDef = def.unlockFeature ? (C.ABYSS_FEATURES && C.ABYSS_FEATURES[def.unlockFeature]) : null;
       return {
@@ -753,12 +771,14 @@
         role:def.role || 'その他',
         desc:def.desc,
         lvl,
+        maxLevel,
+        maxed: lvl >= maxLevel,
         cost,
         unlocked,
         unlockFeature:def.unlockFeature || null,
         unlockFeatureName: featureDef ? featureDef.name : null,
         unlockChallengeId: featureDef ? featureDef.unlockChallengeId : null,
-        affordable: unlocked && (src.abyss.shards || 0) >= cost
+        affordable: unlocked && lvl < maxLevel && (src.abyss.shards || 0) >= cost
       };
     });
   }
@@ -771,6 +791,8 @@
     state.abyss.features = state.abyss.features || {};
     state.abyss.upgrades = state.abyss.upgrades || {};
     const lvl = state.abyss.upgrades[def.id] || 0;
+    const maxLevel = abyssUpgradeMaxLevel(def);
+    if (lvl >= maxLevel) return { ok:false, reason:'max' };
     const cost = (H.abyssUpgradeCost || ((d,l)=>1))(def, lvl);
     if ((state.abyss.shards || 0) < cost) return { ok:false, reason:'shard' };
     state.abyss.shards -= cost;

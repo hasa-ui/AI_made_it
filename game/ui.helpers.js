@@ -49,6 +49,11 @@
       if (!def.payload || def.payload.kind !== kind) continue;
       if ((st.ascOwned[def.id] || 0) > 0) return true;
     }
+    for (const def of (C.ABYSS_UPGRADES || [])){
+      if (def.type !== 'persistentUnlock') continue;
+      if (!def.payload || def.payload.kind !== kind) continue;
+      if ((((st.abyss && st.abyss.upgrades) || {})[def.id] || 0) > 0) return true;
+    }
     return false;
   }
 

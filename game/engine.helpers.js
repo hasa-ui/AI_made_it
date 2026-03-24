@@ -99,6 +99,7 @@
 
   function ascUpgradeMaxLevel(C, st, def){
     if (!def || typeof def.maxLevel !== 'number') return Infinity;
+    if (def.maxLevel <= 1) return def.maxLevel;
     return def.maxLevel + ascCapBonusFromCelestial(C, st);
   }
 

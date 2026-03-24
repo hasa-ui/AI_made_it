@@ -1074,6 +1074,29 @@
 - `node - <<'NODE' ... NODE`（`challenge.completed` に未知キーを混ぜたセーブを `importState()` し、`abyss.bestChallengeCompletions` と `getAbyssGainBreakdown().completedChallenges` が定義済み Challenge のみ数えることを確認） : 成功
 - `python3 -m http.server 4173 --directory /root/AI_made_it` : 成功
 - `npx -y -p playwright node /root/.codex/skills/develop-web-game/scripts/web_game_playwright_client.js ...` : 失敗（この環境では `page.addInitScript: Target page, context or browser has been closed` でブラウザ自動検証不可）
+
+## Plan (2026-03-24 設定網羅化 / Celestial上限修正 / Abyss自動化保持)
+- [x] 確認ダイアログ・トースト・Ascension Shop上限・Abyss自動化保持の現状を確認し、変更点を整理する
+- [x] 設定/状態/UIを更新し、確認ダイアログとトーストの全項目トグルを実装する
+- [x] Celestial上限拡張を一回きり Ascension upgrade へ効かないよう修正し、既存セーブの過剰購入を移行処理で補正する
+- [x] Abyss以降で自動購入を保持できる新要素と関連UI/更新情報/仕様書を追加する
+- [x] 検証を実行し、`.codex/tasks/todo.md` と `progress.md` に結果を追記する
+
+## Progress Log (2026-03-24 設定網羅化 / Celestial上限修正 / Abyss自動化保持)
+- 着手: `game/ui.app.js` `game/ui.helpers.js` `game/state.js` `game/engine.helpers.js` `game/config.js` `index.html` `仕様書.md` を確認し、確認ダイアログは11箇所・トースト種別は4種で、設定UIはその一部しか切り替えられないことを確認。
+- 調査: `ascShopCapBoost` が `maxLevel: 1` の Ascension upgrade にも適用されるため、`記録保全プロトコル` などの一回きり購入まで多重購入可能になることを確認。
+- 方針: 設定は全 confirm/全 toast を個別トグル化し、`ascShopCapBoost` は repeatable な Ascension upgrade のみに限定、Abyss以降の自動化保持は Abyss upgrade として追加する。
+- `game/state.js` `game/engine.app.js` `game/ui.app.js`: 確認ダイアログ設定を全 confirm 対象へ拡張し、一般トーストを含む全4種の toast 設定を UI とセーブに追加。設定UIは import/reset 後も現在 state を参照して同期する形へ修正。
+- `game/engine.helpers.js` `game/state.js`: `ascShopCapBoost` が `maxLevel = 1` の Ascension Shop 項目へ効かないよう修正し、`SAVE_VERSION = 16` で旧セーブの過剰購入分を AP 返金付きで補正する移行を追加。
+- `game/config.js` `game/ui.helpers.js` `game/engine.app.js`: Abyssアップグレード `自律継承アーカイブ` を追加し、Abyss reset 後も `unlockAutobuy` を有効扱いできるよう `persistentUnlock` 判定と Abyss upgrade maxLevel 対応を実装。
+- `index.html` `game/ui.app.js` `仕様書.md`: `Ver.1.28.0` の更新情報、初回表示モーダル、仕様書の設定/上限補正/Abyss自動化保持記述を更新。
+
+## Verify Log (2026-03-24 設定網羅化 / Celestial上限修正 / Abyss自動化保持)
+- `node --check game/config.js && node --check game/state.js && node --check game/engine.helpers.js && node --check game/engine.challenge.js && node --check game/engine.app.js && node --check game/ui.helpers.js && node --check game/ui.app.js` : 成功
+- `node - <<'NODE' ... NODE`（`version=15` の旧セーブに `cel_asc_expand=3` と一回きり Ascension upgrade の過剰レベルを持たせて `importState()` し、`maxLevel=1` 項目が 1 に clamp され AP 返金されること、repeatable 項目の cap は拡張されたままなことを確認） : 成功
+- `node - <<'NODE' ... NODE`（`ab_auto_archive=1` で `unlockAutobuy` が有効扱いになること、旧セーブ読込で `confirmAscend` / `confirmImportOverwrite` / `toast.general` が補完されることを確認） : 成功
+- `python3 -m http.server 4173 --directory /root/AI_made_it` : 成功
+- `npx -y -p playwright node /root/.codex/skills/develop-web-game/scripts/web_game_playwright_client.js ...` : 失敗（この環境では `browser.newPage: Target page, context or browser has been closed` でブラウザ自動検証不可）
 ## 2026-03-24 08:56:24 Review debca9c40cc806f9aedbe19a0bc7a2d39a1ba12b
 - [x] 差分確認
 - [x] 関連コード確認
@@ -1081,3 +1104,16 @@
 - [x] レポート作成
 
 - `node --check game/state.js && node --check game/engine.app.js && node - <<'NODE' ... NODE` : 成功
+
+## Plan (2026-03-24 commit review c768f20f)
+- [x] 差分ファイルと Challenge / Abyss 周辺ロジックを確認
+- [x] 変更点の再現条件を Node で検証
+- [x] 指摘可否を優先度付きで整理
+
+## Progress Log (2026-03-24 commit review c768f20f)
+- `git show` / `git diff` で `game/engine.app.js` `game/engine.challenge.js` `game/engine.helpers.js` `game/state.js` `game/ui.app.js` と文書更新を確認。
+- Abyss reset 後の Challenge 状態再構築、Challenge クリア数集計の変更、Abyss 側 state shape 補正を重点確認。
+
+## Verify Log (2026-03-24 commit review c768f20f)
+- `node --check game/engine.app.js && node --check game/engine.challenge.js && node --check game/engine.helpers.js && node --check game/state.js && node --check game/ui.app.js` : 成功
+- `node - <<'NODE' ... NODE`（vm で `doAbyssResetInternal()` 実行後に Abyss Challenge の `completed` / `bestSec` が残り、`ascendedInChallenge` も保持されることを確認） : 成功

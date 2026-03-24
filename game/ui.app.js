@@ -54,10 +54,55 @@
   let legacyZoom = 1;
   let pinchStartDistance = null;
   let pinchStartZoom = 1;
+  const SETTINGS_DEFAULTS = {
+    notation:'compact',
+    notationThreshold:1000,
+    confirmLegacyBuy:true,
+    confirmLegacyBuyMax:true,
+    confirmAscShopBuy:true,
+    confirmPrestige:true,
+    confirmAscend:true,
+    confirmAbyssReset:true,
+    confirmChallengeStart:true,
+    confirmChallengeAbandon:true,
+    confirmImportOverwrite:true,
+    confirmHardReset:true,
+    toast:{ achievement:true, offline:true, purchase:true, general:true },
+    autoBuy:{ enabled:false, units:true, upgrades:true, legacy:false, intervalMs:500, purchaseMode:'single' }
+  };
+  const CONFIRM_OPTIONS = [
+    { key:'confirmLegacyBuy', id:'confirmLegacyBuyChk', label:'レガシー購入 (Lv+1) 時に確認する' },
+    { key:'confirmLegacyBuyMax', id:'confirmLegacyBuyMaxChk', label:'レガシーまとめ買い (Buy Max) 時に確認する' },
+    { key:'confirmAscShopBuy', id:'confirmAscShopBuyChk', label:'Ascension Shop 購入時に確認する' },
+    { key:'confirmPrestige', id:'confirmPrestigeChk', label:'Prestige 実行時に確認する' },
+    { key:'confirmAscend', id:'confirmAscendChk', label:'Ascend 実行時に確認する' },
+    { key:'confirmAbyssReset', id:'confirmAbyssChk', label:'Abyss リセット時に確認する' },
+    { key:'confirmChallengeStart', id:'confirmChallengeStartChk', label:'Challenge 開始時に確認する' },
+    { key:'confirmChallengeAbandon', id:'confirmChallengeAbandonChk', label:'Challenge 中断時に確認する' },
+    { key:'confirmImportOverwrite', id:'confirmImportOverwriteChk', label:'インポート上書き時に確認する' },
+    { key:'confirmHardReset', id:'confirmHardResetChk', label:'全データリセット時に確認する' }
+  ];
+  const TOAST_OPTIONS = [
+    { key:'general', id:'toastGeneralChk', label:'一般メッセージ' },
+    { key:'purchase', id:'toastPurchaseChk', label:'購入メッセージ' },
+    { key:'achievement', id:'toastAchievementChk', label:'実績解除' },
+    { key:'offline', id:'toastOfflineChk', label:'オフライン報酬' }
+  ];
 
   function hasAscSpecial(kind){ return (U.hasAscSpecial || ((C,E,k)=>false))(C, E, kind); }
   function isAscShopFullyPurchased(st){ return (U.isAscShopFullyPurchased || ((C,E,st)=>false))(C, E, st); }
   function formatBonusText(b){ return (U.formatBonusText || (x=>'恒久ボーナス'))(b); }
+  function ensureSettingsDefaults(st){
+    st.settings = Object.assign({}, SETTINGS_DEFAULTS, st.settings || {});
+    st.settings.toast = Object.assign({}, SETTINGS_DEFAULTS.toast, st.settings.toast || {});
+    st.settings.autoBuy = Object.assign({}, SETTINGS_DEFAULTS.autoBuy, st.settings.autoBuy || {});
+    return st.settings;
+  }
+  function shouldConfirm(settingKey){
+    const st = E.getState();
+    const settings = ensureSettingsDefaults(st);
+    return settings[settingKey] !== false;
+  }
   const miniGameController = (window.UIMiniGame && window.UIMiniGame.create)
     ? window.UIMiniGame.create({
         E,
@@ -157,7 +202,7 @@
         </div></div>`;
       el.appendChild(div);
       document.getElementById(`ascBuy-${a.id}`).addEventListener('click', ()=>{
-        if (!confirm(`Ascensionポイント ${a.cost} を消費して "${a.name}" を購入しますか？`)) return;
+        if (shouldConfirm('confirmAscShopBuy') && !confirm(`Ascensionポイント ${a.cost} を消費して "${a.name}" を購入しますか？`)) return;
         const res = E.buyAscensionUpgradeInternal(a.id);
         if (!res || !res.ok) showTypedToast('general','ポイント不足、または最大レベルです');
         else { SM.saveState(E.getState()); syncUIAfterChange(); checkAchievementsAfterAction(); showTypedToast('purchase', `${a.name} を購入しました`); }
@@ -343,52 +388,72 @@
   }
 
   // ---------- Settings UI ----------
-  function buildSettingsUI(){
-    if (built.settings) return;
-    const el = document.getElementById('settingsCard'); if (!el) return;
+  function syncSettingsUI(){
     const st = E.getState();
-    st.settings = Object.assign({ notation:'compact', notationThreshold:1000, confirmLegacyBuy:true, confirmLegacyBuyMax:true, toast:{achievement:true,offline:true,purchase:true,general:true} }, st.settings || {});
-    st.settings.toast = Object.assign({achievement:true,offline:true,purchase:true,general:true}, st.settings.toast || {});
+    const settings = ensureSettingsDefaults(st);
+    const notationSelect = document.getElementById('notationSelect');
+    if (notationSelect) notationSelect.value = settings.notation || 'compact';
+    for (const opt of CONFIRM_OPTIONS){
+      const el = document.getElementById(opt.id);
+      if (el) el.checked = settings[opt.key] !== false;
+    }
+    for (const opt of TOAST_OPTIONS){
+      const el = document.getElementById(opt.id);
+      if (el) el.checked = !!settings.toast[opt.key];
+    }
+    const appVersionEl = document.getElementById('appVersionText');
+    if (appVersionEl) appVersionEl.textContent = C.APP_VERSION || 'unknown';
+    const saveSchemaEl = document.getElementById('saveSchemaVersionText');
+    if (saveSchemaEl) saveSchemaEl.textContent = String(SM.saveVersion || C.SAVE_VERSION || '-');
+    const currentSaveEl = document.getElementById('currentSaveVersionText');
+    if (currentSaveEl) currentSaveEl.textContent = String(st.version || '-');
+  }
+
+  function buildSettingsUI(){
+    if (built.settings){ syncSettingsUI(); return; }
+    const el = document.getElementById('settingsCard'); if (!el) return;
+    ensureSettingsDefaults(E.getState());
     el.innerHTML = `
       <h3>表示設定</h3>
       <div class="row"><label class="muted small">表示形式: <select id="notationSelect" style="padding:6px; border-radius:6px; background:#071421; color:#fff; border:1px solid #173142;"><option value="compact">コンパクト (1.2K)</option><option value="scientific">指数 (1.23e+3)</option></select></label></div>
       <div class="row" style="margin-top:12px"><strong>確認ダイアログ設定</strong></div>
-      <div class="row"><label class="muted small"><input type="checkbox" id="confirmLegacyBuyChk"> レガシー購入 (Lv+1) 時に確認する</label></div>
-      <div class="row"><label class="muted small"><input type="checkbox" id="confirmLegacyBuyMaxChk"> レガシーまとめ買い (Buy Max) 時に確認する</label></div>
+      ${CONFIRM_OPTIONS.map(opt=>`<div class="row"><label class="muted small"><input type="checkbox" id="${opt.id}"> ${opt.label}</label></div>`).join('')}
       <div class="row" style="margin-top:12px"><strong>通知(トースト)表示</strong></div>
-      <div class="row"><label class="muted small"><input type="checkbox" id="toastAchievementChk"> 実績解除</label></div>
-      <div class="row"><label class="muted small"><input type="checkbox" id="toastOfflineChk"> オフライン報酬</label></div>
-      <div class="row"><label class="muted small"><input type="checkbox" id="toastPurchaseChk"> 購入メッセージ</label></div>
+      ${TOAST_OPTIONS.map(opt=>`<div class="row"><label class="muted small"><input type="checkbox" id="${opt.id}"> ${opt.label}</label></div>`).join('')}
       <div class="row" style="margin-top:12px"><strong>バージョン情報</strong></div>
       <div class="muted small">App: <span id="appVersionText"></span></div>
       <div class="muted small">Save Schema: <span id="saveSchemaVersionText"></span></div>
       <div class="muted small">Current Save: <span id="currentSaveVersionText"></span></div>
     `;
 
-    document.getElementById('notationSelect').value = st.settings.notation || 'compact';
-    document.getElementById('confirmLegacyBuyChk').checked = !!st.settings.confirmLegacyBuy;
-    document.getElementById('confirmLegacyBuyMaxChk').checked = !!st.settings.confirmLegacyBuyMax;
-    document.getElementById('toastAchievementChk').checked = !!(st.settings.toast && st.settings.toast.achievement);
-    document.getElementById('toastOfflineChk').checked = !!(st.settings.toast && st.settings.toast.offline);
-    document.getElementById('toastPurchaseChk').checked = !!(st.settings.toast && st.settings.toast.purchase);
-    document.getElementById('appVersionText').textContent = C.APP_VERSION || 'unknown';
-    document.getElementById('saveSchemaVersionText').textContent = String(SM.saveVersion || C.SAVE_VERSION || '-');
-    document.getElementById('currentSaveVersionText').textContent = String(st.version || '-');
-
-    document.getElementById('notationSelect').addEventListener('change', (ev)=>{ st.settings.notation = ev.target.value; SM.saveState(st); syncUIAfterChange(); });
-    document.getElementById('confirmLegacyBuyChk').addEventListener('change', (ev)=>{ st.settings.confirmLegacyBuy = !!ev.target.checked; SM.saveState(st); });
-    document.getElementById('confirmLegacyBuyMaxChk').addEventListener('change', (ev)=>{ st.settings.confirmLegacyBuyMax = !!ev.target.checked; SM.saveState(st); });
-    document.getElementById('toastAchievementChk').addEventListener('change', (ev)=>{ st.settings.toast.achievement = !!ev.target.checked; SM.saveState(st); });
-    document.getElementById('toastOfflineChk').addEventListener('change', (ev)=>{ st.settings.toast.offline = !!ev.target.checked; SM.saveState(st); });
-    document.getElementById('toastPurchaseChk').addEventListener('change', (ev)=>{ st.settings.toast.purchase = !!ev.target.checked; SM.saveState(st); });
+    document.getElementById('notationSelect').addEventListener('change', (ev)=>{
+      const st = E.getState();
+      ensureSettingsDefaults(st).notation = ev.target.value;
+      SM.saveState(st);
+      syncUIAfterChange();
+    });
+    for (const opt of CONFIRM_OPTIONS){
+      document.getElementById(opt.id)?.addEventListener('change', (ev)=>{
+        const st = E.getState();
+        ensureSettingsDefaults(st)[opt.key] = !!ev.target.checked;
+        SM.saveState(st);
+      });
+    }
+    for (const opt of TOAST_OPTIONS){
+      document.getElementById(opt.id)?.addEventListener('change', (ev)=>{
+        const st = E.getState();
+        ensureSettingsDefaults(st).toast[opt.key] = !!ev.target.checked;
+        SM.saveState(st);
+      });
+    }
 
     built.settings = true;
+    syncSettingsUI();
   }
 
   function syncAutoBuyControls(){
     const st = E.getState();
-    st.settings = st.settings || {};
-    st.settings.autoBuy = Object.assign({ enabled:false, units:true, upgrades:true, legacy:false, intervalMs:500, purchaseMode:'single' }, st.settings.autoBuy || {});
+    ensureSettingsDefaults(st);
     const unlocked = hasAscSpecial('unlockAutobuy');
     const enableEl = document.getElementById('autoBuyEnable');
     const unitsEl = document.getElementById('autoBuyUnits');
@@ -425,8 +490,7 @@
     if (!enableEl || !unitsEl || !upgradesEl || !legacyEl || !modeEl || !intervalEl) return;
     const update = ()=>{
       const st = E.getState();
-      st.settings = st.settings || {};
-      st.settings.autoBuy = st.settings.autoBuy || {};
+      ensureSettingsDefaults(st);
       st.settings.autoBuy.enabled = !!enableEl.checked;
       st.settings.autoBuy.units = !!unitsEl.checked;
       st.settings.autoBuy.upgrades = !!upgradesEl.checked;
@@ -633,7 +697,9 @@
       group.innerHTML = `<div class="muted tiny" style="margin-bottom:8px;">${role}</div>`;
       for (const ab of entries){
         const row = document.createElement('div');
-        row.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><div><strong>${ab.name}</strong><div class="muted small">${ab.desc}</div><div class="muted tiny">Lv ${fmtNumber(ab.lvl)}</div></div><div style="text-align:right"><button id="abyssBuy-${ab.id}" class="small">購入 (${fmtNumber(ab.cost)})</button></div></div>`;
+        const levelText = Number.isFinite(ab.maxLevel) ? `Lv ${fmtNumber(ab.lvl)} / ${fmtNumber(ab.maxLevel)}` : `Lv ${fmtNumber(ab.lvl)}`;
+        const buttonText = ab.maxed ? '最大' : `購入 (${fmtNumber(ab.cost)})`;
+        row.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><div><strong>${ab.name}</strong><div class="muted small">${ab.desc}</div><div class="muted tiny">${levelText}</div></div><div style="text-align:right"><button id="abyssBuy-${ab.id}" class="small">${buttonText}</button></div></div>`;
         group.appendChild(row);
       }
       wrap.appendChild(group);
@@ -656,7 +722,9 @@
       btn.addEventListener('click', ()=>{
         const res = E.buyAbyssUpgradeInternal ? E.buyAbyssUpgradeInternal(ab.id) : { ok:false };
         if (!res.ok){
-          const msg = res.reason === 'feature_locked' ? '対応するChallenge報酬を解放してください' : 'Abyss Shardが不足しています';
+          const msg = res.reason === 'feature_locked'
+            ? '対応するChallenge報酬を解放してください'
+            : (res.reason === 'max' ? 'これ以上強化できません' : 'Abyss Shardが不足しています');
           showTypedToast('general', msg);
           return;
         }
@@ -813,6 +881,7 @@
     abyssBtns.forEach(btn=>{ if (btn) btn.disabled = abyssGain <= 0; });
     const currentSaveVersionEl = document.getElementById('currentSaveVersionText');
     if (currentSaveVersionEl) currentSaveVersionEl.textContent = String(st.version || '-');
+    syncSettingsUI();
     syncAutoBuyControls();
     renderMiniGameState();
     renderPrestigeLayers();
@@ -980,7 +1049,7 @@
     document.getElementById('doPrestige')?.addEventListener('click', ()=>{
       const p = E.previewPrestigeGain();
       if (p <= 0){ showTypedToast('general','獲得できるレガシーはありません'); return; }
-      if (!confirm(`プレステージを実行しますか？ 獲得レガシー: ${fmtNumber(p)} 開始ゴールド: ${fmtNumber(E.computeStartingGoldOnPrestige())}`)) return;
+      if (shouldConfirm('confirmPrestige') && !confirm(`プレステージを実行しますか？ 獲得レガシー: ${fmtNumber(p)} 開始ゴールド: ${fmtNumber(E.computeStartingGoldOnPrestige())}`)) return;
       const res = E.doPrestigeInternal();
       if (res.ok){ svgDirty=true; syncUIAfterChange(); buildAscShop(); checkAchievementsAfterAction(); showTypedToast('purchase', `プレステージ: レガシー +${fmtNumber(res.gain)}`); }
     });
@@ -988,7 +1057,7 @@
     const runAbyssReset = ()=>{
       const g = E.previewAbyssGain ? E.previewAbyssGain() : 0;
       if (g <= 0){ showTypedToast('general', 'Abyss条件未達（累計 1.8e308 必要）'); return; }
-      if (!confirm(`Abyssリセットを実行しますか？ 実績以外の要素が全てリセットされます。獲得: Abyss Shard +${fmtNumber(g)}`)) return;
+      if (shouldConfirm('confirmAbyssReset') && !confirm(`Abyssリセットを実行しますか？ 実績以外の要素が全てリセットされます。獲得: Abyss Shard +${fmtNumber(g)}`)) return;
       const res = E.doAbyssResetInternal ? E.doAbyssResetInternal() : { ok:false };
       if (res.ok){ SM.saveState(E.getState()); buildAbyssUI(); syncUIAfterChange(); checkAchievementsAfterAction(); showTypedToast('achievement', `Abyss Shard +${fmtNumber(res.gain)}`); }
     };
@@ -998,7 +1067,7 @@
     document.getElementById('doAscend')?.addEventListener('click', ()=>{
       const p = E.previewAscGain();
       if (p <= 0){ showTypedToast('general','Ascensionで得られるポイントはありません'); return; }
-      if (!confirm(`Ascend 実行で AscensionPoints +${fmtNumber(p)} を得ます。実行しますか？`)) return;
+      if (shouldConfirm('confirmAscend') && !confirm(`Ascend 実行で AscensionPoints +${fmtNumber(p)} を得ます。実行しますか？`)) return;
       const res = E.doAscendInternal();
       if (res.ok){ svgDirty=true; syncUIAfterChange(); buildAscShop(); buildCelestialShop(); checkAchievementsAfterAction(); showTypedToast('purchase', `Ascend: AP +${fmtNumber(res.gain)} / CP +${fmtNumber(res.celestialGain || 0)}`); }
     });
@@ -1014,7 +1083,7 @@
 
     for (const ch of (C.CHALLENGES || [])){
       document.getElementById(`chStart-${ch.id}`)?.addEventListener('click', ()=>{
-        if (!confirm(`${ch.name} を開始します。現在の周回進行はリセットされます。`)) return;
+        if (shouldConfirm('confirmChallengeStart') && !confirm(`${ch.name} を開始します。現在の周回進行はリセットされます。`)) return;
         const res = E.startChallengeInternal ? E.startChallengeInternal(ch.id) : { ok:false };
         if (res.ok){ SM.saveState(E.getState()); syncUIAfterChange(); showTypedToast('general', `${ch.name} 開始`); }
       });
@@ -1033,7 +1102,7 @@
         else showTypedToast('general', '目標未達です');
       });
       document.getElementById(`chAbandon-${ch.id}`)?.addEventListener('click', ()=>{
-        if (!confirm(`${ch.name} を中断します。チャレンジ中の累計Goldは破棄され、開始前の累計Goldに戻ります。`)) return;
+        if (shouldConfirm('confirmChallengeAbandon') && !confirm(`${ch.name} を中断します。チャレンジ中の累計Goldは破棄され、開始前の累計Goldに戻ります。`)) return;
         const res = E.abandonChallengeInternal ? E.abandonChallengeInternal() : { ok:false };
         if (res.ok){ SM.saveState(E.getState()); syncUIAfterChange(); showTypedToast('general', `${ch.name} を中断`); }
       });
@@ -1041,7 +1110,7 @@
 
     document.getElementById('ins_buy1')?.addEventListener('click', ()=>{
       if (!selectedLegacyId) return;
-      const st = E.getState(); const want = st.settings.confirmLegacyBuy !== false;
+      const st = E.getState(); const want = ensureSettingsDefaults(st).confirmLegacyBuy !== false;
       if (want && !confirm('レガシーを1レベル取得しますか？')) return;
       const res = E.attemptBuyLegacyInternal(selectedLegacyId, 1);
       if (res.ok){ svgDirty=true; syncUIAfterChange(); selectLegacyNode(selectedLegacyId); checkAchievementsAfterAction(); showTypedToast('purchase','レガシーを購入しました'); }
@@ -1050,7 +1119,7 @@
 
     document.getElementById('ins_buyMax')?.addEventListener('click', ()=>{
       if (!selectedLegacyId) return;
-      const st = E.getState(); const want = st.settings.confirmLegacyBuyMax !== false;
+      const st = E.getState(); const want = ensureSettingsDefaults(st).confirmLegacyBuyMax !== false;
       if (want && !confirm('選択中のレガシーノードを限界まで購入しますか？')) return;
       const res = E.attemptBuyLegacyInternal(selectedLegacyId, Infinity);
       if (res.ok){ svgDirty=true; syncUIAfterChange(); selectLegacyNode(selectedLegacyId); checkAchievementsAfterAction(); showTypedToast('purchase','レガシーをまとめて購入しました'); }
@@ -1074,16 +1143,16 @@
       try{ const json = SM.stringifyState(E.getState(), 2); if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(json).then(()=>showTypedToast('general','コピーしました')); else document.getElementById('pasteJson').value = json; } catch(e){}
     });
     document.getElementById('importPasteBtn')?.addEventListener('click', ()=>{
-      try{ const obj = SM.parseStateText(document.getElementById('pasteJson').value.trim()); if (!confirm('上書きしますか？')) return; const migrated = SM.importState(obj); E.setState(migrated); SM.saveState(E.getState()); svgDirty=true; syncUIAfterChange(); buildAchievementsUI(); buildSettingsUI(); showTypedToast('general','インポート完了'); } catch(e){ alert('インポートエラー: '+e.message); } 
+      try{ const obj = SM.parseStateText(document.getElementById('pasteJson').value.trim()); if (shouldConfirm('confirmImportOverwrite') && !confirm('上書きしますか？')) return; const migrated = SM.importState(obj); E.setState(migrated); SM.saveState(E.getState()); svgDirty=true; syncUIAfterChange(); buildAchievementsUI(); buildSettingsUI(); showTypedToast('general','インポート完了'); } catch(e){ alert('インポートエラー: '+e.message); } 
     });
     document.getElementById('reset')?.addEventListener('click', ()=>{
-      if (!confirm('本当に全てのデータをリセットしますか？')) return;
+      if (shouldConfirm('confirmHardReset') && !confirm('本当に全てのデータをリセットしますか？')) return;
       E.setState(SM.deepCopy(SM.defaultState)); SM.saveState(E.getState()); svgDirty=true; syncUIAfterChange(); buildAchievementsUI(); showTypedToast('general','リセットしました');
     });
     document.getElementById('triggerFileInput')?.addEventListener('click', ()=> document.getElementById('fileInput').click());
     document.getElementById('fileInput')?.addEventListener('change', (ev)=>{
       const f = ev.target.files && ev.target.files[0]; if (!f) return;
-      const r = new FileReader(); r.onload = ()=>{ try{ const obj = SM.parseStateText(r.result); if (!confirm('上書きしますか？')) { ev.target.value=''; return; } const migrated = SM.importState(obj); E.setState(migrated); SM.saveState(E.getState()); svgDirty=true; syncUIAfterChange(); buildAchievementsUI(); buildSettingsUI(); showTypedToast('general','ファイル読み込み完了'); } catch(e){ alert('インポートエラー: '+e.message); } }; r.readAsText(f); ev.target.value = ''; 
+      const r = new FileReader(); r.onload = ()=>{ try{ const obj = SM.parseStateText(r.result); if (shouldConfirm('confirmImportOverwrite') && !confirm('上書きしますか？')) { ev.target.value=''; return; } const migrated = SM.importState(obj); E.setState(migrated); SM.saveState(E.getState()); svgDirty=true; syncUIAfterChange(); buildAchievementsUI(); buildSettingsUI(); showTypedToast('general','ファイル読み込み完了'); } catch(e){ alert('インポートエラー: '+e.message); } }; r.readAsText(f); ev.target.value = ''; 
     });
   }
 
@@ -1095,9 +1164,9 @@
     const body = document.getElementById('updateModalBody');
     if (!modal || !body) return;
     body.textContent = `${C.APP_VERSION} の主な更新
-- Abyss gain を再設計し、Challenge / Celestial / 周回数 / Infinity 到達で段階的に伸びるよう変更
-- 機能解放型の Challenge 報酬と、役割別 Abyss アップグレードを追加
-- Abyss タブに短期目標ナビゲーターと gain 内訳表示を追加`;
+- 確認ダイアログ設定を全操作へ拡張し、トースト設定に一般メッセージ切替を追加
+- 「星界チューニング規格」の上限拡張が一回きりの Ascension Shop 項目へ及ばないよう修正
+- Abyssアップグレード「自律継承アーカイブ」を追加し、Abyss後も自動購入の解放状態を保持可能に変更`;
     modal.style.display = 'flex';
     document.getElementById('closeUpdateModal')?.addEventListener('click', ()=>{
       modal.style.display = 'none';
