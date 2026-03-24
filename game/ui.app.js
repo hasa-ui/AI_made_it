@@ -770,6 +770,20 @@
     }
   }
 
+  function finalizeChallengeCompletion(res, fallbackName){
+    if (!res || !res.ok) return false;
+    const challengeName = fallbackName || ((C.CHALLENGES || []).find(ch=>ch.id === res.id)?.name) || res.id;
+    SM.saveState(E.getState());
+    syncUIAfterChange();
+    checkAchievementsAfterAction();
+    showTypedToast('achievement', `${challengeName} クリア`);
+    if (res.unlockedFeature){
+      const feature = C.ABYSS_FEATURES && C.ABYSS_FEATURES[res.unlockedFeature];
+      showTypedToast('purchase', `機能解放: ${(feature && feature.name) || res.unlockedFeature}`);
+    }
+    return true;
+  }
+
   function renderChallengeStatus(){
     const st = E.getState();
     st.challenge = st.challenge || { activeId:null, completed:{}, bestSec:{}, ascendedInChallenge:0 };
@@ -921,16 +935,7 @@
     st.runStats.currentRunPeakGold = Math.max(st.runStats.currentRunPeakGold || 0, st.gold || 0);
     runAutoBuy(dt);
     const chRes = E.tryCompleteChallengeInternal ? E.tryCompleteChallengeInternal() : { ok:false };
-    if (chRes && chRes.ok){
-      SM.saveState(st);
-      showTypedToast('achievement', `Challenge達成: ${chRes.id}`);
-      if (chRes.unlockedFeature){
-        const feature = C.ABYSS_FEATURES && C.ABYSS_FEATURES[chRes.unlockedFeature];
-        showTypedToast('purchase', `機能解放: ${(feature && feature.name) || chRes.unlockedFeature}`);
-      }
-      checkAchievementsAfterAction();
-      syncUIAfterChange();
-    }
+    finalizeChallengeCompletion(chRes);
 
     if (ts - lastUiUpdate >= (C.UI_UPDATE_INTERVAL_MS || 150)){
       lastUiUpdate = ts;
@@ -1090,16 +1095,7 @@
       });
       document.getElementById(`chClaim-${ch.id}`)?.addEventListener('click', ()=>{
         const res = E.tryCompleteChallengeInternal ? E.tryCompleteChallengeInternal() : { ok:false };
-        if (res.ok){
-          SM.saveState(E.getState());
-          syncUIAfterChange();
-          checkAchievementsAfterAction();
-          showTypedToast('achievement', `${ch.name} クリア`);
-          if (res.unlockedFeature){
-            const feature = C.ABYSS_FEATURES && C.ABYSS_FEATURES[res.unlockedFeature];
-            showTypedToast('purchase', `機能解放: ${(feature && feature.name) || res.unlockedFeature}`);
-          }
-        }
+        if (finalizeChallengeCompletion(res, ch.name)) return;
         else showTypedToast('general', '目標未達です');
       });
       document.getElementById(`chAbandon-${ch.id}`)?.addEventListener('click', ()=>{

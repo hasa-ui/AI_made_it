@@ -32,3 +32,9 @@ Original prompt: ロードマップのPhase 1を完了させてください
 - 実装: `game/ui.app.js` の Ascension Shop 表示とボタン状態を実効 ownership ベースへ変更し、`自律運用OS` が冗長購入候補として残らないよう修正。
 - 実装: `game/engine.app.js` の購入処理でも同じ実効 ownership を反映し、`ab_auto_archive` 所持後は `asc_unlock_autobuy` を購入できず AP も消費しないよう修正。
 - 検証: `node --check` と vm テストで、永続 autobuy 解放が full-shop 判定を満たし、`buyAscensionUpgradeInternal('asc_unlock_autobuy')` が `reason:'max'` で拒否されることを確認。
+
+## 2026-03-24 challenge immediate-clear reflection fix
+- 調査: Challenge クリア自体は engine 側で即時記録されるが、自動クリア経路と `達成判定` ボタン経路で後処理の順序が揃っておらず、開始直後の短時間クリアで UI 反映が後続処理に依存していることを確認。
+- 実装: `game/ui.app.js` に `finalizeChallengeCompletion()` を追加し、Challenge クリア後の `saveState`・`syncUIAfterChange`・achievement 判定・解放 toast を共通化。
+- 実装: main loop の自動クリアと手動 `達成判定` の両方を同 helper 経由へ変更し、クリア状態の UI 反映を最優先で確定させるよう修正。
+- 検証: `node --check game/ui.app.js` と小さな Node harness で、共通 helper の呼び出し順と両経路からの接続を確認。
