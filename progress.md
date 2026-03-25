@@ -61,3 +61,12 @@ Original prompt: ロードマップのPhase 1を完了させてください
 - 修正: `game/ui.app.js` の `getCelestialUpgradeState()` で、選択中ルートの未購入 Celestial upgrade は `選択中` ではなく `未購入（選択中ルート）` を返すよう補正。
 - 修正: これにより、未購入状態を維持したまま branch switch ヒントだけを抑制し、所持/効果状態と route 状態を混同しない表示へ戻した。
 - 検証: `node --check game/ui.app.js` と helper 抽出 harness で、Mirror 選択中の未購入 `cel_harmonic_seed` が `未購入（選択中ルート）`、Mirror 非選択時だけ `ミラー系 を選択で有効` になることを確認。
+
+## 2026-03-25 モバイル優先軽量化
+- 調査: `game/ui.app.js` の `syncUIAfterChange()` が各購入ごとに全タブ描画・全体集計をまとめて走らせ、さらに `SM.saveState()` を同期で即時実行していることを確認。
+- 実装: `game/engine.app.js` に `getUiEconomySnapshot()` を追加し、UI 表示用の次価格 / Buy10 / 寄与 GPS を 1 回の集計で返すよう変更。
+- 実装: `game/ui.app.js` に `persistState()` / `scheduleSave()` / `flushScheduledSave()` を追加し、通常操作は 300ms デバウンス保存、重要操作は即時保存へ整理。
+- 実装: `syncUIAfterChange()` を軽いヘッダー更新と表示中タブ専用描画へ分割し、main loop も `UI_UPDATE_INTERVAL_MS = 120` と `UI_SLOW_UPDATE_INTERVAL_MS = 400` の二段更新へ再構成。
+- 実装: 実績解除時の保存・再計算・UI 再描画をバッチ化し、複数実績同時解除時の負荷を抑えた。ミニゲームの保存経路も新 helper へ統一。
+- 文書: `Ver.1.29.1` として `index.html` のアップデート情報、`ui.app.js` の更新モーダル、`仕様書.md` の UI / セーブ仕様を更新。`SAVE_VERSION = 16` は据え置き。
+- 検証: `node --check` で `config/engine/ui/ui.minigame` の構文確認に成功。vm harness で `getUiEconomySnapshot()` と保存 helper の挙動を確認。Playwright は `page.goto: Target page, context or browser has been closed` で今回も実行不可。
