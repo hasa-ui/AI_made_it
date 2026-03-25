@@ -829,6 +829,15 @@
     return getAbyssGainBreakdownInternal(state).current;
   }
 
+  function getUiPreviewSnapshot(){
+    return {
+      prestigeGain: previewPrestigeGain(),
+      startingGold: computeStartingGoldOnPrestige(),
+      ascGain: previewAscGain(),
+      abyssGain: previewAbyssGain()
+    };
+  }
+
 
   function getAbyssUpgradeStatus(st){
     const src = st || state;
@@ -1024,6 +1033,7 @@
     computeStartingGoldOnPrestige,
     previewAscGain,
     previewAbyssGain,
+    getUiPreviewSnapshot,
     getAbyssUpgradeStatus: (st) => getAbyssUpgradeStatus(st || state),
     getAbyssGainBreakdown: (st) => getAbyssGainBreakdownInternal(st || state),
     getAbyssObjectives: (st) => getAbyssObjectivesInternal(st || state),
