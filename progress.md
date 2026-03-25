@@ -56,3 +56,8 @@ Original prompt: ロードマップのPhase 1を完了させてください
 - 修正: `game/ui.app.js` の `getCelestialUpgradeState()` で、選択中ルートに属する未購入 Celestial upgrade は `選択中` / `inactive:false` を返すよう補正。
 - 修正: route-switch ヒント (`〜を選択で有効`) は、実際に別ルートを選んでいる場合だけ出すよう限定。
 - 検証: `node --check game/ui.app.js` と helper 抽出 harness で、Mirror 選択中の未購入 `cel_harmonic_seed` が `選択中` になり、Mirror 非選択時だけ switch hint が出ることを確認。
+
+## 2026-03-25 Celestial unpurchased label wording fix
+- 修正: `game/ui.app.js` の `getCelestialUpgradeState()` で、選択中ルートの未購入 Celestial upgrade は `選択中` ではなく `未購入（選択中ルート）` を返すよう補正。
+- 修正: これにより、未購入状態を維持したまま branch switch ヒントだけを抑制し、所持/効果状態と route 状態を混同しない表示へ戻した。
+- 検証: `node --check game/ui.app.js` と helper 抽出 harness で、Mirror 選択中の未購入 `cel_harmonic_seed` が `未購入（選択中ルート）`、Mirror 非選択時だけ `ミラー系 を選択で有効` になることを確認。

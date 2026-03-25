@@ -85,3 +85,17 @@
 ## Verify Log (2026-03-24 Celestial unpurchased active-branch label fix)
 - `node --check game/ui.app.js` : 成功
 - `node - <<'NODE' ... NODE`（`ui.app.js` から `getCelestialUpgradeState()` を抽出して stub 環境で実行し、Mirror 選択中の未購入 `cel_harmonic_seed` が `{ label:'選択中', inactive:false }`、Mirror 非選択時は `{ label:'ミラー系 を選択で有効', inactive:true }` になることを確認） : 成功
+
+## Plan (2026-03-25 Celestial unpurchased label wording fix)
+- [x] 選択中 branch の未購入 Celestial upgrade 表示が ownership/effect 状態と矛盾していることを確認する
+- [x] 未購入 branch-specific upgrade を active 表現にせず、branch switch hint だけ抑制する文言へ修正する
+- [x] Node で構文確認と再現ケース検証を実行し、ログへ記録する
+
+## Progress Log (2026-03-25 Celestial unpurchased label wording fix)
+- 着手: `game/ui.app.js` の `getCelestialUpgradeState()` を確認し、選択中 branch の未購入 upgrade が `選択中` と表示され、未購入状態と active 状態が区別できなくなっていることを確認。
+- 方針: 選択中 branch でも ownership/effect 表示は「未購入」に寄せ、route switch hint だけを消す。文言は `未購入（選択中ルート）` として neutral にする。
+- `game/ui.app.js`: branch-specific かつ `activeBranchId === branchId` の未購入 upgrade に対し、`選択中` ではなく `未購入（選択中ルート）` を返すよう修正。
+
+## Verify Log (2026-03-25 Celestial unpurchased label wording fix)
+- `node --check game/ui.app.js` : 成功
+- `node - <<'NODE' ... NODE`（`ui.app.js` から `getCelestialUpgradeState()` を抽出して stub 環境で実行し、Mirror 選択中の未購入 `cel_harmonic_seed` が `{ label:'未購入（選択中ルート）', inactive:true }`、Mirror 非選択時は `{ label:'ミラー系 を選択で有効', inactive:true }` になることを確認） : 成功
