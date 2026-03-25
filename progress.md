@@ -51,3 +51,8 @@ Original prompt: ロードマップのPhase 1を完了させてください
 - 修正: Celestial ルートカードの保存済み専用強化表示も同じ判定へ揃え、`現在も有効` と `切替で有効` を分離。
 - 修正: 起動直後とテキスト/ファイル import 直後に `checkAchievementsAfterAction()` を実行し、ルート別 Celestial 実績が既存セーブでも即時バックフィルされるよう変更。
 - 検証: `node --check game/ui.app.js` と helper 抽出 harness で、状態ラベルの具体例 (`cel_prism` / `cel_asc_expand`) と startup/import 後の achievement 再評価フックを確認。
+
+## 2026-03-24 Celestial unpurchased active-branch label fix
+- 修正: `game/ui.app.js` の `getCelestialUpgradeState()` で、選択中ルートに属する未購入 Celestial upgrade は `選択中` / `inactive:false` を返すよう補正。
+- 修正: route-switch ヒント (`〜を選択で有効`) は、実際に別ルートを選んでいる場合だけ出すよう限定。
+- 検証: `node --check game/ui.app.js` と helper 抽出 harness で、Mirror 選択中の未購入 `cel_harmonic_seed` が `選択中` になり、Mirror 非選択時だけ switch hint が出ることを確認。

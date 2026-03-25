@@ -158,6 +158,7 @@
     const branchId = def.branch || 'shared';
     if (lvl <= 0){
       if (branchId === 'shared') return { label:'未購入', inactive:true };
+      if (src.celestial && src.celestial.activeBranchId === branchId) return { label:'選択中', inactive:false };
       const branch = getCelestialBranchDef(branchId);
       return { label:`${(branch && branch.jpName) || branchId} を選択で有効`, inactive:true };
     }

@@ -71,3 +71,17 @@
 ## Verify Log (2026-03-24 Phase 2 review fixes)
 - `node --check game/ui.app.js` : 成功
 - `node - <<'NODE' ... NODE`（`ui.app.js` から Celestial 状態 helper 群を抽出して stub 環境で実行し、`cel_prism` 未購入が `未購入`、`cel_asc_expand` が Mirror 外でも `購入済み・常時有効` と判定されること、Mirror ルートの effect buckets で `星界チューニング規格` が active / `ハーモニック種銭` が dormant に分かれることを確認。あわせて起動直後と import 直後に `checkAchievementsAfterAction()` を呼ぶフックが追加されていることを確認） : 成功
+
+## Plan (2026-03-24 Celestial unpurchased active-branch label fix)
+- [x] `getCelestialUpgradeState()` の未購入 branch-specific 表示条件を確認する
+- [x] 選択中ルートの未購入 Celestial upgrade が `inactive:false` かつ route-switch 文言にならないよう修正する
+- [x] Node で構文確認と再現ケース検証を実行し、ログへ記録する
+
+## Progress Log (2026-03-24 Celestial unpurchased active-branch label fix)
+- 着手: `game/ui.app.js` の `getCelestialUpgradeState()` を確認し、未購入 branch-specific upgrade が現在選択中ルートでも常に `〜を選択で有効` と誤表示されることを確認。
+- 方針: `lvl <= 0` 分岐の中で、shared / 選択中 branch / 別 branch を分け、選択中 branch の未購入項目だけ `選択中` かつ `inactive:false` を返す。
+- `game/ui.app.js`: branch-specific かつ `activeBranchId === branchId` の未購入 upgrade に対して `選択中` を返す分岐を追加し、switch hint は別ルート時だけ出すよう修正。
+
+## Verify Log (2026-03-24 Celestial unpurchased active-branch label fix)
+- `node --check game/ui.app.js` : 成功
+- `node - <<'NODE' ... NODE`（`ui.app.js` から `getCelestialUpgradeState()` を抽出して stub 環境で実行し、Mirror 選択中の未購入 `cel_harmonic_seed` が `{ label:'選択中', inactive:false }`、Mirror 非選択時は `{ label:'ミラー系 を選択で有効', inactive:true }` になることを確認） : 成功
