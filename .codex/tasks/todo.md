@@ -99,3 +99,69 @@
 ## Verify Log (2026-03-25 Celestial unpurchased label wording fix)
 - `node --check game/ui.app.js` : 成功
 - `node - <<'NODE' ... NODE`（`ui.app.js` から `getCelestialUpgradeState()` を抽出して stub 環境で実行し、Mirror 選択中の未購入 `cel_harmonic_seed` が `{ label:'未購入（選択中ルート）', inactive:true }`、Mirror 非選択時は `{ label:'ミラー系 を選択で有効', inactive:true }` になることを確認） : 成功
+
+## Plan (2026-03-25 review commit da4b147)
+- [x] 対象コミットの差分と変更文脈を確認する
+- [x] `getCelestialUpgradeState()` の利用箇所と影響範囲を検証する
+- [x] 指摘価値のある不具合だけを優先度付きで整理する
+
+## Progress Log (2026-03-25 review commit da4b147)
+- `git show --stat --unified=80 da4b14757c637309fd4dfab325cf2a35f3375c0d` で差分を確認し、実コード変更が `game/ui.app.js` の Celestial 未購入ラベル分岐 1 行のみであることを確認。
+- `rg -n "getCelestialUpgradeState\(|inactive\b|選択中ルート|を選択で有効" game/ui.app.js` で関連参照を追跡し、返却値の `inactive` は現行 UI では未使用で、状態文言は `celState-*` 表示テキストにのみ反映されることを確認。
+
+## Verify Log (2026-03-25 review commit da4b147)
+- `node --check game/ui.app.js` : 成功
+- `node - <<'NODE' ... NODE`（`game/ui.app.js` 内の `getCelestialUpgradeState()` 呼び出し数と `effectState.inactive` 参照有無を確認し、`inactive` が未使用であることを確認） : 成功
+- 結論: 対象コミットで作者に修正を勧めるべき離散的な不具合は確認できず。
+
+## Plan (2026-03-25 モバイル優先軽量化)
+- [x] UI 更新・保存・集計の重複箇所を整理し、軽量化の差分方針を確定する
+- [x] UI 差分更新、集計スナップショット、保存デバウンスを実装し、関連文書とバージョン表記を更新する
+- [x] 構文確認と軽量化対象の要点検証を実行し、結果をログへ記録する
+
+## Progress Log (2026-03-25 モバイル優先軽量化)
+- 着手: `game/ui.app.js` の `syncUIAfterChange()` がユニット/アップグレード/各タブ描画を毎回まとめて実行し、購入ごとに `SM.saveState()` も同期で走っていることを確認。
+- 方針: モバイル優先で、`saveState` は短いデバウンスへ集約し、UI 更新は「ヘッダー等の軽い更新」と「表示中タブだけの再描画」に分離する。あわせて UI 用の集計を `engine` 側で 1 回にまとめる。
+- `game/config.js`: `Ver.1.29.1` へ更新し、`UI_UPDATE_INTERVAL_MS = 120`、`UI_SLOW_UPDATE_INTERVAL_MS = 400`、`SAVE_DEBOUNCE_MS = 300` を追加。
+- `game/engine.app.js`: `getUiEconomySnapshot()` を追加し、ユニット次価格 / Buy10 価格 / アップグレード次価格 / ユニット寄与 GPS を UI 用に一括計算するよう変更。
+- `game/ui.app.js`: `persistState()` / `scheduleSave()` / `flushScheduledSave()` を追加し、購入連打・設定変更・自動購入の保存をデバウンス化。重要操作（Prestige / Ascend / Abyss / Challenge 開始中断クリア / import / reset / update modal close）は即時保存へ寄せた。
+- `game/ui.app.js`: `syncUIAfterChange()` を `syncHeaderResources()`・`syncPreviewPanels()`・`syncUnitShop()`・`syncUpgradeShop()`・`syncVisiblePanels()`・`syncSlowPanels()` へ分割し、非表示タブの再描画をやめた。main loop は軽いヘッダー更新と表示中パネルの slow tick 更新へ整理。
+- `game/ui.app.js`: 実績解除時の保存 / 再計算 / UI 再描画を実績1件ごとではなくバッチ化し、連続解除時の負荷を抑えた。
+- `game/ui.minigame.js`: ミニゲーム開始/終了も UI 側の保存 helper を使うよう合わせた。
+- `index.html` `仕様書.md`: `Ver.1.29.1` の更新内容と、軽量化に伴う UI / 保存仕様を反映。
+
+## Verify Log (2026-03-25 モバイル優先軽量化)
+- `node --check game/config.js && node --check game/engine.app.js && node --check game/ui.app.js && node --check game/ui.minigame.js` : 成功
+- `node - <<'NODE' ... NODE`（`config/state/helpers/challenge/engine` を vm で読み込み、`getUiEconomySnapshot()` が次価格・Buy10価格・GPS 合計を返し、Challenge 中もユニット寄与値を返すことを確認） : 成功
+- `node - <<'NODE' ... NODE`（`ui.app.js` から保存 helper 群を抽出し、`scheduleSave()` 連打で保存が 1 回にまとまり、`persistState('immediate')` が即時 flush することを確認） : 成功
+- `node "$WEB_GAME_CLIENT" --url http://127.0.0.1:8000/index.html ...` : 失敗。`page.goto: Target page, context or browser has been closed` によりこの環境では Playwright 起動確認を完了できず。
+
+## Plan (2026-03-25 review commit 00f7f6a)
+- [x] Record review checklist in .codex/tasks/todo.md
+- [x] Inspect the target commit diff and affected code paths
+- [x] Validate any suspected regressions with targeted commands
+- [x] Produce prioritized review findings
+
+## Progress Log (2026-03-25 review commit 00f7f6a)
+- `git show --unified=80 00f7f6ae126974401d9324ddead7565c4425d429 -- ...` で `game/config.js` `game/engine.app.js` `game/ui.app.js` `game/ui.minigame.js` `index.html` の差分と周辺コードを確認。
+- 保存経路の変更点を追跡し、通常操作の多くが `persistState()` に置き換わった一方、flush 経路が `beforeunload` と 5 秒オートセーブのみであることを確認。
+- UI 更新分割と `getUiEconomySnapshot()` の利用箇所を追跡し、指摘候補をモバイル/バックグラウンド保存回りに絞り込んだ。
+
+## Verify Log (2026-03-25 review commit 00f7f6a)
+- `node --check game/config.js && node --check game/engine.app.js && node --check game/ui.app.js && node --check game/ui.minigame.js` : 成功
+- `rg -n "beforeunload|pagehide|visibilitychange|persistState\\(|setInterval\\(=>flushScheduledSave" game/ui.app.js` : `beforeunload` 以外の background flush 経路が無く、通常操作の多くが debounced save に移行していることを確認
+- 結論: モバイル/バックグラウンド終了時に直近操作が失われる回帰を 1 件特定
+
+## Plan (2026-03-25 background save flush fix)
+- [x] debounced save の flush 条件を確認し、バックグラウンド遷移で不足しているイベントを特定する
+- [x] `beforeunload` 依存を補う flush 経路を最小差分で追加する
+- [x] 構文確認とイベント登録の検証を行い、ログへ記録する
+
+## Progress Log (2026-03-25 background save flush fix)
+- 着手: `game/ui.app.js` の初期化部を確認し、debounced save の即時 flush が `beforeunload` と 5 秒オートセーブだけに依存していることを再確認。
+- 方針: バックグラウンド遷移時の保存回帰だけを直すため、既存の保存 helper はそのままに `visibilitychange(hidden)` と `pagehide` で `flushScheduledSave(true)` を追加する。
+- `game/ui.app.js`: `document.addEventListener('visibilitychange', ...)` と `window.addEventListener('pagehide', ...)` を追加し、タブ非表示化やモバイルのページ退避時にも pending save を即時保存するよう修正。`beforeunload` と定期オートセーブは維持。
+
+## Verify Log (2026-03-25 background save flush fix)
+- `node --check game/ui.app.js` : 成功
+- `rg -n "visibilitychange|pagehide|beforeunload|flushScheduledSave\\(true\\)" game/ui.app.js` : `visibilitychange(hidden)` / `pagehide` / `beforeunload` / 定期オートセーブの 4 経路で flush されることを確認

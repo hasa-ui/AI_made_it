@@ -8,6 +8,7 @@
     const fmtNumber = deps.fmtNumber || (n=>String(n));
     const showTypedToast = deps.showTypedToast || (()=>{});
     const isAscShopFullyPurchased = deps.isAscShopFullyPurchased || (()=>false);
+    const persistState = deps.persistState || (()=>{});
     const syncUIAfterChange = deps.syncUIAfterChange || (()=>{});
     const checkAchievementsAfterAction = deps.checkAchievementsAfterAction || (()=>{});
 
@@ -60,7 +61,7 @@
       st.miniGame.bestScore = Math.max(st.miniGame.bestScore, runtime.score);
       st.miniGame.bestStreak = Math.max(st.miniGame.bestStreak || 0, runtime.bestStreak || 0);
       if (runtime.misses === 0 && runtime.score >= 140) st.miniGame.perfectRuns += 1;
-      SM.saveState(st);
+      persistState('immediate');
       syncUIAfterChange();
       checkAchievementsAfterAction();
       showTypedToast('general', `ミニゲーム終了: スコア ${fmtNumber(runtime.score)} / AP +${fmtNumber(reward)}`);
@@ -92,7 +93,7 @@
       if ((st.ascPoints || 0) < 1){ showTypedToast('general', '開始には AP が1必要です'); return; }
       st.ascPoints -= 1;
       runtime = { active:true, round:0, totalRounds:10, score:0, misses:0, streak:0, bestStreak:0, targetLane:0, timerId:null, rule:'normal', roundTimeoutMs:1100 };
-      SM.saveState(st);
+      persistState('immediate');
       syncUIAfterChange();
       runRound();
     }

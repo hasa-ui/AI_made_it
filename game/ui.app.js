@@ -179,6 +179,26 @@
     const settings = ensureSettingsDefaults(st);
     return settings[settingKey] !== false;
   }
+  let pendingSaveTimer = null;
+  function flushScheduledSave(force){
+    if (pendingSaveTimer){
+      clearTimeout(pendingSaveTimer);
+      pendingSaveTimer = null;
+    }
+    if (!force) return;
+    try { SM.saveState(E.getState()); } catch(e){}
+  }
+  function scheduleSave(){
+    if (pendingSaveTimer) clearTimeout(pendingSaveTimer);
+    pendingSaveTimer = setTimeout(()=>{
+      pendingSaveTimer = null;
+      try { SM.saveState(E.getState()); } catch(e){}
+    }, C.SAVE_DEBOUNCE_MS || 300);
+  }
+  function persistState(mode){
+    if (mode === 'immediate') flushScheduledSave(true);
+    else scheduleSave();
+  }
   const miniGameController = (window.UIMiniGame && window.UIMiniGame.create)
     ? window.UIMiniGame.create({
         E,
@@ -186,6 +206,7 @@
         fmtNumber,
         showTypedToast,
         isAscShopFullyPurchased,
+        persistState: (mode)=>persistState(mode || 'debounced'),
         syncUIAfterChange: ()=>syncUIAfterChange(),
         checkAchievementsAfterAction: ()=>checkAchievementsAfterAction()
       })
@@ -232,9 +253,9 @@
         nextCost: Infinity, buy10Cost: Infinity
       };
 
-      unitButtons[def.id].buy1.addEventListener('click', ()=>{ const res = E.buyUnitInternal(def.id,1); if (!res || !res.ok) showTypedToast('general','ゴールド不足'); else { SM.saveState(E.getState()); syncUIAfterChange(); checkAchievementsAfterAction(); showTypedToast('purchase', `${def.name} を購入しました`); }});
-      unitButtons[def.id].buy10.addEventListener('click', ()=>{ const res = E.buyUnitInternal(def.id,10); if (!res || !res.ok) showTypedToast('general','ゴールド不足'); else { SM.saveState(E.getState()); syncUIAfterChange(); checkAchievementsAfterAction(); showTypedToast('purchase', `${def.name} x10 を購入しました`); }});
-      unitButtons[def.id].buyMax.addEventListener('click', ()=>{ const res = E.buyMaxUnitsInternal(def.id); if (!res || !res.ok) showTypedToast('general','購入できる量はありません'); else { SM.saveState(E.getState()); syncUIAfterChange(); checkAchievementsAfterAction(); showTypedToast('purchase', `${def.name} を ${res.bought} 台購入しました`); }});
+      unitButtons[def.id].buy1.addEventListener('click', ()=>{ const res = E.buyUnitInternal(def.id,1); if (!res || !res.ok) showTypedToast('general','ゴールド不足'); else { persistState(); syncUIAfterChange(); checkAchievementsAfterAction(); showTypedToast('purchase', `${def.name} を購入しました`); }});
+      unitButtons[def.id].buy10.addEventListener('click', ()=>{ const res = E.buyUnitInternal(def.id,10); if (!res || !res.ok) showTypedToast('general','ゴールド不足'); else { persistState(); syncUIAfterChange(); checkAchievementsAfterAction(); showTypedToast('purchase', `${def.name} x10 を購入しました`); }});
+      unitButtons[def.id].buyMax.addEventListener('click', ()=>{ const res = E.buyMaxUnitsInternal(def.id); if (!res || !res.ok) showTypedToast('general','購入できる量はありません'); else { persistState(); syncUIAfterChange(); checkAchievementsAfterAction(); showTypedToast('purchase', `${def.name} を ${res.bought} 台購入しました`); }});
     }
     built.units = true; cacheRefs();
   }
@@ -257,8 +278,8 @@
 
       upgradeButtons[def.id] = { buy: document.getElementById(`buyUp-${def.id}`), buyMax: document.getElementById(`buyMaxUp-${def.id}`), lvlEl: document.getElementById(`uplvl-${def.id}`), costEl: document.getElementById(`upCost-${def.id}`), nextCost: Infinity };
 
-      upgradeButtons[def.id].buy.addEventListener('click', ()=>{ const res = E.buyUpgradeInternal(def.id); if (!res || !res.ok) showTypedToast('general','ゴールド不足'); else { SM.saveState(E.getState()); syncUIAfterChange(); checkAchievementsAfterAction(); showTypedToast('purchase', `${def.name} を Lv ${res.lvl} にしました`); }});
-      upgradeButtons[def.id].buyMax.addEventListener('click', ()=>{ const res = E.buyMaxUpgradeInternal(def.id); if (!res || !res.ok) showTypedToast('general','購入できるレベルはありません'); else { SM.saveState(E.getState()); syncUIAfterChange(); checkAchievementsAfterAction(); showTypedToast('purchase', `${def.name} を ${res.bought} レベル上げました`); }});
+      upgradeButtons[def.id].buy.addEventListener('click', ()=>{ const res = E.buyUpgradeInternal(def.id); if (!res || !res.ok) showTypedToast('general','ゴールド不足'); else { persistState(); syncUIAfterChange(); checkAchievementsAfterAction(); showTypedToast('purchase', `${def.name} を Lv ${res.lvl} にしました`); }});
+      upgradeButtons[def.id].buyMax.addEventListener('click', ()=>{ const res = E.buyMaxUpgradeInternal(def.id); if (!res || !res.ok) showTypedToast('general','購入できるレベルはありません'); else { persistState(); syncUIAfterChange(); checkAchievementsAfterAction(); showTypedToast('purchase', `${def.name} を ${res.bought} レベル上げました`); }});
     }
     built.upgrades = true; cacheRefs();
   }
@@ -281,7 +302,7 @@
         if (shouldConfirm('confirmAscShopBuy') && !confirm(`Ascensionポイント ${a.cost} を消費して "${a.name}" を購入しますか？`)) return;
         const res = E.buyAscensionUpgradeInternal(a.id);
         if (!res || !res.ok) showTypedToast('general','ポイント不足、または最大レベルです');
-        else { SM.saveState(E.getState()); syncUIAfterChange(); checkAchievementsAfterAction(); showTypedToast('purchase', `${a.name} を購入しました`); }
+        else { persistState(); syncUIAfterChange(); checkAchievementsAfterAction(); showTypedToast('purchase', `${a.name} を購入しました`); }
       });
     }
     built.asc = true; cacheRefs();
@@ -423,6 +444,8 @@
   function checkAchievementsAfterAction(){
     const st = E.getState();
     ensureMiniGameState(st);
+    const unlockedNames = [];
+    let cacheInvalidated = false;
     for (const a of (C.ACHIEVEMENTS||[])){
       if (st.achievementsOwned && st.achievementsOwned[a.id]) continue;
       let achieved = false;
@@ -460,9 +483,20 @@
       if (achieved){
         st.achievementsOwned = st.achievementsOwned || {};
         st.achievementsOwned[a.id] = true;
-        SM.saveState(st); E.invalidateCache(); E.recalcAndCacheGPS(st);
-        buildAchievementsUI(); showTypedToast('achievement', `実績解除: ${a.name}`); syncUIAfterChange();
+        unlockedNames.push(a.name);
+        if (!cacheInvalidated){
+          E.invalidateCache();
+          E.recalcAndCacheGPS(st);
+          cacheInvalidated = true;
+        }
       }
+    }
+    if (!unlockedNames.length) return;
+    persistState();
+    buildAchievementsUI();
+    syncUIAfterChange();
+    for (const name of unlockedNames){
+      showTypedToast('achievement', `実績解除: ${name}`);
     }
   }
 
@@ -508,21 +542,21 @@
     document.getElementById('notationSelect').addEventListener('change', (ev)=>{
       const st = E.getState();
       ensureSettingsDefaults(st).notation = ev.target.value;
-      SM.saveState(st);
+      persistState();
       syncUIAfterChange();
     });
     for (const opt of CONFIRM_OPTIONS){
       document.getElementById(opt.id)?.addEventListener('change', (ev)=>{
         const st = E.getState();
         ensureSettingsDefaults(st)[opt.key] = !!ev.target.checked;
-        SM.saveState(st);
+        persistState();
       });
     }
     for (const opt of TOAST_OPTIONS){
       document.getElementById(opt.id)?.addEventListener('change', (ev)=>{
         const st = E.getState();
         ensureSettingsDefaults(st).toast[opt.key] = !!ev.target.checked;
-        SM.saveState(st);
+        persistState();
       });
     }
 
@@ -576,7 +610,7 @@
       st.settings.autoBuy.legacy = !!legacyEl.checked;
       st.settings.autoBuy.purchaseMode = modeEl.value === 'max' ? 'max' : 'single';
       st.settings.autoBuy.intervalMs = Math.max(50, Number(intervalEl.value || 500));
-      SM.saveState(st);
+      persistState();
     };
     enableEl.addEventListener('change', update);
     unitsEl.addEventListener('change', update);
@@ -623,7 +657,7 @@
     }
     if (changed){
       syncUIAfterChange();
-      SM.saveState(st);
+      persistState();
     }
   }
 
@@ -716,7 +750,7 @@
         btn.addEventListener('click', ()=>{
           const res = E.selectCelestialBranchInternal ? E.selectCelestialBranchInternal(branch.id) : { ok:false };
           if (!res.ok){ showTypedToast('general', 'そのルートはまだ選択できません'); return; }
-          SM.saveState(E.getState());
+          persistState();
           syncUIAfterChange();
           showTypedToast('purchase', `${branch.jpName} に切り替えました`);
         });
@@ -747,7 +781,7 @@
             : 'CP不足、または最大レベルです';
           showTypedToast('general', msg);
         }
-        else { SM.saveState(E.getState()); syncUIAfterChange(); checkAchievementsAfterAction(); showTypedToast('purchase', `${def.name} を購入しました`); }
+        else { persistState(); syncUIAfterChange(); checkAchievementsAfterAction(); showTypedToast('purchase', `${def.name} を購入しました`); }
       });
     }
     built.celestial = true;
@@ -829,7 +863,7 @@
           showTypedToast('general', msg);
           return;
         }
-        SM.saveState(E.getState());
+        persistState();
         buildAbyssUI();
         syncUIAfterChange();
         showTypedToast('purchase', `${ab.name} を強化しました`);
@@ -873,7 +907,7 @@
   function finalizeChallengeCompletion(res, fallbackName){
     if (!res || !res.ok) return false;
     const challengeName = fallbackName || ((C.CHALLENGES || []).find(ch=>ch.id === res.id)?.name) || res.id;
-    SM.saveState(E.getState());
+    persistState('immediate');
     syncUIAfterChange();
     checkAchievementsAfterAction();
     showTypedToast('achievement', `${challengeName} クリア`);
@@ -920,40 +954,74 @@
     }
   }
 
-  // ---------- syncUIAfterChange ----------
-  function syncUIAfterChange(){
-    const st = E.getState();
-    E.recalcAndCacheGPS(st);
-
-    const totalGps = st.gpsCache || 0;
+  function getActiveTabName(st){ return (st && st.settings && st.settings.activeTab) || 'play'; }
+  function getActiveSubTab(parent, st){
+    const defaults = { prestige:'core', ascension:'core', challenges:'core' };
+    const activeSubTabs = (st && st.settings && st.settings.activeSubTabs) || {};
+    return activeSubTabs[parent] || defaults[parent] || 'core';
+  }
+  function buildPreviewSnapshot(){
+    return {
+      prestigeGain: E.previewPrestigeGain(),
+      startingGold: E.computeStartingGoldOnPrestige(),
+      ascGain: E.previewAscGain(),
+      abyssGain: E.previewAbyssGain ? E.previewAbyssGain() : 0
+    };
+  }
+  function syncHeaderResources(st){
+    if (refs.goldEl) refs.goldEl.textContent = fmtNumber(st.gold);
+    if (refs.gpsEl) refs.gpsEl.textContent = fmtNumber(st.gpsCache || 0);
+    if (refs.totalEl) refs.totalEl.textContent = fmtNumber(st.totalGoldEarned || 0);
+    if (refs.legacyEl) refs.legacyEl.textContent = fmtNumber(st.legacy || 0);
+    if (refs.ascEl) refs.ascEl.textContent = fmtNumber(st.ascPoints || 0);
+    if (refs.celestialEl) refs.celestialEl.textContent = fmtNumber(st.celestialPoints || 0);
+    if (refs.celestialTotalEl) refs.celestialTotalEl.textContent = fmtNumber(st.celestialEarnedTotal || 0);
+    if (refs.lastSave) refs.lastSave.textContent = new Date(st.lastSavedAt*1000).toLocaleString();
+    if (refs.abyssShardEl) refs.abyssShardEl.textContent = fmtNumber((st.abyss && st.abyss.shards) || 0);
+    if (refs.abyssHeaderShardEl) refs.abyssHeaderShardEl.textContent = fmtNumber((st.abyss && st.abyss.shards) || 0);
+  }
+  function syncPreviewPanels(st, previews){
+    const preview = previews || buildPreviewSnapshot();
+    if (refs.prestigePreview) refs.prestigePreview.textContent = fmtNumber(preview.prestigeGain);
+    if (refs.startingGoldPreview) refs.startingGoldPreview.textContent = fmtNumber(preview.startingGold);
+    if (refs.ascGainPreview) refs.ascGainPreview.textContent = fmtNumber(preview.ascGain);
+    if (refs.abyssGainEl) refs.abyssGainEl.textContent = fmtNumber(preview.abyssGain);
+    if (refs.abyssTabShardEl) refs.abyssTabShardEl.textContent = fmtNumber((st.abyss && st.abyss.shards) || 0);
+    if (refs.abyssTabGainEl) refs.abyssTabGainEl.textContent = fmtNumber(preview.abyssGain);
+    if (refs.abyssResetCountEl) refs.abyssResetCountEl.textContent = fmtNumber((st.abyss && st.abyss.resetCount) || 0);
+    const abyssBtns = [document.getElementById('doAbyss'), document.getElementById('doAbyssFromTab')];
+    abyssBtns.forEach(btn=>{ if (btn) btn.disabled = preview.abyssGain <= 0; });
+  }
+  function syncUnitShop(st, economy){
+    const snapshot = economy || (E.getUiEconomySnapshot ? E.getUiEconomySnapshot(st) : null);
+    const totalGps = (snapshot && snapshot.totalGps) || st.gpsCache || 0;
     for (const d of C.UNIT_DEFS){
+      const btns = unitButtons[d.id];
+      if (!btns) continue;
       const owned = st.units[d.id] || 0;
-      if (unitButtons[d.id] && unitButtons[d.id].ownedEl) unitButtons[d.id].ownedEl.textContent = fmtNumber(owned);
-      const nextCost = E.unitCost(d, owned, st);
-      if (unitButtons[d.id] && unitButtons[d.id].costEl) unitButtons[d.id].costEl.textContent = fmtNumber(nextCost);
-
-      let c10 = 0; for (let i=0;i<10;i++) c10 += E.unitCost(d, owned + i, st);
-
-      let unitGps = d.baseGPS * owned;
-      const agg = E.getAggregates(st);
-      if (agg.unitMults && agg.unitMults[d.id]) unitGps *= agg.unitMults[d.id];
-      for (const up of C.UPGRADE_DEFS){ const ul = st.upgrades[up.id]||0; if (ul<=0) continue; if (up.type==='unitMult' && up.payload.unitId===d.id) unitGps *= Math.pow(1+(up.payload.multPerLevel||0), ul); }
-      let globalMul = 1;
-      for (const up of C.UPGRADE_DEFS){ const ul = st.upgrades[up.id]||0; if (ul<=0) continue; if (up.type==='globalMult') globalMul *= Math.pow(1+(up.payload.multPerLevel||0), ul); }
-      unitGps *= (agg.globalMult || 1) * globalMul;
+      if (btns.ownedEl) btns.ownedEl.textContent = fmtNumber(owned);
+      const nextCost = snapshot ? snapshot.nextUnitCosts[d.id] : E.unitCost(d, owned, st);
+      if (btns.costEl) btns.costEl.textContent = fmtNumber(nextCost);
+      const buy10Cost = snapshot ? snapshot.buy10Costs[d.id] : btns.buy10Cost;
+      const unitGps = snapshot ? snapshot.unitGpsById[d.id] : 0;
       const perc = totalGps > 0 ? (unitGps / totalGps * 100) : 0;
-      if (unitButtons[d.id] && unitButtons[d.id].contribEl) unitButtons[d.id].contribEl.textContent = (perc >= 0.01 ? (Math.round(perc*100)/100) : 0) + '%';
-
-      if (unitButtons[d.id]) { unitButtons[d.id].nextCost = nextCost; unitButtons[d.id].buy10Cost = c10; }
+      if (btns.contribEl) btns.contribEl.textContent = (perc >= 0.01 ? (Math.round(perc * 100) / 100) : 0) + '%';
+      btns.nextCost = nextCost;
+      btns.buy10Cost = buy10Cost;
     }
-
+  }
+  function syncUpgradeShop(st, economy){
+    const snapshot = economy || (E.getUiEconomySnapshot ? E.getUiEconomySnapshot(st) : null);
     for (const d of C.UPGRADE_DEFS){
-      if (upgradeButtons[d.id] && upgradeButtons[d.id].lvlEl) upgradeButtons[d.id].lvlEl.textContent = fmtNumber(st.upgrades[d.id]||0);
-      const nxt = E.upgradeCostNextLevel(d, st.upgrades[d.id]||0);
-      if (upgradeButtons[d.id] && upgradeButtons[d.id].costEl) upgradeButtons[d.id].costEl.textContent = fmtNumber(nxt);
-      if (upgradeButtons[d.id]) upgradeButtons[d.id].nextCost = nxt;
+      const btns = upgradeButtons[d.id];
+      if (!btns) continue;
+      if (btns.lvlEl) btns.lvlEl.textContent = fmtNumber(st.upgrades[d.id] || 0);
+      const nextCost = snapshot ? snapshot.nextUpgradeCosts[d.id] : E.upgradeCostNextLevel(d, st.upgrades[d.id] || 0);
+      if (btns.costEl) btns.costEl.textContent = fmtNumber(nextCost);
+      btns.nextCost = nextCost;
     }
-
+  }
+  function syncAscensionShop(st){
     for (const a of C.ASC_UPGRADES){
       const l = document.getElementById(`ascLvl-${a.id}`);
       const m = document.getElementById(`ascMax-${a.id}`);
@@ -964,66 +1032,122 @@
       if (m) m.textContent = fmtNumber(maxLv);
       if (buyBtn) buyBtn.disabled = curLv >= maxLv || (st.ascPoints || 0) < (a.cost || 0);
     }
-
-    if (selectedLegacyId){
-      const def = C.LEGACY_DEFS.find(x=>x.id===selectedLegacyId);
-      if (def){
-        document.getElementById('ins_lvl').textContent = fmtLegacyValue(st.legacyNodes[selectedLegacyId]||0);
-        const nxt = E.legacyCostForNextLevel(def, st.legacyNodes[selectedLegacyId]||0);
-        document.getElementById('ins_next_cost').textContent = fmtLegacyValue(nxt);
-      }
-    }
-
-    if (refs.goldEl) refs.goldEl.textContent = fmtNumber(st.gold);
-    if (refs.gpsEl) refs.gpsEl.textContent = fmtNumber(st.gpsCache || 0);
-    if (refs.totalEl) refs.totalEl.textContent = fmtNumber(st.totalGoldEarned || 0);
-    if (refs.legacyEl) refs.legacyEl.textContent = fmtNumber(st.legacy || 0);
-    if (refs.ascEl) refs.ascEl.textContent = fmtNumber(st.ascPoints || 0);
-    if (refs.celestialEl) refs.celestialEl.textContent = fmtNumber(st.celestialPoints || 0);
-    if (refs.celestialTotalEl) refs.celestialTotalEl.textContent = fmtNumber(st.celestialEarnedTotal || 0);
-    if (refs.prestigePreview) refs.prestigePreview.textContent = fmtNumber(E.previewPrestigeGain());
-    if (refs.startingGoldPreview) refs.startingGoldPreview.textContent = fmtNumber(E.computeStartingGoldOnPrestige());
-    if (refs.ascGainPreview) refs.ascGainPreview.textContent = fmtNumber(E.previewAscGain());
-    if (refs.lastSave) refs.lastSave.textContent = new Date(st.lastSavedAt*1000).toLocaleString();
-    if (refs.abyssShardEl) refs.abyssShardEl.textContent = fmtNumber((st.abyss && st.abyss.shards) || 0);
-    if (refs.abyssHeaderShardEl) refs.abyssHeaderShardEl.textContent = fmtNumber((st.abyss && st.abyss.shards) || 0);
-    if (refs.abyssGainEl) refs.abyssGainEl.textContent = fmtNumber(E.previewAbyssGain ? E.previewAbyssGain() : 0);
-    if (refs.abyssTabShardEl) refs.abyssTabShardEl.textContent = fmtNumber((st.abyss && st.abyss.shards) || 0);
-    if (refs.abyssTabGainEl) refs.abyssTabGainEl.textContent = fmtNumber(E.previewAbyssGain ? E.previewAbyssGain() : 0);
-    if (refs.abyssResetCountEl) refs.abyssResetCountEl.textContent = fmtNumber((st.abyss && st.abyss.resetCount) || 0);
-    const abyssGain = E.previewAbyssGain ? E.previewAbyssGain() : 0;
-    const abyssBtns = [document.getElementById('doAbyss'), document.getElementById('doAbyssFromTab')];
-    abyssBtns.forEach(btn=>{ if (btn) btn.disabled = abyssGain <= 0; });
-    const currentSaveVersionEl = document.getElementById('currentSaveVersionText');
-    if (currentSaveVersionEl) currentSaveVersionEl.textContent = String(st.version || '-');
-    syncSettingsUI();
-    syncAutoBuyControls();
-    renderMiniGameState();
-    renderPrestigeLayers();
-    renderCelestialLayers();
-    renderCelestialBranches();
+  }
+  function syncLegacyInspector(st){
+    if (!selectedLegacyId) return;
+    const def = C.LEGACY_DEFS.find(x=>x.id===selectedLegacyId);
+    if (!def) return;
+    document.getElementById('ins_lvl').textContent = fmtLegacyValue(st.legacyNodes[selectedLegacyId] || 0);
+    const nxt = E.legacyCostForNextLevel(def, st.legacyNodes[selectedLegacyId] || 0);
+    document.getElementById('ins_next_cost').textContent = fmtLegacyValue(nxt);
+  }
+  function syncCelestialShop(st){
     for (const def of (C.CELESTIAL_UPGRADES || [])){
       const lvlEl = document.getElementById(`celLvl-${def.id}`);
       if (lvlEl) lvlEl.textContent = fmtNumber((st.celestialOwned && st.celestialOwned[def.id]) || 0);
       const stateEl = document.getElementById(`celState-${def.id}`);
       if (stateEl) stateEl.textContent = getCelestialUpgradeState(def, st).label;
       const btn = document.getElementById(`celBuy-${def.id}`);
-      if (btn){
-        const lvl = (st.celestialOwned && st.celestialOwned[def.id]) || 0;
-        const branchId = def.branch || 'shared';
-        const activeBranchId = st.celestial && st.celestial.activeBranchId;
-        const branchLocked = branchId !== 'shared' && activeBranchId !== branchId;
-        btn.disabled = (def.maxLevel && lvl >= def.maxLevel) || ((st.celestialPoints || 0) < (def.cost || 0)) || branchLocked;
+      if (!btn) continue;
+      const lvl = (st.celestialOwned && st.celestialOwned[def.id]) || 0;
+      const branchId = def.branch || 'shared';
+      const activeBranchId = st.celestial && st.celestial.activeBranchId;
+      const branchLocked = branchId !== 'shared' && activeBranchId !== branchId;
+      btn.disabled = (def.maxLevel && lvl >= def.maxLevel) || ((st.celestialPoints || 0) < (def.cost || 0)) || branchLocked;
+    }
+  }
+  function syncDynamicButtons(st){
+    const activeTab = getActiveTabName(st);
+    if (activeTab === 'play'){
+      for (const def of C.UNIT_DEFS){
+        const btns = unitButtons[def.id];
+        if (!btns) continue;
+        const c1 = btns.nextCost || Infinity;
+        btns.buy1.disabled = st.gold < c1;
+        btns.buy10.disabled = st.gold < (btns.buy10Cost || Infinity);
+        btns.buyMax.disabled = st.gold < c1;
+      }
+      const activeChallenge = E.getActiveChallenge ? E.getActiveChallenge(st) : null;
+      for (const def of C.UPGRADE_DEFS){
+        const btns = upgradeButtons[def.id];
+        if (!btns) continue;
+        const cost = btns.nextCost || Infinity;
+        const locked = !!(activeChallenge && activeChallenge.effects && activeChallenge.effects.disableUpgrades);
+        btns.buy.disabled = locked || !isFinite(cost) || st.gold < cost;
+        btns.buyMax.disabled = locked || st.gold < cost || !isFinite(cost);
       }
     }
-    renderChallengeStatus();
-    renderStatsTab();
-    renderAbyssRoadmap();
-    if ((st.settings && st.settings.activeTab) === 'abyss') buildAbyssUI();
+    if (activeTab === 'ascension' && getActiveSubTab('ascension', st) === 'core'){
+      syncAscensionShop(st);
+    }
+  }
+  function syncVisiblePanels(st, options){
+    const opts = options || {};
+    const activeTab = getActiveTabName(st);
+    const previewSnapshot = opts.previewSnapshot || null;
+    const economySnapshot = opts.economySnapshot || null;
+    syncSettingsUI();
+    const currentSaveVersionEl = document.getElementById('currentSaveVersionText');
+    if (currentSaveVersionEl) currentSaveVersionEl.textContent = String(st.version || '-');
+
+    if (activeTab === 'play'){
+      syncUnitShop(st, economySnapshot);
+      syncUpgradeShop(st, economySnapshot);
+    } else if (activeTab === 'prestige'){
+      const activeSubTab = getActiveSubTab('prestige', st);
+      if (activeSubTab === 'core') syncPreviewPanels(st, previewSnapshot);
+      if (activeSubTab === 'layers') renderPrestigeLayers();
+      if (activeSubTab === 'legacy'){
+        if (svgDirty){ drawLegacySVG(); svgDirty = false; }
+        syncLegacyInspector(st);
+      }
+    } else if (activeTab === 'ascension'){
+      const activeSubTab = getActiveSubTab('ascension', st);
+      if (activeSubTab === 'core'){
+        syncPreviewPanels(st, previewSnapshot);
+        syncAscensionShop(st);
+        syncAutoBuyControls();
+        renderMiniGameState();
+      } else if (activeSubTab === 'celestial'){
+        renderCelestialLayers();
+        renderCelestialBranches();
+        syncCelestialShop(st);
+      }
+    } else if (activeTab === 'challenges'){
+      renderChallengeStatus();
+    } else if (activeTab === 'stats'){
+      renderStatsTab();
+    } else if (activeTab === 'abyss'){
+      buildAbyssUI();
+      syncPreviewPanels(st, previewSnapshot);
+      renderAbyssRoadmap();
+    }
+  }
+  function syncSlowPanels(st, previewSnapshot){
+    const activeTab = getActiveTabName(st);
+    if (activeTab === 'prestige' && getActiveSubTab('prestige', st) === 'core') syncPreviewPanels(st, previewSnapshot);
+    if (activeTab === 'ascension' && getActiveSubTab('ascension', st) === 'core') syncPreviewPanels(st, previewSnapshot);
+    if (activeTab === 'challenges') renderChallengeStatus();
+    if (activeTab === 'stats') renderStatsTab();
+    if (activeTab === 'abyss'){
+      syncPreviewPanels(st, previewSnapshot);
+      renderAbyssRoadmap();
+    }
+  }
+
+  // ---------- syncUIAfterChange ----------
+  function syncUIAfterChange(){
+    const st = E.getState();
+    E.recalcAndCacheGPS(st);
+    const economySnapshot = E.getUiEconomySnapshot ? E.getUiEconomySnapshot(st) : null;
+    const previewSnapshot = buildPreviewSnapshot();
+    syncHeaderResources(st);
+    syncVisiblePanels(st, { economySnapshot, previewSnapshot });
+    syncDynamicButtons(st);
   }
 
   // ---------- mainLoop ----------
-  let lastFrame = performance.now(), lastUiUpdate = performance.now(), rafId = null;
+  let lastFrame = performance.now(), lastUiUpdate = performance.now(), lastSlowUiUpdate = performance.now(), rafId = null;
   function mainLoop(ts){
     cacheRefsIfNeeded();
     let dt = (ts - lastFrame) / 1000; lastFrame = ts;
@@ -1041,34 +1165,13 @@
 
     if (ts - lastUiUpdate >= (C.UI_UPDATE_INTERVAL_MS || 150)){
       lastUiUpdate = ts;
-      if (refs.goldEl) refs.goldEl.textContent = fmtNumber(st.gold);
-      if (refs.gpsEl) refs.gpsEl.textContent = fmtNumber(st.gpsCache || 0);
-      if (refs.totalEl) refs.totalEl.textContent = fmtNumber(st.totalGoldEarned || 0);
-      if (refs.legacyEl) refs.legacyEl.textContent = fmtNumber(st.legacy || 0);
-      if (refs.ascEl) refs.ascEl.textContent = fmtNumber(st.ascPoints || 0);
-      if (refs.celestialEl) refs.celestialEl.textContent = fmtNumber(st.celestialPoints || 0);
-      if (refs.abyssHeaderShardEl) refs.abyssHeaderShardEl.textContent = fmtNumber((st.abyss && st.abyss.shards) || 0);
-    if (refs.celestialTotalEl) refs.celestialTotalEl.textContent = fmtNumber(st.celestialEarnedTotal || 0);
-      if (refs.prestigePreview) refs.prestigePreview.textContent = fmtNumber(E.previewPrestigeGain());
-      if (refs.startingGoldPreview) refs.startingGoldPreview.textContent = fmtNumber(E.computeStartingGoldOnPrestige());
-      if (refs.ascGainPreview) refs.ascGainPreview.textContent = fmtNumber(E.previewAscGain());
-
-      for (const def of C.UNIT_DEFS){
-        const btns = unitButtons[def.id]; if (!btns) continue;
-        const c1 = btns.nextCost || Infinity;
-        btns.buy1.disabled = st.gold < c1;
-        btns.buy10.disabled = st.gold < (btns.buy10Cost || Infinity);
-        btns.buyMax.disabled = st.gold < c1;
-      }
-      const activeChallenge = E.getActiveChallenge ? E.getActiveChallenge(st) : null;
-      for (const def of C.UPGRADE_DEFS){
-        const b = upgradeButtons[def.id]; if (!b) continue;
-        const cost = b.nextCost || Infinity;
-        const locked = !!(activeChallenge && activeChallenge.effects && activeChallenge.effects.disableUpgrades);
-        b.buy.disabled = locked || !isFinite(cost) || st.gold < cost;
-        b.buyMax.disabled = locked || st.gold < cost || !isFinite(cost);
-      }
+      syncHeaderResources(st);
+      syncDynamicButtons(st);
       if (svgDirty){ drawLegacySVG(); svgDirty = false; }
+    }
+    if (ts - lastSlowUiUpdate >= (C.UI_SLOW_UPDATE_INTERVAL_MS || 400)){
+      lastSlowUiUpdate = ts;
+      syncSlowPanels(st, buildPreviewSnapshot());
     }
     rafId = requestAnimationFrame(mainLoop);
   }
@@ -1086,8 +1189,9 @@
     const pane = document.getElementById(`subtab-${parent}-${active}`);
     if (pane) pane.style.display = 'block';
     st.settings.activeSubTabs[parent] = active;
-    try { SM.saveState(st); } catch(e){}
+    persistState();
     if (parent === 'prestige' && active === 'legacy'){ svgDirty = true; drawLegacySVG(); }
+    syncVisiblePanels(st, { economySnapshot: E.getUiEconomySnapshot ? E.getUiEconomySnapshot(st) : null, previewSnapshot: buildPreviewSnapshot() });
   }
 
   // ---------- タブ表示制御 (修正: display='block') ----------
@@ -1118,7 +1222,14 @@
     if (name === 'challenges'){ buildChallengesUI(); showSubTab('challenges'); }
     if (name === 'abyss') buildAbyssUI();
 
-    try { const st = E.getState(); st.settings = st.settings || {}; st.settings.activeTab = name; SM.saveState(st); } catch(e){}
+    try {
+      const st = E.getState();
+      st.settings = st.settings || {};
+      st.settings.activeTab = name;
+      persistState();
+      syncVisiblePanels(st, { economySnapshot: E.getUiEconomySnapshot ? E.getUiEconomySnapshot(st) : null, previewSnapshot: buildPreviewSnapshot() });
+      syncDynamicButtons(st);
+    } catch(e){}
   }
 
   // ---------- グローバルイベントバインド ----------
@@ -1159,7 +1270,7 @@
       if (p <= 0){ showTypedToast('general','獲得できるレガシーはありません'); return; }
       if (shouldConfirm('confirmPrestige') && !confirm(`プレステージを実行しますか？ 獲得レガシー: ${fmtNumber(p)} 開始ゴールド: ${fmtNumber(E.computeStartingGoldOnPrestige())}`)) return;
       const res = E.doPrestigeInternal();
-      if (res.ok){ svgDirty=true; syncUIAfterChange(); buildAscShop(); checkAchievementsAfterAction(); showTypedToast('purchase', `プレステージ: レガシー +${fmtNumber(res.gain)}`); }
+      if (res.ok){ persistState('immediate'); svgDirty=true; syncUIAfterChange(); buildAscShop(); checkAchievementsAfterAction(); showTypedToast('purchase', `プレステージ: レガシー +${fmtNumber(res.gain)}`); }
     });
 
     const runAbyssReset = ()=>{
@@ -1167,7 +1278,7 @@
       if (g <= 0){ showTypedToast('general', 'Abyss条件未達（累計 1.8e308 必要）'); return; }
       if (shouldConfirm('confirmAbyssReset') && !confirm(`Abyssリセットを実行しますか？ 実績以外の要素が全てリセットされます。獲得: Abyss Shard +${fmtNumber(g)}`)) return;
       const res = E.doAbyssResetInternal ? E.doAbyssResetInternal() : { ok:false };
-      if (res.ok){ SM.saveState(E.getState()); buildAbyssUI(); syncUIAfterChange(); checkAchievementsAfterAction(); showTypedToast('achievement', `Abyss Shard +${fmtNumber(res.gain)}`); }
+      if (res.ok){ persistState('immediate'); buildAbyssUI(); syncUIAfterChange(); checkAchievementsAfterAction(); showTypedToast('achievement', `Abyss Shard +${fmtNumber(res.gain)}`); }
     };
     document.getElementById('doAbyss')?.addEventListener('click', runAbyssReset);
     document.getElementById('doAbyssFromTab')?.addEventListener('click', runAbyssReset);
@@ -1177,7 +1288,7 @@
       if (p <= 0){ showTypedToast('general','Ascensionで得られるポイントはありません'); return; }
       if (shouldConfirm('confirmAscend') && !confirm(`Ascend 実行で AscensionPoints +${fmtNumber(p)} を得ます。実行しますか？`)) return;
       const res = E.doAscendInternal();
-      if (res.ok){ svgDirty=true; syncUIAfterChange(); buildAscShop(); buildCelestialShop(); checkAchievementsAfterAction(); showTypedToast('purchase', `Ascend: AP +${fmtNumber(res.gain)} / CP +${fmtNumber(res.celestialGain || 0)}`); }
+      if (res.ok){ persistState('immediate'); svgDirty=true; syncUIAfterChange(); buildAscShop(); buildCelestialShop(); checkAchievementsAfterAction(); showTypedToast('purchase', `Ascend: AP +${fmtNumber(res.gain)} / CP +${fmtNumber(res.celestialGain || 0)}`); }
     });
 
     document.getElementById('miniGameStart')?.addEventListener('click', ()=> startMiniGame());
@@ -1193,7 +1304,7 @@
       document.getElementById(`chStart-${ch.id}`)?.addEventListener('click', ()=>{
         if (shouldConfirm('confirmChallengeStart') && !confirm(`${ch.name} を開始します。現在の周回進行はリセットされます。`)) return;
         const res = E.startChallengeInternal ? E.startChallengeInternal(ch.id) : { ok:false };
-        if (res.ok){ SM.saveState(E.getState()); syncUIAfterChange(); showTypedToast('general', `${ch.name} 開始`); }
+        if (res.ok){ persistState('immediate'); syncUIAfterChange(); showTypedToast('general', `${ch.name} 開始`); }
       });
       document.getElementById(`chClaim-${ch.id}`)?.addEventListener('click', ()=>{
         const res = E.tryCompleteChallengeInternal ? E.tryCompleteChallengeInternal() : { ok:false };
@@ -1203,7 +1314,7 @@
       document.getElementById(`chAbandon-${ch.id}`)?.addEventListener('click', ()=>{
         if (shouldConfirm('confirmChallengeAbandon') && !confirm(`${ch.name} を中断します。チャレンジ中の累計Goldは破棄され、開始前の累計Goldに戻ります。`)) return;
         const res = E.abandonChallengeInternal ? E.abandonChallengeInternal() : { ok:false };
-        if (res.ok){ SM.saveState(E.getState()); syncUIAfterChange(); showTypedToast('general', `${ch.name} を中断`); }
+        if (res.ok){ persistState('immediate'); syncUIAfterChange(); showTypedToast('general', `${ch.name} を中断`); }
       });
     }
 
@@ -1242,16 +1353,16 @@
       try{ const json = SM.stringifyState(E.getState(), 2); if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(json).then(()=>showTypedToast('general','コピーしました')); else document.getElementById('pasteJson').value = json; } catch(e){}
     });
     document.getElementById('importPasteBtn')?.addEventListener('click', ()=>{
-      try{ const obj = SM.parseStateText(document.getElementById('pasteJson').value.trim()); if (shouldConfirm('confirmImportOverwrite') && !confirm('上書きしますか？')) return; const migrated = SM.importState(obj); E.setState(migrated); SM.saveState(E.getState()); svgDirty=true; syncUIAfterChange(); buildAchievementsUI(); buildSettingsUI(); checkAchievementsAfterAction(); showTypedToast('general','インポート完了'); } catch(e){ alert('インポートエラー: '+e.message); } 
+      try{ const obj = SM.parseStateText(document.getElementById('pasteJson').value.trim()); if (shouldConfirm('confirmImportOverwrite') && !confirm('上書きしますか？')) return; const migrated = SM.importState(obj); E.setState(migrated); persistState('immediate'); svgDirty=true; syncUIAfterChange(); buildAchievementsUI(); buildSettingsUI(); checkAchievementsAfterAction(); showTypedToast('general','インポート完了'); } catch(e){ alert('インポートエラー: '+e.message); }
     });
     document.getElementById('reset')?.addEventListener('click', ()=>{
       if (shouldConfirm('confirmHardReset') && !confirm('本当に全てのデータをリセットしますか？')) return;
-      E.setState(SM.deepCopy(SM.defaultState)); SM.saveState(E.getState()); svgDirty=true; syncUIAfterChange(); buildAchievementsUI(); showTypedToast('general','リセットしました');
+      E.setState(SM.deepCopy(SM.defaultState)); persistState('immediate'); svgDirty=true; syncUIAfterChange(); buildAchievementsUI(); showTypedToast('general','リセットしました');
     });
     document.getElementById('triggerFileInput')?.addEventListener('click', ()=> document.getElementById('fileInput').click());
     document.getElementById('fileInput')?.addEventListener('change', (ev)=>{
       const f = ev.target.files && ev.target.files[0]; if (!f) return;
-      const r = new FileReader(); r.onload = ()=>{ try{ const obj = SM.parseStateText(r.result); if (shouldConfirm('confirmImportOverwrite') && !confirm('上書きしますか？')) { ev.target.value=''; return; } const migrated = SM.importState(obj); E.setState(migrated); SM.saveState(E.getState()); svgDirty=true; syncUIAfterChange(); buildAchievementsUI(); buildSettingsUI(); checkAchievementsAfterAction(); showTypedToast('general','ファイル読み込み完了'); } catch(e){ alert('インポートエラー: '+e.message); } }; r.readAsText(f); ev.target.value = ''; 
+      const r = new FileReader(); r.onload = ()=>{ try{ const obj = SM.parseStateText(r.result); if (shouldConfirm('confirmImportOverwrite') && !confirm('上書きしますか？')) { ev.target.value=''; return; } const migrated = SM.importState(obj); E.setState(migrated); persistState('immediate'); svgDirty=true; syncUIAfterChange(); buildAchievementsUI(); buildSettingsUI(); checkAchievementsAfterAction(); showTypedToast('general','ファイル読み込み完了'); } catch(e){ alert('インポートエラー: '+e.message); } }; r.readAsText(f); ev.target.value = '';
     });
   }
 
@@ -1263,14 +1374,14 @@
     const body = document.getElementById('updateModalBody');
     if (!modal || !body) return;
     body.textContent = `${C.APP_VERSION} の主な更新
-- Celestial Phase 2 を完了し、4ルートの専用アップグレードを大幅増量
-- Celestial画面でルートごとの推奨スタイル・到達目標・有効中/待機中の専用効果を表示
-- ルート別Celestial実績を追加し、Nova / Vault / Mirror / Epoch の攻略方針差を強化`;
+- UI 更新を「常時軽い更新」と「表示中タブだけの再描画」に分離し、モバイル時の引っかかりを軽減
+- 購入連打や自動購入時の保存を短いデバウンスへ寄せ、同期 localStorage 書き込みの頻度を削減
+- 実績解除時の多重再計算・多重保存をまとめ、連続解除時の負荷を抑制`;
     modal.style.display = 'flex';
     document.getElementById('closeUpdateModal')?.addEventListener('click', ()=>{
       modal.style.display = 'none';
       st.seenUpdateVersion = C.APP_VERSION;
-      SM.saveState(st);
+      persistState('immediate');
     }, { once:true });
   }
 
@@ -1292,8 +1403,13 @@
     showTab(E.getState().settings.activeTab || 'play');
     showUpdateModalIfNeeded();
 
-    setInterval(()=>SM.saveState(E.getState()), C.AUTO_SAVE_INTERVAL || 5000);
-    lastFrame = performance.now(); lastUiUpdate = performance.now(); requestAnimationFrame(mainLoop);
+    document.addEventListener('visibilitychange', ()=>{
+      if (document.visibilityState === 'hidden') flushScheduledSave(true);
+    });
+    window.addEventListener('pagehide', ()=>flushScheduledSave(true));
+    window.addEventListener('beforeunload', ()=>flushScheduledSave(true));
+    setInterval(()=>flushScheduledSave(true), C.AUTO_SAVE_INTERVAL || 5000);
+    lastFrame = performance.now(); lastUiUpdate = performance.now(); lastSlowUiUpdate = performance.now(); requestAnimationFrame(mainLoop);
   });
 
 })();

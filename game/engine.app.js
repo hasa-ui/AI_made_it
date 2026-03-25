@@ -384,6 +384,72 @@
     return aggCache;
   }
 
+  function getUiEconomySnapshot(st){
+    st = st || state;
+    const agg = getAggregates(st);
+    const activeChallenge = getActiveChallengeDef(st);
+    const snapshot = {
+      totalGps: st.gpsCache || 0,
+      nextUnitCosts: {},
+      buy10Costs: {},
+      nextUpgradeCosts: {},
+      unitGpsById: {}
+    };
+    const unitUpgradeMults = {};
+    let globalUpgradeMult = 1;
+    for (const up of (C.UPGRADE_DEFS || [])){
+      const ul = st.upgrades[up.id] || 0;
+      if (ul <= 0) continue;
+      if (up.type === 'unitMult' && up.payload && up.payload.unitId){
+        unitUpgradeMults[up.payload.unitId] = (unitUpgradeMults[up.payload.unitId] || 1) * Math.pow(1 + (up.payload.multPerLevel || 0), ul);
+      }
+      if (up.type === 'globalMult'){
+        globalUpgradeMult *= Math.pow(1 + (up.payload.multPerLevel || 0), ul);
+      }
+    }
+
+    let challengeGlobalMult = 1;
+    if (activeChallenge && activeChallenge.effects){
+      if (typeof activeChallenge.effects.globalMult === 'number') challengeGlobalMult *= activeChallenge.effects.globalMult;
+      if (typeof activeChallenge.effects.globalMultPerOwned === 'number'){
+        const totalOwned = Object.values(st.units || {}).reduce((acc, v)=>acc + (Number(v) || 0), 0);
+        challengeGlobalMult *= Math.pow(activeChallenge.effects.globalMultPerOwned, totalOwned);
+      }
+    }
+
+    let highestOwnedUnitId = null;
+    if (activeChallenge && activeChallenge.effects && activeChallenge.effects.onlyHighestUnitProduces){
+      for (const def of (C.UNIT_DEFS || [])){
+        if ((st.units[def.id] || 0) > 0) highestOwnedUnitId = def.id;
+      }
+    }
+
+    const sharedUnitMult = (agg.globalMult || 1) * globalUpgradeMult * challengeGlobalMult;
+    for (const def of (C.UNIT_DEFS || [])){
+      const owned = st.units[def.id] || 0;
+      const nextCost = unitCost(def, owned, st);
+      snapshot.nextUnitCosts[def.id] = nextCost;
+      let c10 = 0;
+      for (let i=0; i<10; i++) c10 += unitCost(def, owned + i, st);
+      snapshot.buy10Costs[def.id] = c10;
+
+      if (highestOwnedUnitId && def.id !== highestOwnedUnitId){
+        snapshot.unitGpsById[def.id] = 0;
+        continue;
+      }
+      let unitGps = def.baseGPS * owned;
+      if (agg.unitMults && agg.unitMults[def.id]) unitGps *= agg.unitMults[def.id];
+      if (unitUpgradeMults[def.id]) unitGps *= unitUpgradeMults[def.id];
+      snapshot.unitGpsById[def.id] = unitGps * sharedUnitMult;
+    }
+
+    for (const def of (C.UPGRADE_DEFS || [])){
+      snapshot.nextUpgradeCosts[def.id] = upgradeCostNextLevel(def, st.upgrades[def.id] || 0);
+    }
+
+    return snapshot;
+  }
+
   // --- cost / gps helpers ---
   function unitBaseCost(def, owned){ return Math.floor(def.baseCost * Math.pow(def.costMult, owned)); }
   function unitCost(def, owned, st){
@@ -930,6 +996,7 @@
     computeBaseGPS: (st) => computeBaseGPS(st || state),
     computeGPSFull: (st) => computeGPSFull(st || state),
     recalcAndCacheGPS: (st) => recalcAndCacheGPS(st || state),
+    getUiEconomySnapshot: (st) => getUiEconomySnapshot(st || state),
 
     // buy / actions — these operate on internal state
     buyUnitInternal: (unitId, qty) => buyUnitInternal(unitId, qty),
