@@ -70,3 +70,8 @@ Original prompt: ロードマップのPhase 1を完了させてください
 - 実装: 実績解除時の保存・再計算・UI 再描画をバッチ化し、複数実績同時解除時の負荷を抑えた。ミニゲームの保存経路も新 helper へ統一。
 - 文書: `Ver.1.29.1` として `index.html` のアップデート情報、`ui.app.js` の更新モーダル、`仕様書.md` の UI / セーブ仕様を更新。`SAVE_VERSION = 16` は据え置き。
 - 検証: `node --check` で `config/engine/ui/ui.minigame` の構文確認に成功。vm harness で `getUiEconomySnapshot()` と保存 helper の挙動を確認。Playwright は `page.goto: Target page, context or browser has been closed` で今回も実行不可。
+
+## 2026-03-25 background save flush fix
+- 修正: `game/ui.app.js` の debounced save flush 条件を補強し、`visibilitychange` で `document.visibilityState === 'hidden'` になった時点と `pagehide` 発火時にも `flushScheduledSave(true)` を呼ぶよう変更。
+- 修正: これにより、モバイルやバックグラウンド遷移で `beforeunload` が走らない環境でも、直近の購入や設定変更がメモリ上に残ったまま失われにくくした。
+- 検証: `node --check game/ui.app.js` と `rg -n "visibilitychange|pagehide|beforeunload|flushScheduledSave\\(true\\)" game/ui.app.js` で、新しい background flush 経路が追加されていることを確認。

@@ -1403,6 +1403,10 @@
     showTab(E.getState().settings.activeTab || 'play');
     showUpdateModalIfNeeded();
 
+    document.addEventListener('visibilitychange', ()=>{
+      if (document.visibilityState === 'hidden') flushScheduledSave(true);
+    });
+    window.addEventListener('pagehide', ()=>flushScheduledSave(true));
     window.addEventListener('beforeunload', ()=>flushScheduledSave(true));
     setInterval(()=>flushScheduledSave(true), C.AUTO_SAVE_INTERVAL || 5000);
     lastFrame = performance.now(); lastUiUpdate = performance.now(); lastSlowUiUpdate = performance.now(); requestAnimationFrame(mainLoop);
