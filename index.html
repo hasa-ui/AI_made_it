@@ -369,6 +369,7 @@
           <h3>アップデート情報</h3>
           <p class="small muted" style="margin-top:4px;">このゲームは現在<strong>アルファ版</strong>です。仕様やバランスは今後も変更されます。</p>
           <ul class="small muted" style="margin-top:8px; padding-left:20px; line-height:1.8;">
+            <li><strong>Ver.1.29.3</strong>：起動時の実績判定が未定義 helper を呼んで初期化停止する不具合を修正。プレイ開始時に Inspector しか表示されず、タブ切替が反応しない問題を解消。</li>
             <li><strong>Ver.1.29.2</strong>：軽量化をさらに進め、UI更新を dirty flag ベースの dispatcher へ再編。Celestialルート一覧と Abyssアップグレード一覧を build-once / update-in-place に変更し、preview/economy の再計算も必要時だけ行うよう改善。</li>
             <li><strong>Ver.1.29.1</strong>：軽量化対応。UI更新を「常時更新」と「表示中タブだけの再描画」に分離し、モバイル時の引っかかりを軽減。購入連打や自動購入時の保存をデバウンス化し、実績解除時の多重再計算・多重保存も抑制。</li>
             <li><strong>Ver.1.29.0</strong>：ロードマップ Phase 2 を完了。Celestial の Nova / Vault / Mirror / Epoch へ専用アップグレードを増設し、ルートごとの攻略方針を強化。Celestial画面で推奨スタイル・到達目標・有効中/待機中の専用効果を表示し、ルート別実績も追加。</li>

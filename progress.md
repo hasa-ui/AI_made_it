@@ -83,3 +83,9 @@ Original prompt: ロードマップのPhase 1を完了させてください
 - 実装: main loop は `playShop` / `ascCore` のボタン活性更新だけに絞り、Legacy SVG の再描画も Legacy 表示中だけに制限。
 - 文書: `index.html` のアップデート情報、`ui.app.js` の更新モーダル、`仕様書.md` の UI / セーブ仕様を `Ver.1.29.2` 内容へ更新。`SAVE_VERSION = 16` は据え置き。
 - 検証: `node --check` で `config/engine/ui/ui.minigame` の構文確認に成功。vm harness で `getUiPreviewSnapshot()` の整合性と、dirty flag で snapshot 計算が gated されることを確認。Playwright は `browser.newPage: Target page, context or browser has been closed` で今回も実行不可。
+
+## 2026-03-25 UI初期化停止修正
+- 調査: 起動時に `checkAchievementsAfterAction()` が `ui.minigame.js` 内部ローカルの `ensureMiniGameState()` を直接参照しており、`DOMContentLoaded` 中に `ReferenceError` で初期化が止まることを確認。
+- 実装: `game/ui.app.js` に同等の `ensureMiniGameState(st)` helper を追加し、起動直後の achievement 判定でも `miniGame` state の既定 shape を安全に補完するよう修正。
+- 実装: `Ver.1.29.3` として `game/config.js`、アップデート情報タブ、更新モーダルを今回の起動不能修正内容へ更新。
+- 検証: `node --check` と簡易 DOM ハーネスで、起動後に `tab-inspector` が `none`、`tab-play` が `block`、アクティブタブが `play`、タブ click handler が登録済みであることを確認。

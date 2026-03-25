@@ -262,6 +262,17 @@
     miniGameController.start();
   }
 
+  function ensureMiniGameState(st){
+    st.miniGame = Object.assign({
+      plays:0,
+      bestScore:0,
+      lastScore:0,
+      lastMisses:0,
+      perfectRuns:0,
+      bestStreak:0
+    }, st.miniGame || {});
+  }
+
   // ---------- UI 生成関数 ----------
   function buildUnitsUI(){
     if (built.units) return;
@@ -1577,9 +1588,9 @@
     const body = document.getElementById('updateModalBody');
     if (!modal || !body) return;
     body.textContent = `${C.APP_VERSION} の主な更新
-- dirty flag ベースの UI dispatcher を導入し、必要な panel だけ更新する構造へ整理
-- Celestial ルート一覧と Abyss アップグレード一覧を build-once / update-in-place に変更
-- preview/economy snapshot を必要時だけ計算するようにし、表示外タブの無駄な再計算を削減`;
+- 起動時に checkAchievementsAfterAction() が未定義 helper を呼んで初期化停止する不具合を修正
+- プレイ開始時に Inspector しか表示されず、タブ切替が反応しない症状を解消
+- ミニゲーム state 初期化を UI 共通 helper へ寄せ、起動直後の achievement 判定でも安全化`;
     modal.style.display = 'flex';
     document.getElementById('closeUpdateModal')?.addEventListener('click', ()=>{
       modal.style.display = 'none';
