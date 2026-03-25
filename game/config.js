@@ -5,7 +5,7 @@
   const C = {
     SAVE_KEY: 'inc.split.full.v4',
     SAVE_VERSION: 16,
-    APP_VERSION: 'Ver.1.28.0',
+    APP_VERSION: 'Ver.1.29.0',
     UI_UPDATE_INTERVAL_MS: 50,
     AUTO_SAVE_INTERVAL: 5000,
     MAX_OFFLINE_SECONDS: 60*60*24,
@@ -129,10 +129,50 @@
   ];
 
   C.CELESTIAL_BRANCHES = [
-    { id:'nova', name:'Nova Route', jpName:'ノヴァ系', layerId:'cl_nova', desc:'高速周回向け。生産倍率と終盤Tierを伸ばす。', bonus:{ type:'globalMult', mult:1.35 } },
-    { id:'vault', name:'Vault Route', jpName:'ヴォルト系', layerId:'cl_vault', desc:'経済圧縮向け。コスト圧縮と中盤Tier補助を担う。', bonus:{ type:'costMult', mult:0.8 } },
-    { id:'mirror', name:'Mirror Route', jpName:'ミラー系', layerId:'cl_mirror', desc:'初速向け。開始資源と保持寄りの強化を開く。', bonus:{ type:'startGold', amount:2.5e6 } },
-    { id:'epoch', name:'Epoch Route', jpName:'エポック系', layerId:'cl_epoch', desc:'変換効率向け。Prestige効率と高次接続を強化する。', bonus:{ type:'prestigeEffectAdd', add:0.18 } }
+    {
+      id:'nova',
+      name:'Nova Route',
+      jpName:'ノヴァ系',
+      layerId:'cl_nova',
+      desc:'高速周回向け。生産倍率と終盤Tierを伸ばす。',
+      playstyle:'高速周回 / 高Tier突破',
+      guide:'Voidrig と Drillcore を早めに立ち上げ、短い Ascend を回す。',
+      goal:{ type:'celestialBranchUpgradeCount', target:6, reward:'実績「星火の先導者」' },
+      bonus:{ type:'globalMult', mult:1.35 }
+    },
+    {
+      id:'vault',
+      name:'Vault Route',
+      jpName:'ヴォルト系',
+      layerId:'cl_vault',
+      desc:'経済圧縮向け。コスト圧縮と中盤Tier補助を担う。',
+      playstyle:'圧縮経済 / 安定量産',
+      guide:'コスト圧縮を重ね、Excavator と Drillcore の台数を押し上げる。',
+      goal:{ type:'celestialBranchUpgradeCount', target:6, reward:'実績「保管庫の監督者」' },
+      bonus:{ type:'costMult', mult:0.8 }
+    },
+    {
+      id:'mirror',
+      name:'Mirror Route',
+      jpName:'ミラー系',
+      layerId:'cl_mirror',
+      desc:'初速向け。開始資源と保持寄りの強化を開く。',
+      playstyle:'初速特化 / 再始動連打',
+      guide:'開始資源を厚くして、早期 Prestige と短周期 Ascend を連打する。',
+      goal:{ type:'celestialBranchUpgradeCount', target:6, reward:'実績「鏡面の投資家」' },
+      bonus:{ type:'startGold', amount:2.5e6 }
+    },
+    {
+      id:'epoch',
+      name:'Epoch Route',
+      jpName:'エポック系',
+      layerId:'cl_epoch',
+      desc:'変換効率向け。Prestige効率と高次接続を強化する。',
+      playstyle:'変換効率 / 長期ラン',
+      guide:'Prestige効果を積み、重めの run から AP と CP をまとめて回収する。',
+      goal:{ type:'celestialBranchUpgradeCount', target:6, reward:'実績「時代書庫の編纂者」' },
+      bonus:{ type:'prestigeEffectAdd', add:0.18 }
+    }
   ];
 
   C.CELESTIAL_UPGRADES = [
@@ -144,7 +184,15 @@
     { id:'cel_excav_pulse', name:'深層パルス', branch:'vault', desc:'Vault専用: エクスカベーター ×2.5', cost:7, type:'unitMult', payload:{ unitId:'excav', mult:2.5 }, maxLevel:3 },
     { id:'cel_voidrig_flux', name:'虚空フラックス', branch:'nova', desc:'Nova専用: ヴォイド掘削艦 ×4.0', cost:12, type:'unitMult', payload:{ unitId:'voidrig', mult:4.0 }, maxLevel:3 },
     { id:'cel_event_horizon', name:'事象地平演算', branch:'epoch', desc:'Epoch専用: 全体 ×2.5', cost:14, type:'globalMult', payload:{ mult:2.5 }, maxLevel:2 },
-    { id:'cel_asc_expand', name:'星界チューニング規格', branch:'mirror', desc:'Mirror専用: Ascension Shopのレベル上限 +1 /Lv', cost:16, type:'ascShopCapBoost', payload:{ addMaxLevel:1 }, maxLevel:5 }
+    { id:'cel_asc_expand', name:'星界チューニング規格', branch:'mirror', desc:'Mirror専用: Ascension Shopのレベル上限 +1 /Lv', cost:16, type:'ascShopCapBoost', payload:{ addMaxLevel:1 }, maxLevel:5 },
+    { id:'cel_supernova_mesh', name:'超新星メッシュ', branch:'nova', desc:'Nova専用: 全体 ×1.7', cost:15, type:'globalMult', payload:{ mult:1.7 }, maxLevel:2 },
+    { id:'cel_quasar_drill', name:'クエーサ穿孔', branch:'nova', desc:'Nova専用: ドリルコア反応炉 ×3.4', cost:10, type:'unitMult', payload:{ unitId:'drillcore', mult:3.4 }, maxLevel:3 },
+    { id:'cel_bedrock_weave', name:'基盤岩織り', branch:'vault', desc:'Vault専用: コスト ×0.76', cost:13, type:'costMult', payload:{ mult:0.76 }, maxLevel:2 },
+    { id:'cel_reserve_condenser', name:'備蓄凝縮器', branch:'vault', desc:'Vault専用: +12000 GPS', cost:9, type:'flatGPS', payload:{ gps:12000 }, maxLevel:3 },
+    { id:'cel_reflective_bank', name:'反射資本蔵', branch:'mirror', desc:'Mirror専用: 開始ゴールド +4.0e6', cost:11, type:'startGold', payload:{ amount:4.0e6 }, maxLevel:3 },
+    { id:'cel_mirror_dividend', name:'鏡面配当列', branch:'mirror', desc:'Mirror専用: +9000 GPS', cost:8, type:'flatGPS', payload:{ gps:9000 }, maxLevel:3 },
+    { id:'cel_chronicle_lens', name:'年代記レンズ', branch:'epoch', desc:'Epoch専用: Prestige効果 +0.12', cost:12, type:'prestigeEffectAdd', payload:{ add:0.12 }, maxLevel:3 },
+    { id:'cel_epoch_pulse', name:'時代脈動炉', branch:'epoch', desc:'Epoch専用: 全体 ×1.9', cost:16, type:'globalMult', payload:{ mult:1.9 }, maxLevel:2 }
   ];
 
   C.CHALLENGES = [
@@ -271,6 +319,10 @@
     { id:'ach_challenge_quadra', name:'四重試練の覇者', desc:'全Challenge(4種)をクリアする', type:'challengeClearCount', target:4, bonus:{type:'prestigeEffectAdd', add:0.04} },
     { id:'ach_celestial_apprentice', name:'星工学の見習い', desc:'Celestialアップグレードを2回購入する', type:'celestialUpgradeCount', target:2, bonus:{type:'globalMult', mult:1.18} },
     { id:'ach_celestial_architect', name:'星界設計者', desc:'Celestialアップグレードを8回購入する', type:'celestialUpgradeCount', target:8, bonus:{type:'costMult', mult:0.88} },
+    { id:'ach_nova_branch_master', name:'星火の先導者', desc:'Nova系Celestialアップグレードを合計6Lv購入する', type:'celestialBranchUpgradeCount', branchId:'nova', target:6, bonus:{type:'globalMult', mult:1.22} },
+    { id:'ach_vault_branch_master', name:'保管庫の監督者', desc:'Vault系Celestialアップグレードを合計6Lv購入する', type:'celestialBranchUpgradeCount', branchId:'vault', target:6, bonus:{type:'costMult', mult:0.9} },
+    { id:'ach_mirror_branch_master', name:'鏡面の投資家', desc:'Mirror系Celestialアップグレードを合計6Lv購入する', type:'celestialBranchUpgradeCount', branchId:'mirror', target:6, bonus:{type:'startGold', amount:2.5e6} },
+    { id:'ach_epoch_branch_master', name:'時代書庫の編纂者', desc:'Epoch系Celestialアップグレードを合計6Lv購入する', type:'celestialBranchUpgradeCount', branchId:'epoch', target:6, bonus:{type:'prestigeEffectAdd', add:0.05} },
     { id:'ach_challenge_hepta', name:'七重試練の制覇者', desc:'全Challenge(7種)をクリアする', type:'challengeClearCount', target:7, bonus:{type:'prestigeEffectAdd', add:0.1} },
     { id:'ach_abyss_challenge_master', name:'深淵試練の設計者', desc:'全Challenge(11種)をクリアする', type:'challengeClearCount', target:11, bonus:{type:'globalMult', mult:2.0} },
     { id:'ach_ascension_galaxy', name:'銀河渡り', desc:'累計Ascension AP 180到達', type:'ascend', target:180, bonus:{type:'flatGPS', gps:6000} },
