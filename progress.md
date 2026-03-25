@@ -75,3 +75,11 @@ Original prompt: ロードマップのPhase 1を完了させてください
 - 修正: `game/ui.app.js` の debounced save flush 条件を補強し、`visibilitychange` で `document.visibilityState === 'hidden'` になった時点と `pagehide` 発火時にも `flushScheduledSave(true)` を呼ぶよう変更。
 - 修正: これにより、モバイルやバックグラウンド遷移で `beforeunload` が走らない環境でも、直近の購入や設定変更がメモリ上に残ったまま失われにくくした。
 - 検証: `node --check game/ui.app.js` と `rg -n "visibilitychange|pagehide|beforeunload|flushScheduledSave\\(true\\)" game/ui.app.js` で、新しい background flush 経路が追加されていることを確認。
+
+## 2026-03-25 最大効果の軽量化
+- 実装: `Ver.1.29.2` として、`game/engine.app.js` に `getUiPreviewSnapshot()` を追加。UI 側が preview 値を個別計算せず一括取得できるよう変更。
+- 実装: `game/ui.app.js` に dirty flag helper 群 (`createUiDirty` / `normalizeUiDirty` / `getCurrentViewDirty` / `getSubTabDirty`) を追加し、購入・Challenge 操作・ルート切替・タブ切替ごとに必要な panel だけを更新する dispatcher へ再編。
+- 実装: Ascension Shop / Celestial Shop / Celestial Branch / Abyss Upgrade の row 参照を保持し、表示更新を build-once / update-in-place に変更。特に `renderCelestialBranches()` と `buildAbyssUI()` は通常更新時に DOM を全破棄しないよう整理。
+- 実装: main loop は `playShop` / `ascCore` のボタン活性更新だけに絞り、Legacy SVG の再描画も Legacy 表示中だけに制限。
+- 文書: `index.html` のアップデート情報、`ui.app.js` の更新モーダル、`仕様書.md` の UI / セーブ仕様を `Ver.1.29.2` 内容へ更新。`SAVE_VERSION = 16` は据え置き。
+- 検証: `node --check` で `config/engine/ui/ui.minigame` の構文確認に成功。vm harness で `getUiPreviewSnapshot()` の整合性と、dirty flag で snapshot 計算が gated されることを確認。Playwright は `browser.newPage: Target page, context or browser has been closed` で今回も実行不可。

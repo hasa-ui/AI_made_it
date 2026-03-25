@@ -165,3 +165,24 @@
 ## Verify Log (2026-03-25 background save flush fix)
 - `node --check game/ui.app.js` : 成功
 - `rg -n "visibilitychange|pagehide|beforeunload|flushScheduledSave\\(true\\)" game/ui.app.js` : `visibilitychange(hidden)` / `pagehide` / `beforeunload` / 定期オートセーブの 4 経路で flush されることを確認
+
+## Plan (2026-03-25 最大効果の軽量化)
+- [x] UI 更新経路と一覧 build 処理を確認し、dirty flag と build-once 化の差分を設計する
+- [x] dirty flag dispatcher、preview snapshot、一覧 update-in-place、主要 call site の更新を実装する
+- [x] バージョン表記・アップデート情報・仕様書を更新し、構文確認と targeted 検証を実行する
+
+## Progress Log (2026-03-25 最大効果の軽量化)
+- 着手: `game/ui.app.js` の dirty update 導入後も、`showTab/showSubTab` と一覧系 (`renderCelestialBranches` / `buildAbyssUI`) は更新対象の粒度が粗く、Abyss/Celestial の DOM 再生成と preview 試算がまだ重いことを確認。
+- 方針: `syncUIAfterChange()` を dirty flag dispatcher にし、`economy snapshot` と `preview snapshot` は必要時だけ計算する。加えて Celestial ルート一覧と Abyss アップグレード一覧は build-once / update-in-place に変える。
+- `game/engine.app.js`: `getUiPreviewSnapshot()` を追加し、Prestige/Ascension/Abyss の preview 値を UI 向けに一括取得できるよう変更。
+- `game/ui.app.js`: `createUiDirty()` / `normalizeUiDirty()` / `getCurrentViewDirty()` / `getSubTabDirty()` を追加し、購入・ルート切替・Challenge 操作ごとに必要な panel だけ更新するよう call site を更新。
+- `game/ui.app.js`: Ascension/Celestial/Abyss の row 参照を保持し、`syncAscensionShop()` / `syncCelestialShop()` / `renderCelestialBranches()` / `buildAbyssUI()` が DOM を作り直さず update-in-place で同期するよう修正。
+- `game/ui.app.js`: タブ/サブタブ切替も current view 専用 dirty flag で描画し、main loop のボタン更新は `playShop` / `ascCore` に限定。Legacy SVG の再描画も Legacy 表示中だけに制限。
+- `game/config.js`: `APP_VERSION` を `Ver.1.29.2` へ更新。`index.html` / `game/ui.app.js` 更新モーダル / `仕様書.md` も今回内容へ同期。
+
+## Verify Log (2026-03-25 最大効果の軽量化)
+- `node --check game/config.js && node --check game/engine.app.js && node --check game/ui.app.js && node --check game/ui.minigame.js` : 成功
+- `node - <<'NODE' ... NODE`（`config/state/helpers/challenge/engine` を vm で読み込み、`getUiPreviewSnapshot()` の各値が `previewPrestigeGain()` / `computeStartingGoldOnPrestige()` / `previewAscGain()` / `previewAbyssGain()` と一致することを確認） : 成功
+- `node - <<'NODE' ... NODE`（`ui.app.js` の関数本体を検査し、`renderCelestialBranches()` と `buildAbyssUI()` が render ごとに `wrap.innerHTML = ''` を行わず、`syncUIAfterChange()` 内の `economySnapshot` / `previewSnapshot` が dirty flag 条件つきで計算されることを確認） : 成功
+- `git diff --check -- ...` : 成功
+- `node "$WEB_GAME_CLIENT" --url http://127.0.0.1:8000/index.html ...` : 失敗。今回も `browser.newPage: Target page, context or browser has been closed` により Playwright 実機確認は完了できず
