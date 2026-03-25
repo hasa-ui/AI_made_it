@@ -62,6 +62,8 @@
   const SETTINGS_DEFAULTS = {
     notation:'compact',
     notationThreshold:1000,
+    uiUpdateIntervalMs: C.UI_UPDATE_INTERVAL_MS || 120,
+    uiSlowUpdateIntervalMs: C.UI_SLOW_UPDATE_INTERVAL_MS || 400,
     confirmLegacyBuy:true,
     confirmLegacyBuyMax:true,
     confirmAscShopBuy:true,
@@ -213,6 +215,19 @@
     st.settings.toast = Object.assign({}, SETTINGS_DEFAULTS.toast, st.settings.toast || {});
     st.settings.autoBuy = Object.assign({}, SETTINGS_DEFAULTS.autoBuy, st.settings.autoBuy || {});
     return st.settings;
+  }
+  function clampUiIntervalMs(value, fallback){
+    const num = Number(value);
+    const base = Number.isFinite(num) ? num : fallback;
+    return Math.max(50, Math.round(base || 50));
+  }
+  function getConfiguredUiUpdateInterval(st){
+    const settings = ensureSettingsDefaults(st || E.getState());
+    return clampUiIntervalMs(settings.uiUpdateIntervalMs, C.UI_UPDATE_INTERVAL_MS || 120);
+  }
+  function getConfiguredSlowUiUpdateInterval(st){
+    const settings = ensureSettingsDefaults(st || E.getState());
+    return clampUiIntervalMs(settings.uiSlowUpdateIntervalMs, C.UI_SLOW_UPDATE_INTERVAL_MS || 400);
   }
   function shouldConfirm(settingKey){
     const st = E.getState();
@@ -562,6 +577,10 @@
     const settings = ensureSettingsDefaults(st);
     const notationSelect = document.getElementById('notationSelect');
     if (notationSelect) notationSelect.value = settings.notation || 'compact';
+    const uiUpdateIntervalEl = document.getElementById('uiUpdateInterval');
+    if (uiUpdateIntervalEl) uiUpdateIntervalEl.value = String(getConfiguredUiUpdateInterval(st));
+    const uiSlowUpdateIntervalEl = document.getElementById('uiSlowUpdateInterval');
+    if (uiSlowUpdateIntervalEl) uiSlowUpdateIntervalEl.value = String(getConfiguredSlowUiUpdateInterval(st));
     for (const opt of CONFIRM_OPTIONS){
       const el = document.getElementById(opt.id);
       if (el) el.checked = settings[opt.key] !== false;
@@ -585,6 +604,8 @@
     el.innerHTML = `
       <h3>表示設定</h3>
       <div class="row"><label class="muted small">表示形式: <select id="notationSelect" style="padding:6px; border-radius:6px; background:#071421; color:#fff; border:1px solid #173142;"><option value="compact">コンパクト (1.2K)</option><option value="scientific">指数 (1.23e+3)</option></select></label></div>
+      <div class="row" style="margin-top:10px; gap:8px; align-items:center;"><label class="muted small">通常UI更新間隔(ms)</label><input id="uiUpdateInterval" type="number" min="50" step="10" value="${fmtNumber(C.UI_UPDATE_INTERVAL_MS || 120)}" style="width:100px;" /><span class="muted small">下限 50ms</span></div>
+      <div class="row" style="margin-top:6px; gap:8px; align-items:center;"><label class="muted small">重いパネル更新間隔(ms)</label><input id="uiSlowUpdateInterval" type="number" min="50" step="10" value="${fmtNumber(C.UI_SLOW_UPDATE_INTERVAL_MS || 400)}" style="width:100px;" /><span class="muted small">Challenge / Stats / Abyss など</span></div>
       <div class="row" style="margin-top:12px"><strong>確認ダイアログ設定</strong></div>
       ${CONFIRM_OPTIONS.map(opt=>`<div class="row"><label class="muted small"><input type="checkbox" id="${opt.id}"> ${opt.label}</label></div>`).join('')}
       <div class="row" style="margin-top:12px"><strong>通知(トースト)表示</strong></div>
@@ -600,6 +621,20 @@
       ensureSettingsDefaults(st).notation = ev.target.value;
       persistState();
       syncUIAfterChange();
+    });
+    document.getElementById('uiUpdateInterval')?.addEventListener('change', (ev)=>{
+      const st = E.getState();
+      const settings = ensureSettingsDefaults(st);
+      settings.uiUpdateIntervalMs = clampUiIntervalMs(ev.target.value, C.UI_UPDATE_INTERVAL_MS || 120);
+      persistState();
+      syncSettingsUI();
+    });
+    document.getElementById('uiSlowUpdateInterval')?.addEventListener('change', (ev)=>{
+      const st = E.getState();
+      const settings = ensureSettingsDefaults(st);
+      settings.uiSlowUpdateIntervalMs = clampUiIntervalMs(ev.target.value, C.UI_SLOW_UPDATE_INTERVAL_MS || 400);
+      persistState();
+      syncSettingsUI();
     });
     for (const opt of CONFIRM_OPTIONS){
       document.getElementById(opt.id)?.addEventListener('change', (ev)=>{
@@ -1377,13 +1412,13 @@
     const chRes = E.tryCompleteChallengeInternal ? E.tryCompleteChallengeInternal() : { ok:false };
     finalizeChallengeCompletion(chRes);
 
-    if (ts - lastUiUpdate >= (C.UI_UPDATE_INTERVAL_MS || 150)){
+    if (ts - lastUiUpdate >= getConfiguredUiUpdateInterval(st)){
       lastUiUpdate = ts;
       syncHeaderResources(st);
       syncDynamicButtons(st, createUiDirty('playShop','ascCore'));
       if (svgDirty && getActiveTabName(st) === 'prestige' && getActiveSubTab('prestige', st) === 'legacy'){ drawLegacySVG(); svgDirty = false; }
     }
-    if (ts - lastSlowUiUpdate >= (C.UI_SLOW_UPDATE_INTERVAL_MS || 400)){
+    if (ts - lastSlowUiUpdate >= getConfiguredSlowUiUpdateInterval(st)){
       lastSlowUiUpdate = ts;
       syncSlowPanels(st, buildPreviewSnapshot());
     }
@@ -1588,9 +1623,9 @@
     const body = document.getElementById('updateModalBody');
     if (!modal || !body) return;
     body.textContent = `${C.APP_VERSION} の主な更新
-- 起動時に checkAchievementsAfterAction() が未定義 helper を呼んで初期化停止する不具合を修正
-- プレイ開始時に Inspector しか表示されず、タブ切替が反応しない症状を解消
-- ミニゲーム state 初期化を UI 共通 helper へ寄せ、起動直後の achievement 判定でも安全化`;
+- 設定画面から通常UI更新間隔と重いパネル更新間隔を個別に変更できるよう追加
+- どちらの更新間隔も 50ms まで短縮可能にし、好みの描画頻度へ調整できるよう変更
+- メインループは設定値を参照して更新頻度を決めるように修正`;
     modal.style.display = 'flex';
     document.getElementById('closeUpdateModal')?.addEventListener('click', ()=>{
       modal.style.display = 'none';

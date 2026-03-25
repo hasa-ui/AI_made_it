@@ -27,3 +27,21 @@
 - `node --check game/config.js && node --check game/ui.app.js && node --check game/ui.minigame.js && node --check game/engine.app.js` : 成功
 - 簡易 DOM ハーネスで `DOMContentLoaded` を再現し、`inspectorDisplay: \"none\"` `playDisplay: \"block\"` `activeTabs: [\"play\"]` `tabHandlers: true` を確認。起動後にプレイタブ表示とタブイベント登録まで進むことを確認 : 成功
 - `git diff --check` : 成功
+
+## Plan (2026-03-25 UI更新頻度設定)
+- [x] 更新頻度設定を state / settings UI / mainLoop へ追加
+- [x] 50ms 下限の clamp を入れ、通常UIと重いパネルを個別設定化
+- [x] バージョン表記 / 更新情報 / 仕様書を更新
+- [x] 構文確認と設定値反映の検証を実施
+
+## Progress Log (2026-03-25 UI更新頻度設定)
+- `game/state.js` の `settings` に `uiUpdateIntervalMs` と `uiSlowUpdateIntervalMs` を追加し、旧セーブでも migrate の既定値補完で設定が入るようにした。
+- `game/ui.app.js` に更新間隔 clamp helper と取得 helper を追加し、設定画面から通常UI更新間隔と重いパネル更新間隔を個別に変更できるようにした。どちらも `50ms` を下限に固定。
+- `mainLoop` は定数直参照をやめ、保存済み設定値を参照して通常更新 / slow 更新の頻度を決めるよう変更した。
+- ゲーム変更に伴い `Ver.1.29.4` へ更新し、アップデート情報タブ・更新モーダル・仕様書へ新設定を反映した。
+
+## Verify Log (2026-03-25 UI更新頻度設定)
+- `node --check game/config.js && node --check game/state.js && node --check game/ui.app.js` : 成功
+- vm で `StateManager.defaultState.settings` を確認し、`uiUpdateIntervalMs: 120` / `uiSlowUpdateIntervalMs: 400` が入ることを確認 : 成功
+- `rg -n "uiUpdateInterval|uiSlowUpdateInterval|getConfiguredUiUpdateInterval|getConfiguredSlowUiUpdateInterval|min=\"50\""` で、設定 UI の `min=\"50\"`、保存値参照、mainLoop 側の helper 使用を確認 : 成功
+- `git diff --check` : 成功

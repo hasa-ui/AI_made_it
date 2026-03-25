@@ -89,3 +89,9 @@ Original prompt: ロードマップのPhase 1を完了させてください
 - 実装: `game/ui.app.js` に同等の `ensureMiniGameState(st)` helper を追加し、起動直後の achievement 判定でも `miniGame` state の既定 shape を安全に補完するよう修正。
 - 実装: `Ver.1.29.3` として `game/config.js`、アップデート情報タブ、更新モーダルを今回の起動不能修正内容へ更新。
 - 検証: `node --check` と簡易 DOM ハーネスで、起動後に `tab-inspector` が `none`、`tab-play` が `block`、アクティブタブが `play`、タブ click handler が登録済みであることを確認。
+
+## 2026-03-25 UI更新頻度設定
+- 実装: `settings` に `uiUpdateIntervalMs` と `uiSlowUpdateIntervalMs` を追加し、設定画面から通常UI更新間隔と重いパネル更新間隔を個別に変更できるようにした。
+- 実装: どちらの更新間隔も `50ms` を下限に clamp し、`mainLoop` は設定値を参照して通常更新と slow 更新の頻度を決めるよう変更。
+- 実装: `Ver.1.29.4` として `game/config.js`、アップデート情報タブ、更新モーダル、`仕様書.md` を今回の設定追加内容へ更新。`SAVE_VERSION = 16` は据え置き。
+- 検証: `node --check`、defaultState settings の vm 確認、`rg` による UI 下限値 / helper 参照 / mainLoop 反映確認、`git diff --check` を実行して成功。

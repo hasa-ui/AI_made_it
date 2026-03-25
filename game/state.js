@@ -49,6 +49,8 @@
     settings: {
       notation:'compact',
       notationThreshold:1000,
+      uiUpdateIntervalMs: C.UI_UPDATE_INTERVAL_MS || 120,
+      uiSlowUpdateIntervalMs: C.UI_SLOW_UPDATE_INTERVAL_MS || 400,
       activeTab:'play',
       activeSubTabs:{ prestige:'core', ascension:'core' },
       confirmLegacyBuy:true,
