@@ -133,3 +133,19 @@
 - `node <<'NODE' ... NODE` harness で、`ascendedInChallenge = 0` の legacy active challenge save は `SM.importState()` 後に `ascPoints` / `ascOwned` / `celestialOwned` / `miniGame` / `lastAscensionRun` を loaded save から backfill し、`abandonChallengeInternal()` 後もそれらが維持されることを確認。
 - `node <<'NODE' ... NODE` harness で、`ascendedInChallenge = 1` の legacy active challenge save は ascend-derived fields だけ安全側 fallback (`0` / default / `null`) へ補完されることを確認。
 - Playwright client: `browser.newPage: Target page, context or browser has been closed` により今回もブラウザ確認は実行不可。
+
+## Fix legacy live-state baseline bug
+- [x] Stop reconstructing incomplete legacy challenge snapshots from loaded meta state
+- [x] Resolve incompatible legacy active challenges during migration using only stored run-local snapshot data
+- [x] Verify legacy auto-resolve and complete-snapshot preservation with harnesses
+
+## Progress log
+- Replaced the migration-time meta backfill for incomplete legacy active-challenge snapshots with an auto-resolve path: if required rollback fields are missing, migration restores only the run-local snapshot data already present (`gold`, `totalGoldEarned`, `units`, `upgrades`, `legacy`, etc.) and clears `challenge.activeId`.
+- Complete snapshots are left untouched, so only incompatible legacy saves are auto-abandoned on load.
+
+## Verification log
+- `node --check game/state.migration.js` : 成功
+- `git diff --check` : 成功
+- `node <<'NODE' ... NODE` harness で、不完全な legacy active challenge save は `SM.importState()` 後に `challenge.activeId === null` となり、`gold` / `totalGoldEarned` / `units` などの run-local state だけ snapshot 値へ戻り、meta state は loaded save のまま残ることを確認。
+- `node <<'NODE' ... NODE` harness で、必要 field を持つ complete snapshot save は `SM.importState()` 後も `challenge.activeId` を維持し、snapshot 内容も保持されることを確認。
+- Playwright client: `browser.newPage: Target page, context or browser has been closed` により今回もブラウザ確認は実行不可。
