@@ -149,3 +149,19 @@
 - `node <<'NODE' ... NODE` harness で、不完全な legacy active challenge save は `SM.importState()` 後に `challenge.activeId === null` となり、`gold` / `totalGoldEarned` / `units` などの run-local state だけ snapshot 値へ戻り、meta state は loaded save のまま残ることを確認。
 - `node <<'NODE' ... NODE` harness で、必要 field を持つ complete snapshot save は `SM.importState()` 後も `challenge.activeId` を維持し、snapshot 内容も保持されることを確認。
 - Playwright client: `browser.newPage: Target page, context or browser has been closed` により今回もブラウザ確認は実行不可。
+
+## Fix legacy auto-resolve meta leak
+- [x] Discard ambiguous meta progression when auto-resolving incomplete legacy active challenges
+- [x] Keep complete snapshots untouched
+- [x] Verify legacy auto-resolve and complete-snapshot preservation with harnesses
+
+## Progress log
+- Tightened the auto-resolve path for incomplete legacy active-challenge snapshots so it now restores only the stored run-local snapshot data and explicitly resets ambiguous meta progression (`ascPoints`, owned meta upgrades, branch, achievements, miniGame, runStats, lastAscensionRun`) to safe defaults before clearing the challenge flag.
+- Complete snapshots are still preserved as active challenges; only incompatible legacy saves are auto-resolved this way.
+
+## Verification log
+- `node --check game/state.migration.js` : 成功
+- `git diff --check` : 成功
+- `node <<'NODE' ... NODE` harness で、不完全な legacy active challenge save は `SM.importState()` 後に `challenge.activeId === null` になり、`gold` / `totalGoldEarned` / `units` などの run-local state だけ snapshot 値へ戻り、`ascPoints` / `ascOwned` / `celestialOwned` / `miniGame` / `lastAscensionRun` などは安全な既定値へ落ちることを確認。
+- `node <<'NODE' ... NODE` harness で、complete snapshot save は `SM.importState()` 後も `challenge.activeId` を維持し、snapshot 内容も保持されることを確認。
+- Playwright client: `browser.newPage: Target page, context or browser has been closed` により今回もブラウザ確認は実行不可。

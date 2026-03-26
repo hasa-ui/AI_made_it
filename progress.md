@@ -158,3 +158,8 @@ Original prompt: ロードマップのPhase 1を完了させてください
 - 修正: `game/state.migration.js` の不完全な legacy active challenge snapshot は、ロード時に meta baseline を再構成しないように変更した。必要な rollback field が欠けている場合は、その snapshot に実際に保存されている run-local data だけで復元し、`challenge.activeId` を `null` にして auto-abandon 相当に解消する。
 - 修正: これにより、in-challenge live state を rollback baseline として再利用せずに済み、legacy save での abandon/complete 時に tainted meta state を戻してしまう経路を消した。
 - 検証: vm harness で、不完全な legacy active challenge save は import 時点で `challenge.activeId === null` になり run-local snapshot だけ復元されること、complete snapshot save は引き続き active のまま維持されることを確認。Playwright client は `browser.newPage: Target page, context or browser has been closed` で今回も実行不可。
+
+## 2026-03-26 Legacy auto-resolve meta discard
+- 修正: `game/state.migration.js` の auto-resolve 分岐で、不完全な legacy active challenge save は run-local snapshot 復元後に `ascPoints` `ascOwned` `celestialOwned` `celestial.activeBranchId` `achievementsOwned` `miniGame` `runStats` `lastAscensionRun` などの曖昧な meta progression を安全な既定値へ明示的にリセットするよう変更した。
+- 修正: これにより、旧 build の challenge 内で稼がれた可能性がある meta progression を、challenge flag 解除後に main save へ残さないようにした。
+- 検証: vm harness で、不完全な legacy active challenge save は import 時点で `challenge.activeId === null` になり、run-local だけ snapshot 値へ戻り、曖昧な meta progression は default/null へ落ちること、complete snapshot save は従来どおり active のまま維持されることを確認。Playwright client は `browser.newPage: Target page, context or browser has been closed` で今回も実行不可。
