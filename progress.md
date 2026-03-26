@@ -163,3 +163,8 @@ Original prompt: ロードマップのPhase 1を完了させてください
 - 修正: `game/state.migration.js` の auto-resolve 分岐で、不完全な legacy active challenge save は run-local snapshot 復元後に `ascPoints` `ascOwned` `celestialOwned` `celestial.activeBranchId` `achievementsOwned` `miniGame` `runStats` `lastAscensionRun` などの曖昧な meta progression を安全な既定値へ明示的にリセットするよう変更した。
 - 修正: これにより、旧 build の challenge 内で稼がれた可能性がある meta progression を、challenge flag 解除後に main save へ残さないようにした。
 - 検証: vm harness で、不完全な legacy active challenge save は import 時点で `challenge.activeId === null` になり、run-local だけ snapshot 値へ戻り、曖昧な meta progression は default/null へ落ちること、complete snapshot save は従来どおり active のまま維持されることを確認。Playwright client は `browser.newPage: Target page, context or browser has been closed` で今回も実行不可。
+
+## 2026-03-26 Legacy auto-resolve meta preservation
+- 修正: `game/state.migration.js` の不完全な legacy active challenge auto-resolve から、top-level meta progression を default/null へ落とす処理を削除した。これにより、互換性のない challenge 自体はロード時に解消しつつ、読み込んだ save に既に存在していた `ascPoints`、Ascension/Celestial 所持、achievement、mini-game、run history は保持される。
+- 修正: run-local snapshot の復元 (`gold` `totalGoldEarned` `units` `upgrades` `legacy` など) と `challenge.activeId` のクリアは維持し、auto-resolve の影響範囲を challenge 互換解消に限定した。
+- 検証: vm harness で、不完全な legacy active challenge save は `SM.importState()` 後に `challenge.activeId === null` になりつつ、run-local は snapshot 値へ戻り、`ascPoints` / `ascOwned` / `celestialOwned` / `achievementsOwned` / `miniGame` / `runStats` / `lastAscensionRun` は loaded save の値が維持されることを確認。complete snapshot save は引き続き active のまま維持されることも確認。Playwright client は `browser.newPage: Target page, context or browser has been closed` で今回も実行不可。

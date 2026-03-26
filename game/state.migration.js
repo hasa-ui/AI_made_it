@@ -99,17 +99,6 @@
           merged.runStats.history = Array.isArray(merged.runStats.history) ? merged.runStats.history.slice(-30) : [];
         }
         if (hasOwn(snapshot, 'lastAscensionRun')) merged.lastAscensionRun = deepCopy(snapshot.lastAscensionRun || null);
-        merged.ascPoints = 0;
-        merged.ascEarnedTotal = 0;
-        merged.ascOwned = deepCopy(defaultState.ascOwned);
-        merged.celestialPoints = 0;
-        merged.celestialEarnedTotal = 0;
-        merged.celestialOwned = deepCopy(defaultState.celestialOwned);
-        merged.celestial = deepCopy(defaultState.celestial);
-        merged.achievementsOwned = {};
-        merged.miniGame = deepCopy(defaultState.miniGame);
-        merged.runStats = deepCopy(defaultState.runStats);
-        merged.lastAscensionRun = null;
         merged.challenge.activeId = null;
         merged.challenge.savedSnapshot = null;
         merged.challenge.savedGold = null;
