@@ -250,3 +250,20 @@
 ## Verification log
 - `node <<'NODE' ... NODE` vm harness: imported an incomplete legacy active-challenge save whose live state had challenge-earned AP/CP/meta purchases; `migrateState()` restored `gold`/`totalGoldEarned` to snapshot values while leaving `ascPoints: 35`, `ascOwned.asc_global20: 1`, `celestialPoints: 8`, `celestialOwned.cel_prism: 1`, `achievementsOwned`, `miniGame`, `runStats`, and `lastAscensionRun` untouched.
 - `node <<'NODE' ... NODE` vm harness: imported an incomplete legacy active-challenge save with `ascendedInChallenge = 0`; `migrateState()` still cleared `challenge.activeId` but preserved challenge `runStats.currentRunStartedAt: 12345`, `currentRunPeakGold: 999`, and challenge-tagged `history`, confirming current-run stats are not rewound.
+
+## Fix partial legacy snapshot baseline loss
+- [x] Restore available meta rollback fields from partially populated legacy snapshots
+- [x] Preserve earned-total counters when no in-challenge ascends occurred
+- [x] Verify partial-snapshot and no-ascend legacy imports with harnesses
+
+## Progress log
+- Replaced the blanket legacy meta reset with field-by-field restore logic in `state.migration.js`, so incomplete legacy snapshots now reuse any rollback baselines they already contain instead of wiping the whole meta layer whenever one later-added field is missing.
+- `ascEarnedTotal` and `celestialEarnedTotal` now preserve the loaded save values when `ascendedInChallenge === 0`, because those lifetime totals only change on Ascend; they still fall back to `0` when the discarded legacy challenge actually recorded one or more ascends and the snapshot lacks a baseline.
+- Kept the existing behavior for fields that still have no safe baseline (`achievementsOwned`, `achievementsProgress`, `miniGame`, etc.): if the partial legacy snapshot does not carry them, they are still reset during auto-resolve.
+
+## Verification log
+- `node --check game/state.migration.js` : 成功
+- `git diff --check` : 成功
+- `node <<'NODE' ... NODE` harness で、partial legacy snapshot が `ascPoints` / `ascOwned` / `celestialOwned` を持っているケースでは、それらの baseline が field 単位で復元され、snapshot に無い `achievementsOwned` / `miniGame` だけが reset されることを確認。
+- `node <<'NODE' ... NODE` harness で、`ascendedInChallenge = 0` の legacy save は `ascEarnedTotal` / `celestialEarnedTotal` を loaded save から保持し、`ascendedInChallenge = 1` の legacy save は snapshot baseline 不在時に両 total が `0` へ落ちることを確認。`lastAscensionRun === null` の条件と `runStats` 再初期化も維持されることを確認。
+- Playwright client: `browser.newPage: Target page, context or browser has been closed` により今回もブラウザ確認は実行不可。

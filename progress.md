@@ -186,3 +186,9 @@ Original prompt: ロードマップのPhase 1を完了させてください
 - 修正: `lastAscensionRun` は条件付きにし、legacy snapshot が baseline を持たない場合でも `ascendedInChallenge === 0` の save では loaded save 側の既存 summary を保持し、`ascendedInChallenge > 0` の save では leaked summary を `null` へ落とすようにした。
 - 修正: current-run `runStats` の再初期化と、`ascendedInChallenge` 回数ぶんの `history` / `runCount` 巻き戻しは継続し、discard 後の通常 run 統計が challenge 状態を引きずらないようにしている。
 - 検証: vm harness で、不完全な legacy active challenge save は import 時点で `challenge.activeId === null` になり、run-local snapshot を戻しつつ曖昧な meta progression は default/null へ落ちること、`ascendedInChallenge = 0` では既存 `lastAscensionRun` が保持され、`ascendedInChallenge = 1` では `lastAscensionRun === null` になることを確認。Playwright client は `browser.newPage: Target page, context or browser has been closed` で今回も実行不可。
+
+## 2026-03-26 Legacy partial snapshot field restore
+- 修正: `game/state.migration.js` の legacy auto-resolve は、partial snapshot を「全部欠損扱い」せず、snapshot に残っている meta baseline を field 単位で復元するよう変更した。これにより `ascPoints` / `ascOwned` / `celestialOwned` などが snapshot にある save では、その値をそのまま rollback 基準として使う。
+- 修正: `ascEarnedTotal` と `celestialEarnedTotal` は Ascend でしか増えないため、`ascendedInChallenge === 0` の legacy save では loaded save 側の値を保持し、`ascendedInChallenge > 0` かつ snapshot baseline 不在の時だけ `0` へ落とすようにした。
+- 修正: 一方で snapshot に baseline が無い `achievementsOwned` / `achievementsProgress` / `miniGame` などは引き続き reset し、`lastAscensionRun` の条件付き保持と `runStats` の current-run 再初期化も維持している。
+- 検証: vm harness で、partial legacy snapshot が `ascPoints` / `ascOwned` / `celestialOwned` を持つケースではそれらが field 単位で復元され、snapshot に無い `achievementsOwned` / `miniGame` だけが reset されること、`ascendedInChallenge = 0` では `ascEarnedTotal` / `celestialEarnedTotal` が loaded save の値を保持し、`ascendedInChallenge = 1` では snapshot baseline 不在時に `0` へ落ちることを確認。Playwright client は `browser.newPage: Target page, context or browser has been closed` で今回も実行不可。

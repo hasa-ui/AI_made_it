@@ -5,6 +5,7 @@
 
   const { C, SAVE_VERSION, deepCopy, defaultState, nowSec } = runtime;
   function hasOwn(obj, key){ return !!obj && Object.prototype.hasOwnProperty.call(obj, key); }
+  function isRecord(value){ return !!value && typeof value === 'object' && !Array.isArray(value); }
   function buildRunStatsAfterLegacyAutoResolve(runStats, currentGold, challengeAscends){
     const prev = Object.assign({}, deepCopy(defaultState.runStats), runStats || {});
     const ascends = Math.max(0, Math.floor(challengeAscends || 0));
@@ -19,17 +20,29 @@
       history
     };
   }
-  function resetAmbiguousLegacyChallengeMeta(merged){
-    merged.ascPoints = 0;
-    merged.ascEarnedTotal = 0;
-    merged.ascOwned = deepCopy(defaultState.ascOwned);
-    merged.celestialPoints = 0;
-    merged.celestialEarnedTotal = 0;
-    merged.celestialOwned = deepCopy(defaultState.celestialOwned);
-    merged.celestial = deepCopy(defaultState.celestial);
-    merged.achievementsOwned = {};
-    merged.achievementsProgress = {};
-    merged.miniGame = deepCopy(defaultState.miniGame);
+  function restoreLegacySnapshotMeta(merged, snapshot, challengeAscends){
+    if (hasOwn(snapshot, 'ascPoints') && typeof snapshot.ascPoints === 'number') merged.ascPoints = snapshot.ascPoints;
+    else merged.ascPoints = 0;
+    if (hasOwn(snapshot, 'ascEarnedTotal') && typeof snapshot.ascEarnedTotal === 'number') merged.ascEarnedTotal = snapshot.ascEarnedTotal;
+    else if (challengeAscends > 0) merged.ascEarnedTotal = 0;
+    if (isRecord(snapshot.ascOwned)) merged.ascOwned = Object.assign({}, deepCopy(defaultState.ascOwned), deepCopy(snapshot.ascOwned));
+    else merged.ascOwned = deepCopy(defaultState.ascOwned);
+
+    if (hasOwn(snapshot, 'celestialPoints') && typeof snapshot.celestialPoints === 'number') merged.celestialPoints = snapshot.celestialPoints;
+    else merged.celestialPoints = 0;
+    if (hasOwn(snapshot, 'celestialEarnedTotal') && typeof snapshot.celestialEarnedTotal === 'number') merged.celestialEarnedTotal = snapshot.celestialEarnedTotal;
+    else if (challengeAscends > 0) merged.celestialEarnedTotal = 0;
+    if (isRecord(snapshot.celestialOwned)) merged.celestialOwned = Object.assign({}, deepCopy(defaultState.celestialOwned), deepCopy(snapshot.celestialOwned));
+    else merged.celestialOwned = deepCopy(defaultState.celestialOwned);
+    if (isRecord(snapshot.celestial)) merged.celestial = Object.assign({}, deepCopy(defaultState.celestial), deepCopy(snapshot.celestial));
+    else merged.celestial = deepCopy(defaultState.celestial);
+
+    if (isRecord(snapshot.achievementsOwned)) merged.achievementsOwned = deepCopy(snapshot.achievementsOwned);
+    else merged.achievementsOwned = {};
+    if (isRecord(snapshot.achievementsProgress)) merged.achievementsProgress = deepCopy(snapshot.achievementsProgress);
+    else merged.achievementsProgress = {};
+    if (isRecord(snapshot.miniGame)) merged.miniGame = Object.assign({}, deepCopy(defaultState.miniGame), deepCopy(snapshot.miniGame));
+    else merged.miniGame = deepCopy(defaultState.miniGame);
   }
 
   function migrateState(raw){
@@ -120,7 +133,7 @@
         if (hasOwn(snapshot, 'units') && snapshot.units && typeof snapshot.units === 'object' && !Array.isArray(snapshot.units)) merged.units = deepCopy(snapshot.units);
         if (hasOwn(snapshot, 'upgrades') && snapshot.upgrades && typeof snapshot.upgrades === 'object' && !Array.isArray(snapshot.upgrades)) merged.upgrades = deepCopy(snapshot.upgrades);
         if (hasOwn(snapshot, 'legacyNodes') && snapshot.legacyNodes && typeof snapshot.legacyNodes === 'object' && !Array.isArray(snapshot.legacyNodes)) merged.legacyNodes = deepCopy(snapshot.legacyNodes);
-        resetAmbiguousLegacyChallengeMeta(merged);
+        restoreLegacySnapshotMeta(merged, snapshot, challengeAscends);
         if (hasOwn(snapshot, 'runStats') && snapshot.runStats && typeof snapshot.runStats === 'object' && !Array.isArray(snapshot.runStats)){
           merged.runStats = Object.assign({}, deepCopy(defaultState.runStats), deepCopy(snapshot.runStats));
           merged.runStats.currentRunUnitTypes = Object.assign({}, merged.runStats.currentRunUnitTypes || {});
