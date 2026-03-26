@@ -216,6 +216,23 @@
 - `node <<'NODE' ... NODE` harness で、`snapshot.lastAscensionRun` が無い legacy save でも、既存の `lastAscensionRun` が保持され、`snapshot.runStats` が無い場合の current-run `runStats` 再初期化と `ascendedInChallenge = 1` 時の `history` / `runCount` 巻き戻しが引き続き機能することを確認。
 - Playwright client: `browser.newPage: Target page, context or browser has been closed` により今回もブラウザ確認は実行不可。
 
+## Fix legacy auto-resolve meta leak and ascension-summary leak
+- [x] Discard ambiguous meta progression again for incomplete legacy challenge auto-resolve
+- [x] Only keep `lastAscensionRun` when the discarded legacy challenge never ascended
+- [x] Verify no-ascend and with-ascend legacy saves separately
+
+## Progress log
+- Restored the explicit discard of ambiguous top-level meta state (`ascPoints`, meta shop ownership, achievements, mini-game, celestial branch) for incomplete legacy active-challenge snapshots, so auto-resolving those saves no longer preserves challenge-mutated AP/CP progression.
+- Refined `lastAscensionRun` handling so legacy auto-resolve keeps the previous summary only when `ascendedInChallenge === 0`; if the discarded challenge recorded one or more ascends, the leaked summary is now cleared.
+- Kept the current-run `runStats` rebuild and in-challenge `history` / `runCount` rollback logic unchanged.
+
+## Verification log
+- `node --check game/state.migration.js` : 成功
+- `git diff --check` : 成功
+- `node <<'NODE' ... NODE` harness で、不完全な legacy active challenge save は `SM.importState()` 後に `challenge.activeId === null` となり、run-local snapshot を復元した上で `ascPoints` / `ascOwned` / `celestialOwned` / `achievementsOwned` / `achievementsProgress` / `miniGame` が default/null へ戻ることを確認。
+- `node <<'NODE' ... NODE` harness で、`ascendedInChallenge = 0` の legacy save は既存 `lastAscensionRun` を維持し、`ascendedInChallenge = 1` の legacy save は `lastAscensionRun === null` へ落ちることを確認。あわせて `history` / `runCount` 巻き戻しと current-run `runStats` 再初期化も維持されることを確認。
+- Playwright client: `browser.newPage: Target page, context or browser has been closed` により今回もブラウザ確認は実行不可。
+
 ## Review e404964d1bda12fbe3708f803e4e29c24117b494
 - [ ] Inspect commit diff and impacted files
 - [ ] Validate suspected regressions against surrounding code/tests
