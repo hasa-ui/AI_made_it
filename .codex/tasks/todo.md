@@ -100,3 +100,20 @@
 - `node <<'NODE' ... NODE` harness で、その migrated save から `abandonChallengeInternal()` しても `miniGame` と `lastAscensionRun` が開始前 state に戻ることを確認。
 - `node <<'NODE' ... NODE` harness で、同じ migrated save から `tryCompleteChallengeInternal()` しても challenge clear だけ保持しつつ `miniGame` と `lastAscensionRun` が開始前 state に戻ることを確認。
 - Playwright client: `page.addInitScript: Target page, context or browser has been closed` により今回もブラウザ確認は実行不可。
+
+## Fix legacy snapshot live-state seeding bug
+- [x] Stop using live in-challenge meta state as the backfill source for legacy snapshots
+- [x] Switch missing rollback fields to safe non-leaking defaults
+- [x] Verify load->abandon/complete on legacy active-challenge saves
+
+## Progress log
+- Changed legacy active-challenge snapshot backfill to use neutral defaults instead of the current in-challenge state, so rollback does not preserve challenge-earned AP/CP, mini-game progress, or ascension summaries from before the update.
+- This keeps the rollback conservative for old snapshots: missing meta fields are discarded rather than reconstructed from potentially tainted challenge state.
+
+## Verification log
+- `node --check game/state.migration.js` : 成功
+- `git diff --check` : 成功
+- `node <<'NODE' ... NODE` harness で、旧形式の active challenge save を `SM.importState()` に通すと、欠けている `ascPoints` / `miniGame` / `lastAscensionRun` などが live state ではなく安全な既定値へ補完されることを確認。
+- `node <<'NODE' ... NODE` harness で、その migrated save から `abandonChallengeInternal()` しても `ascPoints` / `miniGame` / `lastAscensionRun` が challenge 進行前の安全側 state (`0` / 既定値 / `null`) に戻ることを確認。
+- `node <<'NODE' ... NODE` harness で、同じ migrated save から `tryCompleteChallengeInternal()` しても challenge clear だけ保持しつつ同じ安全側 state に戻ることを確認。
+- Playwright client: `browser.newPage: Target page, context or browser has been closed` により今回もブラウザ確認は実行不可。
