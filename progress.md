@@ -148,3 +148,8 @@ Original prompt: ロードマップのPhase 1を完了させてください
 - 修正: `game/state.migration.js` の legacy active challenge backfill は、live in-challenge state から rollback 基準値を作るのをやめ、欠けている meta fields を `defaultState` ベースの安全な既定値へ補完するよう変更した。
 - 修正: これにより、旧 build 中の challenge で既に稼いでいた AP/CP、mini-game progress、`lastAscensionRun` をアップデート後の abandon/complete で main save に残さないようにした。
 - 検証: vm harness で、legacy active challenge save を import した時点で `savedSnapshot` の不足分が live state ではなく既定値へ埋まること、およびその save からの abandon/complete で `ascPoints` / `miniGame` / `lastAscensionRun` が安全側 state へ戻ることを確認。Playwright client は `browser.newPage: Target page, context or browser has been closed` で今回も実行不可。
+
+## 2026-03-26 Legacy snapshot loaded-state preservation
+- 修正: `game/state.migration.js` の legacy active challenge backfill を `ascendedInChallenge` で分岐し、challenge 内で Ascend していない save については、欠けている meta fields を loaded save から補完するよう変更した。
+- 修正: 一方で `ascendedInChallenge > 0` の save は、Ascend 由来の leak を避けるため、引き続き ascend-derived fields を安全側 fallback へ補完するようにした。
+- 検証: vm harness で、`ascendedInChallenge = 0` の legacy save は `abandonChallengeInternal()` 後も `ascPoints` / `ascOwned` / `celestialOwned` / `miniGame` / `lastAscensionRun` が維持されること、`ascendedInChallenge = 1` では ascend-derived fields だけ安全側 fallback になることを確認。Playwright client は `browser.newPage: Target page, context or browser has been closed` で今回も実行不可。

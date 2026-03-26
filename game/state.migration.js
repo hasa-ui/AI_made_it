@@ -81,17 +81,18 @@
     if (!merged.challenge.savedSnapshot || typeof merged.challenge.savedSnapshot !== 'object' || Array.isArray(merged.challenge.savedSnapshot)) merged.challenge.savedSnapshot = null;
     if (merged.challenge.activeId && merged.challenge.savedSnapshot){
       const snapshot = Object.assign({}, merged.challenge.savedSnapshot);
-      if (!hasOwn(snapshot, 'ascPoints')) snapshot.ascPoints = 0;
-      if (!hasOwn(snapshot, 'ascEarnedTotal')) snapshot.ascEarnedTotal = 0;
-      if (!hasOwn(snapshot, 'celestialPoints')) snapshot.celestialPoints = 0;
-      if (!hasOwn(snapshot, 'celestialEarnedTotal')) snapshot.celestialEarnedTotal = 0;
-      if (!hasOwn(snapshot, 'ascOwned')) snapshot.ascOwned = deepCopy(defaultState.ascOwned);
-      if (!hasOwn(snapshot, 'celestialOwned')) snapshot.celestialOwned = deepCopy(defaultState.celestialOwned);
-      if (!hasOwn(snapshot, 'celestial')) snapshot.celestial = deepCopy(defaultState.celestial);
-      if (!hasOwn(snapshot, 'achievementsOwned')) snapshot.achievementsOwned = {};
-      if (!hasOwn(snapshot, 'miniGame')) snapshot.miniGame = deepCopy(defaultState.miniGame);
-      if (!hasOwn(snapshot, 'runStats')) snapshot.runStats = deepCopy(defaultState.runStats);
-      if (!hasOwn(snapshot, 'lastAscensionRun')) snapshot.lastAscensionRun = null;
+      const preserveLoadedMeta = (merged.challenge.ascendedInChallenge || 0) <= 0;
+      if (!hasOwn(snapshot, 'ascPoints')) snapshot.ascPoints = preserveLoadedMeta ? (merged.ascPoints || 0) : 0;
+      if (!hasOwn(snapshot, 'ascEarnedTotal')) snapshot.ascEarnedTotal = preserveLoadedMeta ? (merged.ascEarnedTotal || 0) : 0;
+      if (!hasOwn(snapshot, 'celestialPoints')) snapshot.celestialPoints = preserveLoadedMeta ? (merged.celestialPoints || 0) : 0;
+      if (!hasOwn(snapshot, 'celestialEarnedTotal')) snapshot.celestialEarnedTotal = preserveLoadedMeta ? (merged.celestialEarnedTotal || 0) : 0;
+      if (!hasOwn(snapshot, 'ascOwned')) snapshot.ascOwned = preserveLoadedMeta ? deepCopy(merged.ascOwned || {}) : deepCopy(defaultState.ascOwned);
+      if (!hasOwn(snapshot, 'celestialOwned')) snapshot.celestialOwned = preserveLoadedMeta ? deepCopy(merged.celestialOwned || {}) : deepCopy(defaultState.celestialOwned);
+      if (!hasOwn(snapshot, 'celestial')) snapshot.celestial = preserveLoadedMeta ? deepCopy(merged.celestial || defaultState.celestial) : deepCopy(defaultState.celestial);
+      if (!hasOwn(snapshot, 'achievementsOwned')) snapshot.achievementsOwned = deepCopy(merged.achievementsOwned || {});
+      if (!hasOwn(snapshot, 'miniGame')) snapshot.miniGame = deepCopy(merged.miniGame || defaultState.miniGame);
+      if (!hasOwn(snapshot, 'runStats')) snapshot.runStats = preserveLoadedMeta ? deepCopy(merged.runStats || defaultState.runStats) : deepCopy(defaultState.runStats);
+      if (!hasOwn(snapshot, 'lastAscensionRun')) snapshot.lastAscensionRun = preserveLoadedMeta ? deepCopy(merged.lastAscensionRun || null) : null;
       merged.challenge.savedSnapshot = snapshot;
     }
     if (typeof merged.challenge.savedGold !== 'number' && merged.challenge.savedGold !== null) merged.challenge.savedGold = null;

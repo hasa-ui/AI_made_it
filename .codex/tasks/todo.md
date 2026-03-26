@@ -117,3 +117,19 @@
 - `node <<'NODE' ... NODE` harness で、その migrated save から `abandonChallengeInternal()` しても `ascPoints` / `miniGame` / `lastAscensionRun` が challenge 進行前の安全側 state (`0` / 既定値 / `null`) に戻ることを確認。
 - `node <<'NODE' ... NODE` harness で、同じ migrated save から `tryCompleteChallengeInternal()` しても challenge clear だけ保持しつつ同じ安全側 state に戻ることを確認。
 - Playwright client: `browser.newPage: Target page, context or browser has been closed` により今回もブラウザ確認は実行不可。
+
+## Fix legacy snapshot baseline loss bug
+- [x] Preserve loaded meta state for legacy active challenges that never ascended inside the challenge
+- [x] Keep safe fallback only for legacy snapshots with recorded in-challenge ascends
+- [x] Verify both compatibility paths with harnesses
+
+## Progress log
+- Adjusted legacy active-challenge backfill to branch on `ascendedInChallenge`: no-ascend saves now seed missing meta fields from the loaded save, while saves that already ascended still fall back to safe reset values for ascend-derived fields.
+- This restores legitimate pre-challenge progression for the common compatibility case without reopening the known leak from legacy challenge ascends.
+
+## Verification log
+- `node --check game/state.migration.js` : 成功
+- `git diff --check` : 成功
+- `node <<'NODE' ... NODE` harness で、`ascendedInChallenge = 0` の legacy active challenge save は `SM.importState()` 後に `ascPoints` / `ascOwned` / `celestialOwned` / `miniGame` / `lastAscensionRun` を loaded save から backfill し、`abandonChallengeInternal()` 後もそれらが維持されることを確認。
+- `node <<'NODE' ... NODE` harness で、`ascendedInChallenge = 1` の legacy active challenge save は ascend-derived fields だけ安全側 fallback (`0` / default / `null`) へ補完されることを確認。
+- Playwright client: `browser.newPage: Target page, context or browser has been closed` により今回もブラウザ確認は実行不可。
