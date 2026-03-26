@@ -3,8 +3,34 @@
   const runtime = window.StateRuntime;
   if (!runtime) throw new Error('state.defaults.js must be loaded before state.migration.js');
 
-  const { C, SAVE_VERSION, deepCopy, defaultState } = runtime;
+  const { C, SAVE_VERSION, deepCopy, defaultState, nowSec } = runtime;
   function hasOwn(obj, key){ return !!obj && Object.prototype.hasOwnProperty.call(obj, key); }
+  function buildRunStatsAfterLegacyAutoResolve(runStats, currentGold, challengeAscends){
+    const prev = Object.assign({}, deepCopy(defaultState.runStats), runStats || {});
+    const ascends = Math.max(0, Math.floor(challengeAscends || 0));
+    const history = Array.isArray(prev.history) ? prev.history.slice(0, Math.max(0, prev.history.length - ascends)).slice(-30) : [];
+    const runCount = Math.max(1, (Number(prev.runCount) || 1) - ascends);
+    return {
+      runCount,
+      currentRunStartedAt: nowSec(),
+      currentRunPeakGold: Math.max(0, currentGold || 0),
+      currentRunUnitTypes: {},
+      currentRunUpgradeBuys: 0,
+      history
+    };
+  }
+  function resetAmbiguousLegacyChallengeMeta(merged){
+    merged.ascPoints = 0;
+    merged.ascEarnedTotal = 0;
+    merged.ascOwned = deepCopy(defaultState.ascOwned);
+    merged.celestialPoints = 0;
+    merged.celestialEarnedTotal = 0;
+    merged.celestialOwned = deepCopy(defaultState.celestialOwned);
+    merged.celestial = deepCopy(defaultState.celestial);
+    merged.achievementsOwned = {};
+    merged.achievementsProgress = {};
+    merged.miniGame = deepCopy(defaultState.miniGame);
+  }
 
   function migrateState(raw){
     if (!raw || typeof raw !== 'object') throw new Error('Invalid save data: object required');
@@ -84,6 +110,7 @@
       const requiredFields = ['ascPoints','ascEarnedTotal','celestialPoints','celestialEarnedTotal','ascOwned','celestialOwned','celestial','achievementsOwned','miniGame','runStats','lastAscensionRun'];
       const hasIncompleteLegacySnapshot = requiredFields.some((key)=>!hasOwn(snapshot, key));
       if (hasIncompleteLegacySnapshot){
+        const challengeAscends = Math.max(0, Math.floor(merged.challenge.ascendedInChallenge || 0));
         if (hasOwn(snapshot, 'gold') && typeof snapshot.gold === 'number') merged.gold = snapshot.gold;
         else if (typeof merged.challenge.savedGold === 'number') merged.gold = merged.challenge.savedGold;
         if (hasOwn(snapshot, 'totalGoldEarned') && typeof snapshot.totalGoldEarned === 'number') merged.totalGoldEarned = snapshot.totalGoldEarned;
@@ -93,13 +120,17 @@
         if (hasOwn(snapshot, 'units') && snapshot.units && typeof snapshot.units === 'object' && !Array.isArray(snapshot.units)) merged.units = deepCopy(snapshot.units);
         if (hasOwn(snapshot, 'upgrades') && snapshot.upgrades && typeof snapshot.upgrades === 'object' && !Array.isArray(snapshot.upgrades)) merged.upgrades = deepCopy(snapshot.upgrades);
         if (hasOwn(snapshot, 'legacyNodes') && snapshot.legacyNodes && typeof snapshot.legacyNodes === 'object' && !Array.isArray(snapshot.legacyNodes)) merged.legacyNodes = deepCopy(snapshot.legacyNodes);
+        resetAmbiguousLegacyChallengeMeta(merged);
         if (hasOwn(snapshot, 'runStats') && snapshot.runStats && typeof snapshot.runStats === 'object' && !Array.isArray(snapshot.runStats)){
           merged.runStats = Object.assign({}, deepCopy(defaultState.runStats), deepCopy(snapshot.runStats));
           merged.runStats.currentRunUnitTypes = Object.assign({}, merged.runStats.currentRunUnitTypes || {});
           merged.runStats.history = Array.isArray(merged.runStats.history) ? merged.runStats.history.slice(-30) : [];
+        } else {
+          merged.runStats = buildRunStatsAfterLegacyAutoResolve(merged.runStats, merged.gold, challengeAscends);
         }
-        if (hasOwn(snapshot, 'lastAscensionRun')) merged.lastAscensionRun = deepCopy(snapshot.lastAscensionRun || null);
+        merged.lastAscensionRun = hasOwn(snapshot, 'lastAscensionRun') ? deepCopy(snapshot.lastAscensionRun || null) : null;
         merged.challenge.activeId = null;
+        merged.challenge.ascendedInChallenge = 0;
         merged.challenge.savedSnapshot = null;
         merged.challenge.savedGold = null;
         merged.challenge.savedTotalGold = null;

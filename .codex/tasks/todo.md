@@ -181,3 +181,38 @@
 - `node <<'NODE' ... NODE` harness で、不完全な legacy active challenge save は `SM.importState()` 後に `challenge.activeId === null` となり、`gold` / `totalGoldEarned` / `units` は snapshot 値へ戻りつつ、`ascPoints` / `ascOwned` / `celestialOwned` / `achievementsOwned` / `miniGame` / `runStats` / `lastAscensionRun` は loaded save の値が維持されることを確認。
 - `node <<'NODE' ... NODE` harness で、complete snapshot save は `SM.importState()` 後も `challenge.activeId` を維持し、完全 snapshot がそのまま残ることを確認。
 - Playwright client: `browser.newPage: Target page, context or browser has been closed` により今回もブラウザ確認は実行不可。
+
+## Fix legacy auto-resolve leakage and run-stats bugs
+- [x] Revisit incomplete legacy challenge auto-resolve behavior for ambiguous meta fields
+- [x] Reinitialize current run stats when no snapshot baseline exists
+- [x] Verify legacy auto-resolve behavior with and without in-challenge ascends
+
+## Progress log
+- Updated `state.migration.js` so incomplete legacy active-challenge snapshots now discard ambiguous meta progression (`ascPoints`, meta shop ownership, achievements, mini-game stats, branch selection) before auto-resolving the challenge.
+- Added a small run-stats rebuild path for legacy auto-resolve: when no `snapshot.runStats` baseline exists, migration now starts a fresh current run at the restored gold amount and trims history/run-count increments caused by in-challenge ascends.
+- Auto-resolved legacy challenges now also clear `challenge.ascendedInChallenge` so discarded challenge-only ascension counters do not leak forward.
+
+## Verification log
+- `node --check game/state.migration.js` : 成功
+- `git diff --check` : 成功
+- `node <<'NODE' ... NODE` harness で、不完全な legacy active challenge save は `SM.importState()` 後に `challenge.activeId === null` となり、run-local snapshot を復元した上で `ascPoints` / `ascOwned` / `celestialOwned` / `achievementsOwned` / `miniGame` が default/null へ戻ることを確認。
+- `node <<'NODE' ... NODE` harness で、`snapshot.runStats` が無い legacy save は `currentRunStartedAt` / `currentRunPeakGold` / `currentRunUnitTypes` / `currentRunUpgradeBuys` が通常 run 用に再初期化され、`ascendedInChallenge = 1` の場合は challenge 中に追加された `runStats.history` と `runCount` の 1 回分が巻き戻ることを確認。
+- Playwright client: `browser.newPage: Target page, context or browser has been closed` により今回もブラウザ確認は実行不可。
+
+## Review e404964d1bda12fbe3708f803e4e29c24117b494
+- [ ] Inspect commit diff and impacted files
+- [ ] Validate suspected regressions against surrounding code/tests
+- [ ] Produce prioritized review findings
+
+## Progress log
+- Started review of commit `e404964d1bda12fbe3708f803e4e29c24117b494` ("Bug fixes").
+
+## Verification log
+- Pending
+- Inspected `game/state.migration.js` diff and traced how incomplete legacy challenge snapshots are auto-resolved during `migrateState()`.
+- Reproduced with a Node/vm harness that an incomplete legacy active-challenge save with `ascendedInChallenge = 1` now imports with `challenge.activeId === null` but keeps live `ascPoints`, `ascOwned`, `celestialPoints`, `celestialOwned`, `achievementsOwned`, `miniGame`, `runStats`, and `lastAscensionRun` from inside the challenge.
+- Reproduced with a second harness that even `ascendedInChallenge = 0` saves keep challenge-mutated `runStats.currentRunStartedAt/currentRunPeakGold/history` after auto-resolve, so the resumed normal run inherits challenge timers/history.
+
+## Verification log
+- `node <<'NODE' ... NODE` vm harness: imported an incomplete legacy active-challenge save whose live state had challenge-earned AP/CP/meta purchases; `migrateState()` restored `gold`/`totalGoldEarned` to snapshot values while leaving `ascPoints: 35`, `ascOwned.asc_global20: 1`, `celestialPoints: 8`, `celestialOwned.cel_prism: 1`, `achievementsOwned`, `miniGame`, `runStats`, and `lastAscensionRun` untouched.
+- `node <<'NODE' ... NODE` vm harness: imported an incomplete legacy active-challenge save with `ascendedInChallenge = 0`; `migrateState()` still cleared `challenge.activeId` but preserved challenge `runStats.currentRunStartedAt: 12345`, `currentRunPeakGold: 999`, and challenge-tagged `history`, confirming current-run stats are not rewound.
