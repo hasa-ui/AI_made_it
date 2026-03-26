@@ -1157,7 +1157,7 @@
 
   function renderChallengeStatus(){
     const st = E.getState();
-    st.challenge = st.challenge || { activeId:null, completed:{}, bestSec:{}, ascendedInChallenge:0, savedGold:null, savedTotalGold:null };
+    st.challenge = st.challenge || { activeId:null, completed:{}, bestSec:{}, ascendedInChallenge:0, savedSnapshot:null, savedGold:null, savedTotalGold:null };
     const status = document.getElementById('challengeStatus');
     if (status){
       const active = E.getActiveChallenge ? E.getActiveChallenge(st) : null;

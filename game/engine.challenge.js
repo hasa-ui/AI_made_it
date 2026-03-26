@@ -14,14 +14,59 @@
     const getChallengeGoalTotal = deps.getChallengeGoalTotal || ((ch)=>ch.goalTotalGold || Infinity);
 
     function getState(){ return stateRef.get(); }
+    function cloneMap(src){ return Object.assign({}, src || {}); }
+    function captureChallengeSnapshot(state){
+      const runStats = state.runStats || {};
+      return {
+        gold: state.gold || 0,
+        totalGoldEarned: state.totalGoldEarned || 0,
+        prestigeEarnedTotal: state.prestigeEarnedTotal || 0,
+        legacy: state.legacy || 0,
+        units: cloneMap(state.units),
+        upgrades: cloneMap(state.upgrades),
+        legacyNodes: cloneMap(state.legacyNodes),
+        runStats: {
+          currentRunStartedAt: runStats.currentRunStartedAt || null,
+          currentRunPeakGold: runStats.currentRunPeakGold || 0,
+          currentRunUnitTypes: cloneMap(runStats.currentRunUnitTypes),
+          currentRunUpgradeBuys: runStats.currentRunUpgradeBuys || 0
+        }
+      };
+    }
+    function restoreChallengeSnapshot(state){
+      state.challenge = state.challenge || { activeId:null, completed:{}, bestSec:{}, ascendedInChallenge:0, savedSnapshot:null, savedGold:null, savedTotalGold:null };
+      const snap = state.challenge.savedSnapshot;
+      if (snap && typeof snap === 'object'){
+        state.gold = typeof snap.gold === 'number' ? snap.gold : (state.challenge.savedGold || 0);
+        state.totalGoldEarned = typeof snap.totalGoldEarned === 'number' ? snap.totalGoldEarned : (state.challenge.savedTotalGold || 0);
+        state.prestigeEarnedTotal = typeof snap.prestigeEarnedTotal === 'number' ? snap.prestigeEarnedTotal : (state.prestigeEarnedTotal || 0);
+        state.legacy = typeof snap.legacy === 'number' ? snap.legacy : (state.legacy || 0);
+        state.units = cloneMap(snap.units);
+        state.upgrades = cloneMap(snap.upgrades);
+        state.legacyNodes = cloneMap(snap.legacyNodes);
+        state.runStats = state.runStats || {};
+        const snapRunStats = snap.runStats || {};
+        state.runStats.currentRunStartedAt = snapRunStats.currentRunStartedAt || null;
+        state.runStats.currentRunPeakGold = snapRunStats.currentRunPeakGold || 0;
+        state.runStats.currentRunUnitTypes = cloneMap(snapRunStats.currentRunUnitTypes);
+        state.runStats.currentRunUpgradeBuys = snapRunStats.currentRunUpgradeBuys || 0;
+      } else {
+        if (typeof state.challenge.savedGold === 'number') state.gold = state.challenge.savedGold;
+        if (typeof state.challenge.savedTotalGold === 'number') state.totalGoldEarned = state.challenge.savedTotalGold;
+      }
+      state.challenge.savedSnapshot = null;
+      state.challenge.savedGold = null;
+      state.challenge.savedTotalGold = null;
+    }
 
     function startChallengeInternal(id){
       const state = getState();
       const ch = (C.CHALLENGES || []).find(x=>x.id===id);
       if (!ch) return { ok:false, reason:'not_found' };
-      state.challenge = state.challenge || { activeId:null, completed:{}, bestSec:{}, ascendedInChallenge:0, savedGold:null, savedTotalGold:null };
+      state.challenge = state.challenge || { activeId:null, completed:{}, bestSec:{}, ascendedInChallenge:0, savedSnapshot:null, savedGold:null, savedTotalGold:null };
       if (state.challenge.activeId) return { ok:false, reason:'already_active' };
       const rewardSummary = getChallengeRewardSummary(state);
+      state.challenge.savedSnapshot = captureChallengeSnapshot(state);
       state.challenge.savedGold = state.gold || 0;
       state.challenge.savedTotalGold = state.totalGoldEarned || 0;
       state.challenge.activeId = id;
@@ -44,14 +89,9 @@
 
     function abandonChallengeInternal(){
       const state = getState();
-      state.challenge = state.challenge || { activeId:null, completed:{}, bestSec:{}, ascendedInChallenge:0, savedGold:null, savedTotalGold:null };
-      const restoredGold = state.challenge.savedGold;
-      const restoredTotalGold = state.challenge.savedTotalGold;
+      state.challenge = state.challenge || { activeId:null, completed:{}, bestSec:{}, ascendedInChallenge:0, savedSnapshot:null, savedGold:null, savedTotalGold:null };
       state.challenge.activeId = null;
-      if (typeof restoredGold === 'number') state.gold = restoredGold;
-      if (typeof restoredTotalGold === 'number') state.totalGoldEarned = restoredTotalGold;
-      state.challenge.savedGold = null;
-      state.challenge.savedTotalGold = null;
+      restoreChallengeSnapshot(state);
       invalidateAggCache();
       recalcAndCacheGPS(state);
       return { ok:true };
@@ -63,7 +103,7 @@
       if (!ch) return { ok:false, reason:'no_active' };
       const goal = getChallengeGoalTotal(ch, state);
       if ((state.totalGoldEarned || 0) < goal) return { ok:false, reason:'goal' };
-      state.challenge = state.challenge || { activeId:null, completed:{}, bestSec:{}, ascendedInChallenge:0, savedGold:null, savedTotalGold:null };
+      state.challenge = state.challenge || { activeId:null, completed:{}, bestSec:{}, ascendedInChallenge:0, savedSnapshot:null, savedGold:null, savedTotalGold:null };
       state.challenge.completed = state.challenge.completed || {};
       state.challenge.bestSec = state.challenge.bestSec || {};
       const now = nowSec();
@@ -79,13 +119,8 @@
         state.abyss.features[reward.feature] = true;
         unlockedFeature = reward.feature;
       }
-      const restoredGold = state.challenge.savedGold;
-      const restoredTotalGold = state.challenge.savedTotalGold;
       state.challenge.activeId = null;
-      if (typeof restoredGold === 'number') state.gold = restoredGold;
-      if (typeof restoredTotalGold === 'number') state.totalGoldEarned = restoredTotalGold;
-      state.challenge.savedGold = null;
-      state.challenge.savedTotalGold = null;
+      restoreChallengeSnapshot(state);
       invalidateAggCache();
       recalcAndCacheGPS(state);
       return { ok:true, id:ch.id, firstClear: !Number.isFinite(prev), sec, unlockedFeature };

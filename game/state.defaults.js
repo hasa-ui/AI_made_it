@@ -90,6 +90,7 @@
       completed: {},
       bestSec: {},
       ascendedInChallenge: 0,
+      savedSnapshot: null,
       savedGold: null,
       savedTotalGold: null
     },

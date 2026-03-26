@@ -35,7 +35,7 @@
     runtime.state.prestigeEarnedTotal = 0;
     if (!keepLegacyInChallenge) runtime.state.legacy = 0;
     if (!keepTotalGold) runtime.state.totalGoldEarned = 0;
-    if (!keepLegacyTree) runtime.state.legacyNodes = (C.LEGACY_DEFS || []).reduce((a,d)=>(a[d.id]=0,a),{});
+    if (!keepLegacyTree && !keepLegacyInChallenge) runtime.state.legacyNodes = (C.LEGACY_DEFS || []).reduce((a,d)=>(a[d.id]=0,a),{});
 
     runtime.state.runStats = runtime.state.runStats || {};
     runtime.state.runStats.history = Array.isArray(runtime.state.runStats.history) ? runtime.state.runStats.history : [];
@@ -55,7 +55,7 @@
       endedAt: now
     };
     runtime.state.lastAscensionRun = runSummary;
-    runtime.state.challenge = runtime.state.challenge || { activeId:null, completed:{}, bestSec:{}, ascendedInChallenge:0, savedGold:null, savedTotalGold:null };
+    runtime.state.challenge = runtime.state.challenge || { activeId:null, completed:{}, bestSec:{}, ascendedInChallenge:0, savedSnapshot:null, savedGold:null, savedTotalGold:null };
     if (runtime.state.challenge.activeId) runtime.state.challenge.ascendedInChallenge = (runtime.state.challenge.ascendedInChallenge || 0) + 1;
     runtime.state.runStats.history.push(runSummary);
     if (runtime.state.runStats.history.length > 30) runtime.state.runStats.history = runtime.state.runStats.history.slice(-30);

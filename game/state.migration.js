@@ -77,6 +77,7 @@
     merged.challenge.completed = Object.assign({}, merged.challenge.completed || {});
     merged.challenge.bestSec = Object.assign({}, merged.challenge.bestSec || {});
     if (typeof merged.challenge.ascendedInChallenge !== 'number') merged.challenge.ascendedInChallenge = 0;
+    if (!merged.challenge.savedSnapshot || typeof merged.challenge.savedSnapshot !== 'object' || Array.isArray(merged.challenge.savedSnapshot)) merged.challenge.savedSnapshot = null;
     if (typeof merged.challenge.savedGold !== 'number' && merged.challenge.savedGold !== null) merged.challenge.savedGold = null;
     if (typeof merged.challenge.savedTotalGold !== 'number' && merged.challenge.savedTotalGold !== null) merged.challenge.savedTotalGold = null;
     merged.abyss = Object.assign({}, deepCopy(defaultState.abyss), merged.abyss || {});

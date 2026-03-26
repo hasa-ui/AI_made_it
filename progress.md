@@ -122,3 +122,9 @@ Original prompt: ロードマップのPhase 1を完了させてください
 - 修正: `doAscendInternal()` で、アクティブ challenge 中かつ `challengeKeepLegacy` 報酬解放済みなら `legacy` をリセットしないよう変更し、Challenge 2 報酬が Ascend 再始動後も継続するようにした。
 - 修正: `engine.state-normalizers` と UI fallback 側の challenge shape にも `savedGold` を揃え、Abyss reset 後や UI 単体参照時に shape 差異が残らないようにした。
 - 検証: `node --check` と vm harness で、Challenge 開始/中断による gold 漏れが消えていること、Challenge 2 報酬が active challenge 中の Ascend 後も維持されることを確認。Playwright client は `browser.newPage: Target page, context or browser has been closed` で今回も実行不可。
+
+## 2026-03-26 Phase 3 challenge snapshot follow-up fixes
+- 修正: `game/engine.challenge.js` で gold だけの退避をやめ、Challenge 開始前の `units` `upgrades` `legacy` `legacyNodes` `prestigeEarnedTotal` `runStats` を `savedSnapshot` に保存し、中断/クリア時は同じ helper で復元するよう変更。Challenge 開始 gold を使って買った資産が通常 run に漏れないようにした。
+- 修正: `game/engine.reset.js` で `challengeKeepLegacy` 中の Ascend は `legacyNodes` も保持するようにし、Challenge 2 報酬が points だけでなく Legacy Tree 全体として再始動後も残るようにした。
+- 修正: `state.defaults` / `state.migration` / `engine.state-normalizers` / UI fallback に `challenge.savedSnapshot` を追加し、途中 save や Abyss reset 後でも challenge state shape が揃うようにした。
+- 検証: `node --check` と vm harness で、Challenge 開始 gold を unit へ変換しても中断/クリア後に通常 run へ持ち出せないこと、`challengeKeepLegacy` が active challenge 中の Ascend 後も Legacy Tree を保持することを確認。Playwright client は `page.goto: Target page, context or browser has been closed` で今回も実行不可。

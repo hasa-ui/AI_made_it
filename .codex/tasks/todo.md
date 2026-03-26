@@ -31,3 +31,22 @@
 - `node <<'NODE' ... NODE` harness で、`ch_quantum_lock` クリア済み状態から Challenge 開始時に `gold` が `25050` へ増えても、`abandonChallengeInternal()` 後は `gold: 100` / `totalGoldEarned: 100` に正しく復元されることを確認。
 - `node <<'NODE' ... NODE` harness で、`ch_no_upgrades` クリア済みかつ active challenge 中に `doAscendInternal()` を呼んでも `legacy: 77` が維持され、`activeId` 継続・`ascendedInChallenge: 1` になることを確認。
 - Playwright client: `browser.newPage: Target page, context or browser has been closed` により今回もブラウザ確認は実行不可。
+
+## Fix follow-up challenge snapshot bugs
+- [x] Inspect restore paths for asset leakage and partial legacy retention
+- [x] Expand challenge resume snapshot to restore pre-challenge run state
+- [x] Preserve legacy nodes on Ascend during keep-Legacy challenges
+- [x] Verify exploit closure and node retention with harnesses
+
+## Progress log
+- Replaced the partial gold-only restore with a fuller challenge resume snapshot so exiting a challenge restores pre-challenge `units`, `upgrades`, `legacy`, `legacyNodes`, `prestigeEarnedTotal`, and run-local stats instead of only refunding gold.
+- Kept `savedGold` / `savedTotalGold` as compatibility fallback, but made `savedSnapshot` the canonical restore source for new challenge runs.
+- Updated Ascend reset logic so `challengeKeepLegacy` preserves both `legacy` and `legacyNodes` while an active challenge is being restarted.
+
+## Verification log
+- `node --check game/state.defaults.js game/state.migration.js game/engine.challenge.js game/engine.reset.js game/engine.state-normalizers.js game/ui.app.js` : 成功
+- `git diff --check` : 成功
+- `node <<'NODE' ... NODE` harness で、`ch_quantum_lock` クリア済み状態から Challenge 中に unit を購入しても、`abandonChallengeInternal()` 後は `gold: 100` / `totalGoldEarned: 100` / `units.junior: 2` に戻り、Challenge 資産が通常 run へ漏れないことを確認。
+- `node <<'NODE' ... NODE` harness で、Challenge 中に unit を購入した後に `tryCompleteChallengeInternal()` しても、クリアフラグだけ保持しつつ `gold: 240` / `totalGoldEarned: 240` / `units.junior: 3` の開始前 state に戻ることを確認。
+- `node <<'NODE' ... NODE` harness で、`ch_no_upgrades` クリア済みの active challenge 中に `doAscendInternal()` を呼ぶと `legacy: 77` と `legacyNodes.lg_global10: 2` / `lg_seed50: 1` が維持されることを確認。
+- Playwright client: `page.goto: Target page, context or browser has been closed` により今回もブラウザ確認は実行不可。
