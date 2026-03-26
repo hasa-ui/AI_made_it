@@ -192,3 +192,8 @@ Original prompt: ロードマップのPhase 1を完了させてください
 - 修正: `ascEarnedTotal` と `celestialEarnedTotal` は Ascend でしか増えないため、`ascendedInChallenge === 0` の legacy save では loaded save 側の値を保持し、`ascendedInChallenge > 0` かつ snapshot baseline 不在の時だけ `0` へ落とすようにした。
 - 修正: 一方で snapshot に baseline が無い `achievementsOwned` / `achievementsProgress` / `miniGame` などは引き続き reset し、`lastAscensionRun` の条件付き保持と `runStats` の current-run 再初期化も維持している。
 - 検証: vm harness で、partial legacy snapshot が `ascPoints` / `ascOwned` / `celestialOwned` を持つケースではそれらが field 単位で復元され、snapshot に無い `achievementsOwned` / `miniGame` だけが reset されること、`ascendedInChallenge = 0` では `ascEarnedTotal` / `celestialEarnedTotal` が loaded save の値を保持し、`ascendedInChallenge = 1` では snapshot baseline 不在時に `0` へ落ちることを確認。Playwright client は `browser.newPage: Target page, context or browser has been closed` で今回も実行不可。
+
+## 2026-03-26 Restored snapshot migration reapply
+- 修正: `game/state.migration.js` の既存 versioned migration を helper 化し、partial legacy snapshot から `ascOwned` / `celestialOwned` を復元した後にも同じ clamp/refund を再適用するようにした。
+- 修正: これにより、`sourceVersion < 16` の Ascension 一回きり upgrade overcap や、`sourceVersion < 14` の Celestial branch upgrade refund 済み状態が、snapshot restore で復活してしまう経路を塞いだ。
+- 検証: vm harness で、`sourceVersion = 13` の incomplete legacy active challenge save に `savedSnapshot.ascOwned.asc_void_multiplier = 3` と `savedSnapshot.celestialOwned.cel_harmonic_seed = 2` を持たせて import し、auto-resolve 後に `asc_void_multiplier === 1` / `ascPoints === 8400`、`cel_harmonic_seed === 0` / `celestialPoints === 10` へ補正されることを確認。Playwright client は `browser.newPage: Target page, context or browser has been closed` で今回も実行不可。

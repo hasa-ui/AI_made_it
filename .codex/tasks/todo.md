@@ -251,6 +251,21 @@
 - `node <<'NODE' ... NODE` vm harness: imported an incomplete legacy active-challenge save whose live state had challenge-earned AP/CP/meta purchases; `migrateState()` restored `gold`/`totalGoldEarned` to snapshot values while leaving `ascPoints: 35`, `ascOwned.asc_global20: 1`, `celestialPoints: 8`, `celestialOwned.cel_prism: 1`, `achievementsOwned`, `miniGame`, `runStats`, and `lastAscensionRun` untouched.
 - `node <<'NODE' ... NODE` vm harness: imported an incomplete legacy active-challenge save with `ascendedInChallenge = 0`; `migrateState()` still cleared `challenge.activeId` but preserved challenge `runStats.currentRunStartedAt: 12345`, `currentRunPeakGold: 999`, and challenge-tagged `history`, confirming current-run stats are not rewound.
 
+## Fix restored snapshot migration bypass
+- [x] Reapply versioned asc/celestial migration rules after restoring snapshot meta
+- [x] Verify restored legacy snapshot ownership is clamped/refunded correctly
+- [x] Keep the fix local to `state.migration.js`
+
+## Progress log
+- Extracted the existing versioned Ascension/Celestial migration rules into local helpers in `state.migration.js`.
+- The same clamp/refund logic now runs both on the top-level imported state and again after partial legacy snapshot meta is restored, so snapshot-provided `ascOwned` / `celestialOwned` can no longer bypass old refund migrations.
+
+## Verification log
+- `node --check game/state.migration.js` : 成功
+- `git diff --check` : 成功
+- `node <<'NODE' ... NODE` harness で、`sourceVersion = 13` の incomplete legacy active challenge save が `savedSnapshot.ascOwned.asc_void_multiplier = 3` と `savedSnapshot.celestialOwned.cel_harmonic_seed = 2` を持つケースを import し、auto-resolve 後に `asc_void_multiplier === 1` + `ascPoints === 8400`、`cel_harmonic_seed === 0` + `celestialPoints === 10` へ補正されることを確認。
+- Playwright client: `browser.newPage: Target page, context or browser has been closed` により今回もブラウザ確認は実行不可。
+
 ## Fix partial legacy snapshot baseline loss
 - [x] Restore available meta rollback fields from partially populated legacy snapshots
 - [x] Preserve earned-total counters when no in-challenge ascends occurred

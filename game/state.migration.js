@@ -20,13 +20,39 @@
       history
     };
   }
-  function restoreLegacySnapshotMeta(merged, snapshot, challengeAscends){
+  function applyAscUpgradeMigration(state, sourceVersion){
+    if (!(sourceVersion > 0 && sourceVersion < 16)) return;
+    let refundedAp = 0;
+    for (const def of C.ASC_UPGRADES){
+      const baseMaxLevel = (typeof def.maxLevel === 'number') ? def.maxLevel : Infinity;
+      if (!Number.isFinite(baseMaxLevel) || baseMaxLevel > 1) continue;
+      const owned = state.ascOwned[def.id] || 0;
+      if (owned <= baseMaxLevel) continue;
+      refundedAp += (owned - baseMaxLevel) * (def.cost || 0);
+      state.ascOwned[def.id] = baseMaxLevel;
+    }
+    if (refundedAp > 0) state.ascPoints = (state.ascPoints || 0) + refundedAp;
+  }
+  function applyCelestialUpgradeMigration(state, sourceVersion){
+    if (!(sourceVersion > 0 && sourceVersion < 14)) return;
+    let refundedCp = 0;
+    for (const def of (C.CELESTIAL_UPGRADES || [])){
+      if (!def.branch || def.branch === 'shared') continue;
+      const lvl = state.celestialOwned[def.id] || 0;
+      if (lvl <= 0) continue;
+      refundedCp += (def.cost || 0) * lvl;
+      state.celestialOwned[def.id] = 0;
+    }
+    if (refundedCp > 0) state.celestialPoints = (state.celestialPoints || 0) + refundedCp;
+  }
+  function restoreLegacySnapshotMeta(merged, snapshot, challengeAscends, sourceVersion){
     if (hasOwn(snapshot, 'ascPoints') && typeof snapshot.ascPoints === 'number') merged.ascPoints = snapshot.ascPoints;
     else merged.ascPoints = 0;
     if (hasOwn(snapshot, 'ascEarnedTotal') && typeof snapshot.ascEarnedTotal === 'number') merged.ascEarnedTotal = snapshot.ascEarnedTotal;
     else if (challengeAscends > 0) merged.ascEarnedTotal = 0;
     if (isRecord(snapshot.ascOwned)) merged.ascOwned = Object.assign({}, deepCopy(defaultState.ascOwned), deepCopy(snapshot.ascOwned));
     else merged.ascOwned = deepCopy(defaultState.ascOwned);
+    applyAscUpgradeMigration(merged, sourceVersion);
 
     if (hasOwn(snapshot, 'celestialPoints') && typeof snapshot.celestialPoints === 'number') merged.celestialPoints = snapshot.celestialPoints;
     else merged.celestialPoints = 0;
@@ -36,6 +62,7 @@
     else merged.celestialOwned = deepCopy(defaultState.celestialOwned);
     if (isRecord(snapshot.celestial)) merged.celestial = Object.assign({}, deepCopy(defaultState.celestial), deepCopy(snapshot.celestial));
     else merged.celestial = deepCopy(defaultState.celestial);
+    applyCelestialUpgradeMigration(merged, sourceVersion);
 
     if (isRecord(snapshot.achievementsOwned)) merged.achievementsOwned = deepCopy(snapshot.achievementsOwned);
     else merged.achievementsOwned = {};
@@ -64,18 +91,7 @@
 
     merged.ascOwned = merged.ascOwned || {};
     for (const a of C.ASC_UPGRADES) if (!(a.id in merged.ascOwned)) merged.ascOwned[a.id] = 0;
-    if (sourceVersion > 0 && sourceVersion < 16){
-      let refundedAp = 0;
-      for (const def of C.ASC_UPGRADES){
-        const baseMaxLevel = (typeof def.maxLevel === 'number') ? def.maxLevel : Infinity;
-        if (!Number.isFinite(baseMaxLevel) || baseMaxLevel > 1) continue;
-        const owned = merged.ascOwned[def.id] || 0;
-        if (owned <= baseMaxLevel) continue;
-        refundedAp += (owned - baseMaxLevel) * (def.cost || 0);
-        merged.ascOwned[def.id] = baseMaxLevel;
-      }
-      if (refundedAp > 0) merged.ascPoints = (merged.ascPoints || 0) + refundedAp;
-    }
+    applyAscUpgradeMigration(merged, sourceVersion);
 
     merged.celestialOwned = merged.celestialOwned || {};
     for (const a of (C.CELESTIAL_UPGRADES || [])) if (!(a.id in merged.celestialOwned)) merged.celestialOwned[a.id] = 0;
@@ -83,17 +99,7 @@
     if (typeof merged.celestialEarnedTotal !== 'number') merged.celestialEarnedTotal = 0;
     merged.celestial = Object.assign({}, deepCopy(defaultState.celestial), merged.celestial || {});
     if (typeof merged.celestial.activeBranchId !== 'string') merged.celestial.activeBranchId = null;
-    if (sourceVersion > 0 && sourceVersion < 14){
-      let refundedCp = 0;
-      for (const def of (C.CELESTIAL_UPGRADES || [])){
-        if (!def.branch || def.branch === 'shared') continue;
-        const lvl = merged.celestialOwned[def.id] || 0;
-        if (lvl <= 0) continue;
-        refundedCp += (def.cost || 0) * lvl;
-        merged.celestialOwned[def.id] = 0;
-      }
-      if (refundedCp > 0) merged.celestialPoints = (merged.celestialPoints || 0) + refundedCp;
-    }
+    applyCelestialUpgradeMigration(merged, sourceVersion);
 
     merged.settings = Object.assign({}, deepCopy(defaultState.settings), merged.settings || {});
     merged.settings.toast = Object.assign({}, defaultState.settings.toast, merged.settings.toast || {});
@@ -133,7 +139,7 @@
         if (hasOwn(snapshot, 'units') && snapshot.units && typeof snapshot.units === 'object' && !Array.isArray(snapshot.units)) merged.units = deepCopy(snapshot.units);
         if (hasOwn(snapshot, 'upgrades') && snapshot.upgrades && typeof snapshot.upgrades === 'object' && !Array.isArray(snapshot.upgrades)) merged.upgrades = deepCopy(snapshot.upgrades);
         if (hasOwn(snapshot, 'legacyNodes') && snapshot.legacyNodes && typeof snapshot.legacyNodes === 'object' && !Array.isArray(snapshot.legacyNodes)) merged.legacyNodes = deepCopy(snapshot.legacyNodes);
-        restoreLegacySnapshotMeta(merged, snapshot, challengeAscends);
+        restoreLegacySnapshotMeta(merged, snapshot, challengeAscends, sourceVersion);
         if (hasOwn(snapshot, 'runStats') && snapshot.runStats && typeof snapshot.runStats === 'object' && !Array.isArray(snapshot.runStats)){
           merged.runStats = Object.assign({}, deepCopy(defaultState.runStats), deepCopy(snapshot.runStats));
           merged.runStats.currentRunUnitTypes = Object.assign({}, merged.runStats.currentRunUnitTypes || {});
