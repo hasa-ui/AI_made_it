@@ -1623,9 +1623,9 @@
     const body = document.getElementById('updateModalBody');
     if (!modal || !body) return;
     body.textContent = `${C.APP_VERSION} の主な更新
-- 設定画面から通常UI更新間隔と重いパネル更新間隔を個別に変更できるよう追加
-- どちらの更新間隔も 50ms まで短縮可能にし、好みの描画頻度へ調整できるよう変更
-- メインループは設定値を参照して更新頻度を決めるように修正`;
+- State を defaults / migration / storage / facade に分割し、セーブ処理の責務を整理
+- Engine を runtime / economy / progression / shop / reset / facade に分割し、window.ENGINE の互換を保ったまま保守しやすく再編
+- UI bootstrap を独立ファイル化し、起動責務を描画ロジック本体から切り離し`;
     modal.style.display = 'flex';
     document.getElementById('closeUpdateModal')?.addEventListener('click', ()=>{
       modal.style.display = 'none';
@@ -1635,7 +1635,9 @@
   }
 
   // ---------- 初期化 ----------
-  document.addEventListener('DOMContentLoaded', ()=>{
+  function bootUIApp(){
+    if (bootUIApp._booted) return;
+    bootUIApp._booted = true;
     buildUnitsUI(); buildUpgradesUI(); buildAscShop(); buildCelestialShop(); buildChallengesUI(); buildAchievementsUI(); buildSettingsUI();
     bindAutoBuyControls();
     cacheRefs();
@@ -1659,6 +1661,11 @@
     window.addEventListener('beforeunload', ()=>flushScheduledSave(true));
     setInterval(()=>flushScheduledSave(true), C.AUTO_SAVE_INTERVAL || 5000);
     lastFrame = performance.now(); lastUiUpdate = performance.now(); lastSlowUiUpdate = performance.now(); requestAnimationFrame(mainLoop);
-  });
+  }
+
+  window.GameUIBootstrap = {
+    boot: bootUIApp,
+    showUpdateModalIfNeeded
+  };
 
 })();

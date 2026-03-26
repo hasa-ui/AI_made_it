@@ -369,6 +369,7 @@
           <h3>アップデート情報</h3>
           <p class="small muted" style="margin-top:4px;">このゲームは現在<strong>アルファ版</strong>です。仕様やバランスは今後も変更されます。</p>
           <ul class="small muted" style="margin-top:8px; padding-left:20px; line-height:1.8;">
+            <li><strong>Ver.1.30.0</strong>：内部構造を再編。State を defaults / migration / storage / facade に、Engine を runtime / economy / progression / shop / reset / facade に分割し、UI bootstrap を独立ファイル化。公開 API とセーブ互換は維持したまま、今後の機能追加と不具合調査をしやすい構成へ整理。</li>
             <li><strong>Ver.1.29.4</strong>：設定画面に画面更新頻度の調整項目を追加。通常UI更新間隔と重いパネル更新間隔を個別に変更でき、どちらも 50ms まで短縮可能に。</li>
             <li><strong>Ver.1.29.3</strong>：起動時の実績判定が未定義 helper を呼んで初期化停止する不具合を修正。プレイ開始時に Inspector しか表示されず、タブ切替が反応しない問題を解消。</li>
             <li><strong>Ver.1.29.2</strong>：軽量化をさらに進め、UI更新を dirty flag ベースの dispatcher へ再編。Celestialルート一覧と Abyssアップグレード一覧を build-once / update-in-place に変更し、preview/economy の再計算も必要時だけ行うよう改善。</li>
@@ -466,14 +467,24 @@
   <div id="toast" class="toast"></div>
 
   <script src="game/config.js"></script>
+  <script src="game/state.defaults.js"></script>
+  <script src="game/state.migration.js"></script>
+  <script src="game/state.storage.js"></script>
   <script src="game/state.js"></script>
   <script src="game/engine.helpers.js"></script>
   <script src="game/engine.challenge.js"></script>
+  <script src="game/engine.runtime.js"></script>
+  <script src="game/engine.state-normalizers.js"></script>
+  <script src="game/engine.economy.js"></script>
+  <script src="game/engine.progression.js"></script>
+  <script src="game/engine.shop.js"></script>
+  <script src="game/engine.reset.js"></script>
   <script src="game/engine.app.js"></script>
   <script src="game/engine.js"></script>
   <script src="game/ui.helpers.js"></script>
   <script src="game/ui.minigame.js"></script>
   <script src="game/ui.app.js"></script>
+  <script src="game/ui.bootstrap.js"></script>
   <script src="game/ui.js"></script>
 </body>
 </html>
