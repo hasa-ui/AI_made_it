@@ -37,6 +37,7 @@
       completed:retainedCompleted,
       bestSec:retainedBestSec,
       ascendedInChallenge: prevChallenge.ascendedInChallenge || 0,
+      savedGold:null,
       savedTotalGold:null
     };
   };

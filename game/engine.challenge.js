@@ -19,9 +19,10 @@
       const state = getState();
       const ch = (C.CHALLENGES || []).find(x=>x.id===id);
       if (!ch) return { ok:false, reason:'not_found' };
-      state.challenge = state.challenge || { activeId:null, completed:{}, bestSec:{}, ascendedInChallenge:0, savedTotalGold:null };
+      state.challenge = state.challenge || { activeId:null, completed:{}, bestSec:{}, ascendedInChallenge:0, savedGold:null, savedTotalGold:null };
       if (state.challenge.activeId) return { ok:false, reason:'already_active' };
       const rewardSummary = getChallengeRewardSummary(state);
+      state.challenge.savedGold = state.gold || 0;
       state.challenge.savedTotalGold = state.totalGoldEarned || 0;
       state.challenge.activeId = id;
       state.units = (C.UNIT_DEFS || []).reduce((a,u)=>(a[u.id]=0,a),{});
@@ -43,10 +44,13 @@
 
     function abandonChallengeInternal(){
       const state = getState();
-      state.challenge = state.challenge || { activeId:null, completed:{}, bestSec:{}, ascendedInChallenge:0, savedTotalGold:null };
+      state.challenge = state.challenge || { activeId:null, completed:{}, bestSec:{}, ascendedInChallenge:0, savedGold:null, savedTotalGold:null };
+      const restoredGold = state.challenge.savedGold;
       const restoredTotalGold = state.challenge.savedTotalGold;
       state.challenge.activeId = null;
+      if (typeof restoredGold === 'number') state.gold = restoredGold;
       if (typeof restoredTotalGold === 'number') state.totalGoldEarned = restoredTotalGold;
+      state.challenge.savedGold = null;
       state.challenge.savedTotalGold = null;
       invalidateAggCache();
       recalcAndCacheGPS(state);
@@ -59,7 +63,7 @@
       if (!ch) return { ok:false, reason:'no_active' };
       const goal = getChallengeGoalTotal(ch, state);
       if ((state.totalGoldEarned || 0) < goal) return { ok:false, reason:'goal' };
-      state.challenge = state.challenge || { activeId:null, completed:{}, bestSec:{}, ascendedInChallenge:0, savedTotalGold:null };
+      state.challenge = state.challenge || { activeId:null, completed:{}, bestSec:{}, ascendedInChallenge:0, savedGold:null, savedTotalGold:null };
       state.challenge.completed = state.challenge.completed || {};
       state.challenge.bestSec = state.challenge.bestSec || {};
       const now = nowSec();
@@ -75,9 +79,12 @@
         state.abyss.features[reward.feature] = true;
         unlockedFeature = reward.feature;
       }
+      const restoredGold = state.challenge.savedGold;
       const restoredTotalGold = state.challenge.savedTotalGold;
       state.challenge.activeId = null;
+      if (typeof restoredGold === 'number') state.gold = restoredGold;
       if (typeof restoredTotalGold === 'number') state.totalGoldEarned = restoredTotalGold;
+      state.challenge.savedGold = null;
       state.challenge.savedTotalGold = null;
       invalidateAggCache();
       recalcAndCacheGPS(state);

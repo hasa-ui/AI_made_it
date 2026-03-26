@@ -115,3 +115,10 @@ Original prompt: ロードマップのPhase 1を完了させてください
 - 実装: `ui.app.js` で Legacy Inspector に排他情報、Challenge 一覧に `狙い / 報酬タイプ / 実効目標`、Challenge ステータスに実効目標進捗を表示するよう更新した。
 - 文書: `Ver.1.31.0` として `ロードマップ.md` の Phase 3 を完了済みに更新し、`仕様書.md`、アップデート情報タブ、更新モーダルも現仕様へ同期した。
 - 検証: `node --check` 成功。VM ハーネスで Legacy 排他購入、Challenge 報酬 summary、実効 Challenge 目標減少、Challenge 開始 Gold 見積を確認。Playwright は今回も `page.goto: Target page, context or browser has been closed` で実行不可。
+
+## 2026-03-26 Phase 3 challenge regression fixes
+- 修正: `challenge.savedGold` を state defaults / migration / reset normalizer に追加し、Challenge 開始時の専用 start gold を通常 run の gold と分離して退避できるようにした。
+- 修正: `startChallengeInternal()` で開始前 `gold` と `totalGoldEarned` の両方を保存し、`abandonChallengeInternal()` / `tryCompleteChallengeInternal()` で両方を復元するよう変更。Challenge 7 や Legacy 由来の開始 gold が通常 run へ漏れないようにした。
+- 修正: `doAscendInternal()` で、アクティブ challenge 中かつ `challengeKeepLegacy` 報酬解放済みなら `legacy` をリセットしないよう変更し、Challenge 2 報酬が Ascend 再始動後も継続するようにした。
+- 修正: `engine.state-normalizers` と UI fallback 側の challenge shape にも `savedGold` を揃え、Abyss reset 後や UI 単体参照時に shape 差異が残らないようにした。
+- 検証: `node --check` と vm harness で、Challenge 開始/中断による gold 漏れが消えていること、Challenge 2 報酬が active challenge 中の Ascend 後も維持されることを確認。Playwright client は `browser.newPage: Target page, context or browser has been closed` で今回も実行不可。

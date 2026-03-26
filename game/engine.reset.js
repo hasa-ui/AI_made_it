@@ -23,6 +23,8 @@
     if (gain <= 0) return { ok:false };
     const keepTotalGold = runtime.hasSpecialAscUpgrade(runtime.state, 'keepTotalGold');
     const keepLegacyTree = runtime.hasSpecialAscUpgrade(runtime.state, 'keepLegacyTree');
+    const challengeRewards = runtime.getChallengeRewardSummary(runtime.state);
+    const keepLegacyInChallenge = !!(runtime.state.challenge && runtime.state.challenge.activeId && challengeRewards.keepLegacyOnChallenge);
     runtime.state.ascPoints = (runtime.state.ascPoints || 0) + gain;
     runtime.state.ascEarnedTotal = (runtime.state.ascEarnedTotal || 0) + gain;
     const celestialGain = runtime.calcCelestialGain(gain);
@@ -31,7 +33,7 @@
     runtime.state.units = (C.UNIT_DEFS || []).reduce((a,u)=>(a[u.id]=0,a),{});
     runtime.state.upgrades = (C.UPGRADE_DEFS || []).reduce((a,u)=>(a[u.id]=0,a),{});
     runtime.state.prestigeEarnedTotal = 0;
-    runtime.state.legacy = 0;
+    if (!keepLegacyInChallenge) runtime.state.legacy = 0;
     if (!keepTotalGold) runtime.state.totalGoldEarned = 0;
     if (!keepLegacyTree) runtime.state.legacyNodes = (C.LEGACY_DEFS || []).reduce((a,d)=>(a[d.id]=0,a),{});
 
@@ -53,7 +55,7 @@
       endedAt: now
     };
     runtime.state.lastAscensionRun = runSummary;
-    runtime.state.challenge = runtime.state.challenge || { activeId:null, completed:{}, bestSec:{}, ascendedInChallenge:0, savedTotalGold:null };
+    runtime.state.challenge = runtime.state.challenge || { activeId:null, completed:{}, bestSec:{}, ascendedInChallenge:0, savedGold:null, savedTotalGold:null };
     if (runtime.state.challenge.activeId) runtime.state.challenge.ascendedInChallenge = (runtime.state.challenge.ascendedInChallenge || 0) + 1;
     runtime.state.runStats.history.push(runSummary);
     if (runtime.state.runStats.history.length > 30) runtime.state.runStats.history = runtime.state.runStats.history.slice(-30);

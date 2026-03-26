@@ -90,6 +90,7 @@
       completed: {},
       bestSec: {},
       ascendedInChallenge: 0,
+      savedGold: null,
       savedTotalGold: null
     },
     abyss: {
