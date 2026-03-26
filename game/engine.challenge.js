@@ -14,23 +14,33 @@
     const getChallengeGoalTotal = deps.getChallengeGoalTotal || ((ch)=>ch.goalTotalGold || Infinity);
 
     function getState(){ return stateRef.get(); }
-    function cloneMap(src){ return Object.assign({}, src || {}); }
+    function cloneValue(src){
+      try{
+        return JSON.parse(JSON.stringify(src == null ? null : src));
+      } catch(_e){
+        if (Array.isArray(src)) return src.slice();
+        return Object.assign({}, src || {});
+      }
+    }
     function captureChallengeSnapshot(state){
-      const runStats = state.runStats || {};
       return {
         gold: state.gold || 0,
         totalGoldEarned: state.totalGoldEarned || 0,
         prestigeEarnedTotal: state.prestigeEarnedTotal || 0,
         legacy: state.legacy || 0,
-        units: cloneMap(state.units),
-        upgrades: cloneMap(state.upgrades),
-        legacyNodes: cloneMap(state.legacyNodes),
-        runStats: {
-          currentRunStartedAt: runStats.currentRunStartedAt || null,
-          currentRunPeakGold: runStats.currentRunPeakGold || 0,
-          currentRunUnitTypes: cloneMap(runStats.currentRunUnitTypes),
-          currentRunUpgradeBuys: runStats.currentRunUpgradeBuys || 0
-        }
+        ascPoints: state.ascPoints || 0,
+        ascEarnedTotal: state.ascEarnedTotal || 0,
+        celestialPoints: state.celestialPoints || 0,
+        celestialEarnedTotal: state.celestialEarnedTotal || 0,
+        units: cloneValue(state.units),
+        upgrades: cloneValue(state.upgrades),
+        legacyNodes: cloneValue(state.legacyNodes),
+        ascOwned: cloneValue(state.ascOwned),
+        celestialOwned: cloneValue(state.celestialOwned),
+        celestial: cloneValue(state.celestial),
+        achievementsOwned: cloneValue(state.achievementsOwned),
+        runStats: cloneValue(state.runStats),
+        lastAscensionRun: cloneValue(state.lastAscensionRun)
       };
     }
     function restoreChallengeSnapshot(state){
@@ -41,15 +51,19 @@
         state.totalGoldEarned = typeof snap.totalGoldEarned === 'number' ? snap.totalGoldEarned : (state.challenge.savedTotalGold || 0);
         state.prestigeEarnedTotal = typeof snap.prestigeEarnedTotal === 'number' ? snap.prestigeEarnedTotal : (state.prestigeEarnedTotal || 0);
         state.legacy = typeof snap.legacy === 'number' ? snap.legacy : (state.legacy || 0);
-        state.units = cloneMap(snap.units);
-        state.upgrades = cloneMap(snap.upgrades);
-        state.legacyNodes = cloneMap(snap.legacyNodes);
-        state.runStats = state.runStats || {};
-        const snapRunStats = snap.runStats || {};
-        state.runStats.currentRunStartedAt = snapRunStats.currentRunStartedAt || null;
-        state.runStats.currentRunPeakGold = snapRunStats.currentRunPeakGold || 0;
-        state.runStats.currentRunUnitTypes = cloneMap(snapRunStats.currentRunUnitTypes);
-        state.runStats.currentRunUpgradeBuys = snapRunStats.currentRunUpgradeBuys || 0;
+        state.ascPoints = typeof snap.ascPoints === 'number' ? snap.ascPoints : (state.ascPoints || 0);
+        state.ascEarnedTotal = typeof snap.ascEarnedTotal === 'number' ? snap.ascEarnedTotal : (state.ascEarnedTotal || 0);
+        state.celestialPoints = typeof snap.celestialPoints === 'number' ? snap.celestialPoints : (state.celestialPoints || 0);
+        state.celestialEarnedTotal = typeof snap.celestialEarnedTotal === 'number' ? snap.celestialEarnedTotal : (state.celestialEarnedTotal || 0);
+        state.units = cloneValue(snap.units);
+        state.upgrades = cloneValue(snap.upgrades);
+        state.legacyNodes = cloneValue(snap.legacyNodes);
+        state.ascOwned = cloneValue(snap.ascOwned);
+        state.celestialOwned = cloneValue(snap.celestialOwned);
+        state.celestial = cloneValue(snap.celestial) || { activeBranchId:null };
+        state.achievementsOwned = cloneValue(snap.achievementsOwned) || {};
+        state.runStats = cloneValue(snap.runStats) || {};
+        state.lastAscensionRun = cloneValue(snap.lastAscensionRun) || null;
       } else {
         if (typeof state.challenge.savedGold === 'number') state.gold = state.challenge.savedGold;
         if (typeof state.challenge.savedTotalGold === 'number') state.totalGoldEarned = state.challenge.savedTotalGold;

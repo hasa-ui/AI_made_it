@@ -50,3 +50,19 @@
 - `node <<'NODE' ... NODE` harness で、Challenge 中に unit を購入した後に `tryCompleteChallengeInternal()` しても、クリアフラグだけ保持しつつ `gold: 240` / `totalGoldEarned: 240` / `units.junior: 3` の開始前 state に戻ることを確認。
 - `node <<'NODE' ... NODE` harness で、`ch_no_upgrades` クリア済みの active challenge 中に `doAscendInternal()` を呼ぶと `legacy: 77` と `legacyNodes.lg_global10: 2` / `lg_seed50: 1` が維持されることを確認。
 - Playwright client: `page.goto: Target page, context or browser has been closed` により今回もブラウザ確認は実行不可。
+
+## Fix challenge meta-progression restore bug
+- [x] Inspect challenge snapshot gaps around AP/CP and higher-layer purchases
+- [x] Extend challenge snapshot restore to AP/CP, shop ownership, and related meta state
+- [x] Verify abandon/complete both rewind challenge-earned meta progression
+
+## Progress log
+- Expanded `savedSnapshot` to also capture `ascPoints`, `ascEarnedTotal`, `ascOwned`, `celestialPoints`, `celestialEarnedTotal`, `celestialOwned`, `celestial`, `achievementsOwned`, `runStats`, and `lastAscensionRun`.
+- Restored those higher-layer fields on challenge exit so Ascend/CP gains and any Ascension/Celestial purchases made during a discarded challenge no longer leak onto the main save.
+
+## Verification log
+- `node --check game/engine.challenge.js` : 成功
+- `git diff --check` : 成功
+- `node <<'NODE' ... NODE` harness で、Challenge 中に `Ascend -> Ascension Shop購入 -> Celestial Shop購入 -> branch切替` しても、`abandonChallengeInternal()` 後は `ascPoints: 20` / `ascEarnedTotal: 100` / `ascOwned.asc_global20: 0` / `celestialPoints: 10` / `celestialEarnedTotal: 20` / `celestialOwned.cel_prism: 0` / `branch: vault` に戻ることを確認。
+- `node <<'NODE' ... NODE` harness で、同じ操作後に `tryCompleteChallengeInternal()` しても、クリアフラグだけ保持しつつ AP/CP と shop 所持状態が開始前 state に戻ることを確認。
+- Playwright client: `page.goto: Target page, context or browser has been closed` により今回もブラウザ確認は実行不可。

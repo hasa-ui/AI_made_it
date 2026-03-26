@@ -128,3 +128,8 @@ Original prompt: ロードマップのPhase 1を完了させてください
 - 修正: `game/engine.reset.js` で `challengeKeepLegacy` 中の Ascend は `legacyNodes` も保持するようにし、Challenge 2 報酬が points だけでなく Legacy Tree 全体として再始動後も残るようにした。
 - 修正: `state.defaults` / `state.migration` / `engine.state-normalizers` / UI fallback に `challenge.savedSnapshot` を追加し、途中 save や Abyss reset 後でも challenge state shape が揃うようにした。
 - 検証: `node --check` と vm harness で、Challenge 開始 gold を unit へ変換しても中断/クリア後に通常 run へ持ち出せないこと、`challengeKeepLegacy` が active challenge 中の Ascend 後も Legacy Tree を保持することを確認。Playwright client は `page.goto: Target page, context or browser has been closed` で今回も実行不可。
+
+## 2026-03-26 Challenge meta progression rollback fix
+- 修正: `game/engine.challenge.js` の `savedSnapshot` に AP/CP 系 state も追加し、`ascPoints` `ascEarnedTotal` `ascOwned` `celestialPoints` `celestialEarnedTotal` `celestialOwned` `celestial.activeBranchId` を Challenge 開始前の状態ごと復元するよう変更。
+- 修正: あわせて `achievementsOwned` `runStats` `lastAscensionRun` も snapshot/restore 対象に含め、Challenge 中の Ascend や shop 購入の副作用が discard 後に main save へ残らないようにした。
+- 検証: vm harness で `Ascend -> Ascension/Celestial 購入 -> abandon` と `Ascend -> Ascension/Celestial 購入 -> complete` の両経路を確認し、AP/CP・所持 upgrade・branch 状態が開始前 state に戻ることを確認。Playwright client は `page.goto: Target page, context or browser has been closed` で今回も実行不可。
