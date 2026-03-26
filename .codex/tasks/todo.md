@@ -199,6 +199,23 @@
 - `node <<'NODE' ... NODE` harness で、`snapshot.runStats` が無い legacy save は `currentRunStartedAt` / `currentRunPeakGold` / `currentRunUnitTypes` / `currentRunUpgradeBuys` が通常 run 用に再初期化され、`ascendedInChallenge = 1` の場合は challenge 中に追加された `runStats.history` と `runCount` の 1 回分が巻き戻ることを確認。
 - Playwright client: `browser.newPage: Target page, context or browser has been closed` により今回もブラウザ確認は実行不可。
 
+## Fix legacy auto-resolve meta preservation bug
+- [x] Preserve loaded persistent meta state for incomplete legacy challenge auto-resolve
+- [x] Keep existing lastAscensionRun when no snapshot baseline exists
+- [x] Verify meta preservation and run-stats rebuild with harnesses
+
+## Progress log
+- Removed the migration-time meta reset from incomplete legacy active-challenge auto-resolve, so imported saves now keep their loaded AP/CP, owned meta upgrades, achievements, mini-game progress, and other persistent top-level state when the incompatible challenge is cleared.
+- Kept the run-local restore and current-run `runStats` rebuild path intact, so legacy challenge auto-resolve still fixes the broken timer/peak/unit-usage fields without touching persistent meta state.
+- Changed `lastAscensionRun` handling to preserve the loaded summary unless the legacy snapshot actually captured a baseline for it.
+
+## Verification log
+- `node --check game/state.migration.js` : 成功
+- `git diff --check` : 成功
+- `node <<'NODE' ... NODE` harness で、不完全な legacy active challenge save は `SM.importState()` 後に `challenge.activeId === null` となり、`gold` / `totalGoldEarned` / `units` は snapshot 値へ戻りつつ、`ascPoints` / `ascOwned` / `celestialOwned` / `achievementsOwned` / `miniGame` は loaded save の値が維持されることを確認。
+- `node <<'NODE' ... NODE` harness で、`snapshot.lastAscensionRun` が無い legacy save でも、既存の `lastAscensionRun` が保持され、`snapshot.runStats` が無い場合の current-run `runStats` 再初期化と `ascendedInChallenge = 1` 時の `history` / `runCount` 巻き戻しが引き続き機能することを確認。
+- Playwright client: `browser.newPage: Target page, context or browser has been closed` により今回もブラウザ確認は実行不可。
+
 ## Review e404964d1bda12fbe3708f803e4e29c24117b494
 - [ ] Inspect commit diff and impacted files
 - [ ] Validate suspected regressions against surrounding code/tests

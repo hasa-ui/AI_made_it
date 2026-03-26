@@ -174,3 +174,9 @@ Original prompt: ロードマップのPhase 1を完了させてください
 - 修正: ただし `runStats` は全面初期化にせず、`snapshot.runStats` が無い場合だけ「通常 run の current-run 部分」を再初期化する helper を migration に追加した。これで `currentRunStartedAt` / `currentRunPeakGold` / `currentRunUnitTypes` / `currentRunUpgradeBuys` は challenge 開始で壊れた値を引きずらず、`ascendedInChallenge` 回数ぶんだけ `history` と `runCount` も巻き戻す。
 - 修正: auto-resolve 後は `challenge.ascendedInChallenge = 0` に戻し、破棄された legacy challenge の Ascend 回数が後続 state へ残らないようにした。
 - 検証: vm harness で、不完全な legacy active challenge save は import 時点で `challenge.activeId === null` になり、run-local snapshot を戻しつつ曖昧な meta progression は default/null へ落ちること、`snapshot.runStats` 不在時でも current run 情報が通常 run 用に再初期化され、challenge 中 Ascend で増えた `history` / `runCount` が巻き戻ることを確認。Playwright client は `browser.newPage: Target page, context or browser has been closed` で今回も実行不可。
+
+## 2026-03-26 Legacy auto-resolve meta preservation follow-up
+- 修正: `game/state.migration.js` の不完全な legacy active challenge auto-resolve から、top-level meta progression を default/null へ落とす処理を削除した。これにより、challenge 互換解消のために `challenge.activeId` を外しても、読み込んだ save に残っている `ascPoints`、Ascension/Celestial 所持、achievement、mini-game 進行は保持される。
+- 修正: `lastAscensionRun` は、legacy snapshot 自体が baseline を持っている時だけ snapshot 値で復元し、そうでない場合は loaded save 側の既存 summary をそのまま残すようにした。
+- 修正: 一方で `runStats` の current-run 再初期化 helper と、`ascendedInChallenge` 分だけ `history` / `runCount` を巻き戻す処理はそのまま残し、challenge 開始で壊れた通常 run の統計だけを補正する構成にした。
+- 検証: vm harness で、不完全な legacy active challenge save は import 時点で `challenge.activeId === null` になりつつ、run-local snapshot を戻した上で `ascPoints` / `ascOwned` / `celestialOwned` / `achievementsOwned` / `miniGame` / `lastAscensionRun` が loaded save の値のまま維持されることを確認。`snapshot.runStats` 不在時でも current run 情報が通常 run 用に再初期化され、challenge 中 Ascend で増えた `history` / `runCount` は巻き戻ることも確認。Playwright client は `browser.newPage: Target page, context or browser has been closed` で今回も実行不可。
