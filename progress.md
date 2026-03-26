@@ -89,3 +89,19 @@ Original prompt: ロードマップのPhase 1を完了させてください
 - 実装: `game/ui.app.js` に同等の `ensureMiniGameState(st)` helper を追加し、起動直後の achievement 判定でも `miniGame` state の既定 shape を安全に補完するよう修正。
 - 実装: `Ver.1.29.3` として `game/config.js`、アップデート情報タブ、更新モーダルを今回の起動不能修正内容へ更新。
 - 検証: `node --check` と簡易 DOM ハーネスで、起動後に `tab-inspector` が `none`、`tab-play` が `block`、アクティブタブが `play`、タブ click handler が登録済みであることを確認。
+
+## 2026-03-25 UI更新頻度設定
+- 実装: `settings` に `uiUpdateIntervalMs` と `uiSlowUpdateIntervalMs` を追加し、設定画面から通常UI更新間隔と重いパネル更新間隔を個別に変更できるようにした。
+- 実装: どちらの更新間隔も `50ms` を下限に clamp し、`mainLoop` は設定値を参照して通常更新と slow 更新の頻度を決めるよう変更。
+- 実装: `Ver.1.29.4` として `game/config.js`、アップデート情報タブ、更新モーダル、`仕様書.md` を今回の設定追加内容へ更新。`SAVE_VERSION = 16` は据え置き。
+- 検証: `node --check`、defaultState settings の vm 確認、`rg` による UI 下限値 / helper 参照 / mainLoop 反映確認、`git diff --check` を実行して成功。
+
+## 2026-03-25 保守性向上の大規模再設計
+- 調査: `state.js` が defaults / migration / storage を同居させ、`engine.app.js` が state load・economy・shop・progression・reset を抱えていることを確認。
+- 方針: `window.StateManager` と `window.ENGINE` の公開 API は維持しつつ、内部実装を責務別ファイルへ分離する。script 読み込み順は `state.defaults -> state.migration -> state.storage -> state`、`engine.runtime -> engine.* -> engine.app` の順へ変更する。
+- TODO: `ui.app.js` の全面分割は後方互換リスクが高いため、今回は bootstrap と共通責務の境界整理を優先し、README に新しい実装マップを追加する。
+- 実装: `state` を `game/state.defaults.js` `game/state.migration.js` `game/state.storage.js` `game/state.js` の4層へ分割し、既定値・移行・保存 IO・公開 facade の責務を分離。
+- 実装: `engine` を `game/engine.runtime.js` `game/engine.state-normalizers.js` `game/engine.economy.js` `game/engine.progression.js` `game/engine.shop.js` `game/engine.reset.js` `game/engine.app.js` へ再編。`window.ENGINE` は互換 facade のまま維持。
+- 実装: `game/ui.bootstrap.js` を追加し、`DOMContentLoaded` と初回起動責務を `ui.app.js` 本体から分離。`README.md` に実装マップと読み込み順を追加。
+- 文書: `Ver.1.30.0` として `game/config.js`、アップデート情報タブ、更新モーダルを今回の内部再編内容へ更新。
+- 検証: `node --check` で新旧 UI/engine/state 一式の構文確認に成功。VM ハーネスで `StateManager` / `ENGINE` / `GameUIBootstrap` の公開面と script 順依存が成立することを確認。Playwright は今回も `browser.newPage: Target page, context or browser has been closed` で実行不可。
