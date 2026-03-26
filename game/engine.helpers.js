@@ -89,6 +89,35 @@
     return false;
   }
 
+  function getChallengeRewardSummary(C, st){
+    const summary = {
+      globalMult:1,
+      flatGPS:0,
+      startGold:0,
+      prestigeEffectAdd:0,
+      costMult:1,
+      challengeGoalMult:1,
+      challengeStartGold:0,
+      challengeAutoBuySpeedMult:1,
+      keepLegacyOnChallenge:false
+    };
+    const completed = st && st.challenge && st.challenge.completed ? st.challenge.completed : {};
+    for (const ch of (C.CHALLENGES || [])){
+      if (!completed[ch.id]) continue;
+      const r = ch.reward || {};
+      if (r.type === 'globalMult' && typeof r.mult === 'number') summary.globalMult *= r.mult;
+      if (r.type === 'flatGPS' && typeof r.gps === 'number') summary.flatGPS += r.gps;
+      if (r.type === 'startGold' && typeof r.amount === 'number') summary.startGold += r.amount;
+      if (r.type === 'prestigeEffectAdd' && typeof r.add === 'number') summary.prestigeEffectAdd += r.add;
+      if (r.type === 'costMult' && typeof r.mult === 'number') summary.costMult *= r.mult;
+      if (r.type === 'challengeGoalMult' && typeof r.mult === 'number') summary.challengeGoalMult *= r.mult;
+      if (r.type === 'challengeStartGold' && typeof r.amount === 'number') summary.challengeStartGold += r.amount;
+      if (r.type === 'challengeAutoBuySpeed' && typeof r.mult === 'number') summary.challengeAutoBuySpeedMult *= r.mult;
+      if (r.type === 'challengeKeepLegacy') summary.keepLegacyOnChallenge = true;
+    }
+    return summary;
+  }
+
   function ascCapBonusFromCelestial(C, st){
     let bonus = 0;
     for (const def of (C.CELESTIAL_UPGRADES || [])){
@@ -161,6 +190,7 @@
     getCelestialLayerStatus,
     getCelestialBranchStatus,
     hasSpecialAscUpgrade,
+    getChallengeRewardSummary,
     ascUpgradeMaxLevel,
     legacyMaxLevel,
     legacyCostForNextLevel,

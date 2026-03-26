@@ -105,3 +105,13 @@ Original prompt: ロードマップのPhase 1を完了させてください
 - 実装: `game/ui.bootstrap.js` を追加し、`DOMContentLoaded` と初回起動責務を `ui.app.js` 本体から分離。`README.md` に実装マップと読み込み順を追加。
 - 文書: `Ver.1.30.0` として `game/config.js`、アップデート情報タブ、更新モーダルを今回の内部再編内容へ更新。
 - 検証: `node --check` で新旧 UI/engine/state 一式の構文確認に成功。VM ハーネスで `StateManager` / `ENGINE` / `GameUIBootstrap` の公開面と script 順依存が成立することを確認。Playwright は今回も `browser.newPage: Target page, context or browser has been closed` で実行不可。
+
+## 2026-03-26 ロードマップ Phase 3
+- 調査: `ロードマップ.md` の Phase 3 は「Legacy / Challenge のビルド化」。現状は Legacy Tree に排他制御がなく、Challenge 報酬も数値寄りで、Challenge 選択画面も狙いと報酬タイプが見えない状態。
+- 方針: Legacy には排他 root から伸びる `Challenge特化 / 放置特化 / 高速周回特化` の3枝を追加し、Challenge には `保持 / 自動化 / ルール変更` の機能報酬を混ぜる。UI は Challenge ごとの狙いと報酬カテゴリを明示する。
+- 実装: `game/config.js` に 6 個の Legacy ノードを追加。`phase3_build_focus` 排他 group により `Challenge特化 / 放置特化 / 高速周回特化` の3 root が同時取得不可になり、後続ノードで各ビルドを伸ばせるようにした。
+- 実装: Challenge 2/4/6/7 の報酬を `Challenge開始時に所持Legacyを保持`、`Challenge中の自動購入間隔 ×0.5`、`以後のChallenge目標 ×0.88`、`Challenge開始Gold +25000` に差し替え、`goalHint` も追加した。
+- 実装: `engine.helpers` に Challenge 報酬 summary 集計を追加し、`engine.runtime/economy/progression/challenge/shop` で Challenge開始Gold、実効目標、排他購入制御、自動購入加速、オフライン特化 Legacy を反映した。
+- 実装: `ui.app.js` で Legacy Inspector に排他情報、Challenge 一覧に `狙い / 報酬タイプ / 実効目標`、Challenge ステータスに実効目標進捗を表示するよう更新した。
+- 文書: `Ver.1.31.0` として `ロードマップ.md` の Phase 3 を完了済みに更新し、`仕様書.md`、アップデート情報タブ、更新モーダルも現仕様へ同期した。
+- 検証: `node --check` 成功。VM ハーネスで Legacy 排他購入、Challenge 報酬 summary、実効 Challenge 目標減少、Challenge 開始 Gold 見積を確認。Playwright は今回も `page.goto: Target page, context or browser has been closed` で実行不可。

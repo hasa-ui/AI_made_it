@@ -67,3 +67,25 @@
 - `node <<'NODE' ... NODE` の VM ハーネスで新しい script 順を再現し、`StateManager.loadState` / `ENGINE.previewPrestigeGain` / `GameUIBootstrap.boot` が存在し、`ENGINE.getUiPreviewSnapshot()` が期待キーを返し、`DOMContentLoaded` listener が登録されることを確認 : 成功
 - `git diff --check` : 成功
 - Playwright クライアント `node \"$WEB_GAME_CLIENT\" --url http://127.0.0.1:4173/index.html --actions-json '{\"steps\":[{\"buttons\":[],\"frames\":4}]}' --iterations 1 --pause-ms 250` は今回も `browser.newPage: Target page, context or browser has been closed` で実行不可
+
+## Plan (2026-03-26 ロードマップ Phase 3 完了)
+- [x] Legacy Tree に排他ノードと 3 ビルド枝を追加
+- [x] Challenge 報酬へ保持 / 自動化 / ルール変更系を追加
+- [x] Challenge 選択画面に狙いと報酬タイプを表示
+- [x] ロードマップ / 仕様書 / アップデート情報 / モーダルを更新
+- [x] 構文確認・ハーネス検証・Playwright 試行を実施
+
+## Progress Log (2026-03-26 ロードマップ Phase 3 完了)
+- `ロードマップ.md` を確認し、Phase 3 の完了条件が Legacy の排他ビルド化と Challenge の進行装置化であることを整理した。
+- 現状実装を確認し、Legacy Tree は排他条件を持たず、Challenge 報酬はほぼ数値 / 機能解放のみで、Challenge UI も目標と報酬の一行表示だけであることを確認した。
+- `game/config.js` に Legacy の排他 root (`phase3_build_focus`) と Challenge特化 / 放置特化 / 高速周回特化の3枝を追加し、Challenge データには `goalHint` と新しい報酬タイプを追加した。
+- `game/engine.helpers.js` / `engine.runtime.js` / `engine.economy.js` / `engine.challenge.js` / `engine.shop.js` を更新し、Challenge 報酬 summary、実効 Challenge 目標、Challenge 開始 Gold、Challenge 中自動購入加速、Legacy 排他購入判定を反映した。
+- `game/ui.app.js` では Legacy Inspector に排他情報を表示し、Challenge 一覧に狙い・報酬タイプ・実効目標を追加した。Challenge ステータス表示も実効目標ベースへ変更した。
+- `Ver.1.31.0` としてアップデート情報タブ、更新モーダル、`ロードマップ.md`、`仕様書.md` を Phase 3 完了内容へ更新した。
+
+## Verify Log (2026-03-26 ロードマップ Phase 3 完了)
+- 着手時確認: `ロードマップ.md` と `game/config.js` / `game/engine.challenge.js` / `game/ui.app.js` を確認し、未実装箇所を特定
+- `node --check game/config.js && node --check game/engine.helpers.js && node --check game/engine.runtime.js && node --check game/engine.economy.js && node --check game/engine.progression.js && node --check game/engine.shop.js && node --check game/engine.challenge.js && node --check game/engine.app.js && node --check game/ui.helpers.js && node --check game/ui.app.js` : 成功
+- `node <<'NODE' ... NODE` の VM ハーネスで、Legacy 排他購入 (`exclusive`)、Challenge 報酬 summary (`keepLegacyOnChallenge: true`, `challengeAutoBuySpeedMult: 0.5`)、実効 Challenge 目標の減少、Challenge 開始 Gold 見積 `27150` を確認 : 成功
+- `git diff --check` : 成功
+- Playwright クライアント `node \"$WEB_GAME_CLIENT\" --url http://127.0.0.1:4173/index.html --actions-json '{\"steps\":[{\"buttons\":[],\"frames\":4}]}' --iterations 1 --pause-ms 250` は今回も `page.goto: Target page, context or browser has been closed` で実行不可

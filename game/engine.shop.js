@@ -5,6 +5,16 @@
 
   const C = runtime.C;
 
+  function getLegacyExclusiveConflict(def, st){
+    if (!def || !def.exclusiveGroup) return null;
+    const src = st || runtime.state;
+    return (C.LEGACY_DEFS || []).find(other=>{
+      if (other.id === def.id) return false;
+      if (other.exclusiveGroup !== def.exclusiveGroup) return false;
+      return ((src.legacyNodes && src.legacyNodes[other.id]) || 0) > 0;
+    }) || null;
+  }
+
   runtime.buyUnitInternal = function(unitId, qty){
     const def = (C.UNIT_DEFS || []).find(d=>d.id === unitId);
     if (!def) return { ok:false, reason:'no_def' };
@@ -140,6 +150,7 @@
     if (!def) return false;
     const lvl = src.legacyNodes[legacyId] || 0;
     if (lvl >= runtime.legacyMaxLevel(def, src)) return false;
+    if (getLegacyExclusiveConflict(def, src)) return false;
     if (def.prereq && def.prereq.length){
       for (const p of def.prereq){
         const have = src.legacyNodes[p.id] || 0;
@@ -154,6 +165,8 @@
     if (!def) return { ok:false, reason:'no_def' };
     let lvl = runtime.state.legacyNodes[legacyId] || 0;
     if (lvl >= runtime.legacyMaxLevel(def, runtime.state)) return { ok:false, reason:'max' };
+    const exclusiveConflict = getLegacyExclusiveConflict(def, runtime.state);
+    if (exclusiveConflict) return { ok:false, reason:'exclusive', conflictId:exclusiveConflict.id };
     if (def.prereq && def.prereq.length){
       for (const p of def.prereq){
         const have = runtime.state.legacyNodes[p.id] || 0;

@@ -10,6 +10,8 @@
     const invalidateAggCache = deps.invalidateAggCache || (()=>{});
     const recalcAndCacheGPS = deps.recalcAndCacheGPS || (()=>{});
     const getActiveChallengeDef = deps.getActiveChallengeDef || (()=>null);
+    const getChallengeRewardSummary = deps.getChallengeRewardSummary || (()=>({ keepLegacyOnChallenge:false }));
+    const getChallengeGoalTotal = deps.getChallengeGoalTotal || ((ch)=>ch.goalTotalGold || Infinity);
 
     function getState(){ return stateRef.get(); }
 
@@ -19,11 +21,12 @@
       if (!ch) return { ok:false, reason:'not_found' };
       state.challenge = state.challenge || { activeId:null, completed:{}, bestSec:{}, ascendedInChallenge:0, savedTotalGold:null };
       if (state.challenge.activeId) return { ok:false, reason:'already_active' };
+      const rewardSummary = getChallengeRewardSummary(state);
       state.challenge.savedTotalGold = state.totalGoldEarned || 0;
       state.challenge.activeId = id;
       state.units = (C.UNIT_DEFS || []).reduce((a,u)=>(a[u.id]=0,a),{});
       state.upgrades = (C.UPGRADE_DEFS || []).reduce((a,u)=>(a[u.id]=0,a),{});
-      state.legacy = 0;
+      if (!rewardSummary.keepLegacyOnChallenge) state.legacy = 0;
       state.prestigeEarnedTotal = 0;
       state.totalGoldEarned = 0;
       invalidateAggCache();
@@ -54,7 +57,7 @@
       const state = getState();
       const ch = getActiveChallengeDef(state);
       if (!ch) return { ok:false, reason:'no_active' };
-      const goal = ch.goalTotalGold || Infinity;
+      const goal = getChallengeGoalTotal(ch, state);
       if ((state.totalGoldEarned || 0) < goal) return { ok:false, reason:'goal' };
       state.challenge = state.challenge || { activeId:null, completed:{}, bestSec:{}, ascendedInChallenge:0, savedTotalGold:null };
       state.challenge.completed = state.challenge.completed || {};
