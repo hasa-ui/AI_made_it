@@ -66,3 +66,20 @@
 - `node <<'NODE' ... NODE` harness で、Challenge 中に `Ascend -> Ascension Shop購入 -> Celestial Shop購入 -> branch切替` しても、`abandonChallengeInternal()` 後は `ascPoints: 20` / `ascEarnedTotal: 100` / `ascOwned.asc_global20: 0` / `celestialPoints: 10` / `celestialEarnedTotal: 20` / `celestialOwned.cel_prism: 0` / `branch: vault` に戻ることを確認。
 - `node <<'NODE' ... NODE` harness で、同じ操作後に `tryCompleteChallengeInternal()` しても、クリアフラグだけ保持しつつ AP/CP と shop 所持状態が開始前 state に戻ることを確認。
 - Playwright client: `page.goto: Target page, context or browser has been closed` により今回もブラウザ確認は実行不可。
+
+## Fix challenge snapshot compatibility and mini-game rollback
+- [x] Guard restore against legacy in-progress challenge snapshots
+- [x] Include mini-game progress in current challenge snapshots
+- [x] Verify backward compatibility and mini-game rollback with harnesses
+
+## Progress log
+- Switched snapshot restore to field-presence guards so pre-existing in-progress challenge saves only restore fields they actually captured, instead of nulling/wiping newer meta structures.
+- Added `miniGame` to the current challenge snapshot so discarded challenge runs no longer leak minigame score/play/perfect progress into the main save.
+
+## Verification log
+- `node --check game/engine.challenge.js` : 成功
+- `git diff --check` : 成功
+- `node <<'NODE' ... NODE` harness で、旧形式の active challenge snapshot から `abandonChallengeInternal()` しても `ascPoints` / `ascOwned` / `celestialOwned` / `achievementsOwned` が壊れず、その後 `buyAscensionUpgradeInternal()` も正常に呼べることを確認。
+- `node <<'NODE' ... NODE` harness で、現行 snapshot では Challenge 中に増えた `miniGame.plays` / `bestScore` / `perfectRuns` が `abandonChallengeInternal()` 後に開始前 state へ戻ることを確認。
+- `node <<'NODE' ... NODE` harness で、同じ mini-game progress が `tryCompleteChallengeInternal()` 後も challenge clear だけ保持しつつ開始前 state へ戻ることを確認。
+- Playwright client: `browser.newPage: Target page, context or browser has been closed` により今回もブラウザ確認は実行不可。

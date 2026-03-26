@@ -133,3 +133,8 @@ Original prompt: ロードマップのPhase 1を完了させてください
 - 修正: `game/engine.challenge.js` の `savedSnapshot` に AP/CP 系 state も追加し、`ascPoints` `ascEarnedTotal` `ascOwned` `celestialPoints` `celestialEarnedTotal` `celestialOwned` `celestial.activeBranchId` を Challenge 開始前の状態ごと復元するよう変更。
 - 修正: あわせて `achievementsOwned` `runStats` `lastAscensionRun` も snapshot/restore 対象に含め、Challenge 中の Ascend や shop 購入の副作用が discard 後に main save へ残らないようにした。
 - 検証: vm harness で `Ascend -> Ascension/Celestial 購入 -> abandon` と `Ascend -> Ascension/Celestial 購入 -> complete` の両経路を確認し、AP/CP・所持 upgrade・branch 状態が開始前 state に戻ることを確認。Playwright client は `page.goto: Target page, context or browser has been closed` で今回も実行不可。
+
+## 2026-03-26 Challenge snapshot compatibility and mini-game rollback
+- 修正: `game/engine.challenge.js` の restore を「field が存在する時だけ適用」へ切り替え、今回以前の in-progress challenge save が持っていない AP/CP・shop・achievement fields を無理に復元しないようにした。これで旧 snapshot からの abandon/complete で `ascOwned` や `celestialOwned` が壊れないようにした。
+- 修正: 現行 `savedSnapshot` に `miniGame` を追加し、Challenge 中のミニゲーム挑戦で増えた `plays` `bestScore` `perfectRuns` も discard 時に巻き戻すようにした。
+- 検証: vm harness で、旧 snapshot からの abandon 後に meta object が保持されて shop 購入も続行できること、および現行 snapshot では mini-game progress が abandon/complete の両方で開始前 state に戻ることを確認。Playwright client は `browser.newPage: Target page, context or browser has been closed` で今回も実行不可。

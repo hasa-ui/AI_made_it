@@ -22,6 +22,12 @@
         return Object.assign({}, src || {});
       }
     }
+    function hasSnapshotField(snap, key){
+      return !!snap && Object.prototype.hasOwnProperty.call(snap, key);
+    }
+    function isRecord(value){
+      return !!value && typeof value === 'object' && !Array.isArray(value);
+    }
     function captureChallengeSnapshot(state){
       return {
         gold: state.gold || 0,
@@ -39,6 +45,7 @@
         celestialOwned: cloneValue(state.celestialOwned),
         celestial: cloneValue(state.celestial),
         achievementsOwned: cloneValue(state.achievementsOwned),
+        miniGame: cloneValue(state.miniGame),
         runStats: cloneValue(state.runStats),
         lastAscensionRun: cloneValue(state.lastAscensionRun)
       };
@@ -47,23 +54,24 @@
       state.challenge = state.challenge || { activeId:null, completed:{}, bestSec:{}, ascendedInChallenge:0, savedSnapshot:null, savedGold:null, savedTotalGold:null };
       const snap = state.challenge.savedSnapshot;
       if (snap && typeof snap === 'object'){
-        state.gold = typeof snap.gold === 'number' ? snap.gold : (state.challenge.savedGold || 0);
-        state.totalGoldEarned = typeof snap.totalGoldEarned === 'number' ? snap.totalGoldEarned : (state.challenge.savedTotalGold || 0);
-        state.prestigeEarnedTotal = typeof snap.prestigeEarnedTotal === 'number' ? snap.prestigeEarnedTotal : (state.prestigeEarnedTotal || 0);
-        state.legacy = typeof snap.legacy === 'number' ? snap.legacy : (state.legacy || 0);
-        state.ascPoints = typeof snap.ascPoints === 'number' ? snap.ascPoints : (state.ascPoints || 0);
-        state.ascEarnedTotal = typeof snap.ascEarnedTotal === 'number' ? snap.ascEarnedTotal : (state.ascEarnedTotal || 0);
-        state.celestialPoints = typeof snap.celestialPoints === 'number' ? snap.celestialPoints : (state.celestialPoints || 0);
-        state.celestialEarnedTotal = typeof snap.celestialEarnedTotal === 'number' ? snap.celestialEarnedTotal : (state.celestialEarnedTotal || 0);
-        state.units = cloneValue(snap.units);
-        state.upgrades = cloneValue(snap.upgrades);
-        state.legacyNodes = cloneValue(snap.legacyNodes);
-        state.ascOwned = cloneValue(snap.ascOwned);
-        state.celestialOwned = cloneValue(snap.celestialOwned);
-        state.celestial = cloneValue(snap.celestial) || { activeBranchId:null };
-        state.achievementsOwned = cloneValue(snap.achievementsOwned) || {};
-        state.runStats = cloneValue(snap.runStats) || {};
-        state.lastAscensionRun = cloneValue(snap.lastAscensionRun) || null;
+        state.gold = (hasSnapshotField(snap, 'gold') && typeof snap.gold === 'number') ? snap.gold : (state.challenge.savedGold || 0);
+        state.totalGoldEarned = (hasSnapshotField(snap, 'totalGoldEarned') && typeof snap.totalGoldEarned === 'number') ? snap.totalGoldEarned : (state.challenge.savedTotalGold || 0);
+        if (hasSnapshotField(snap, 'prestigeEarnedTotal') && typeof snap.prestigeEarnedTotal === 'number') state.prestigeEarnedTotal = snap.prestigeEarnedTotal;
+        if (hasSnapshotField(snap, 'legacy') && typeof snap.legacy === 'number') state.legacy = snap.legacy;
+        if (hasSnapshotField(snap, 'ascPoints') && typeof snap.ascPoints === 'number') state.ascPoints = snap.ascPoints;
+        if (hasSnapshotField(snap, 'ascEarnedTotal') && typeof snap.ascEarnedTotal === 'number') state.ascEarnedTotal = snap.ascEarnedTotal;
+        if (hasSnapshotField(snap, 'celestialPoints') && typeof snap.celestialPoints === 'number') state.celestialPoints = snap.celestialPoints;
+        if (hasSnapshotField(snap, 'celestialEarnedTotal') && typeof snap.celestialEarnedTotal === 'number') state.celestialEarnedTotal = snap.celestialEarnedTotal;
+        if (isRecord(snap.units)) state.units = cloneValue(snap.units);
+        if (isRecord(snap.upgrades)) state.upgrades = cloneValue(snap.upgrades);
+        if (isRecord(snap.legacyNodes)) state.legacyNodes = cloneValue(snap.legacyNodes);
+        if (isRecord(snap.ascOwned)) state.ascOwned = cloneValue(snap.ascOwned);
+        if (isRecord(snap.celestialOwned)) state.celestialOwned = cloneValue(snap.celestialOwned);
+        if (isRecord(snap.celestial)) state.celestial = cloneValue(snap.celestial);
+        if (isRecord(snap.achievementsOwned)) state.achievementsOwned = cloneValue(snap.achievementsOwned);
+        if (isRecord(snap.miniGame)) state.miniGame = cloneValue(snap.miniGame);
+        if (isRecord(snap.runStats)) state.runStats = cloneValue(snap.runStats);
+        if (hasSnapshotField(snap, 'lastAscensionRun')) state.lastAscensionRun = cloneValue(snap.lastAscensionRun);
       } else {
         if (typeof state.challenge.savedGold === 'number') state.gold = state.challenge.savedGold;
         if (typeof state.challenge.savedTotalGold === 'number') state.totalGoldEarned = state.challenge.savedTotalGold;
