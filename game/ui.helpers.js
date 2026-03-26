@@ -83,6 +83,10 @@
     if (b.type==='unitMult') return `${b.unitId} ×${b.mult}`;
     if (b.type==='prestigeEffectAdd') return `Prestige効果 +${b.add}`;
     if (b.type==='costMult') return `コスト ×${b.mult}`;
+    if (b.type==='challengeKeepLegacy') return b.text || 'Challenge開始時に所持Legacyを保持';
+    if (b.type==='challengeAutoBuySpeed') return b.text || `Challenge中の自動購入間隔 ×${b.mult}`;
+    if (b.type==='challengeGoalMult') return b.text || `以後のChallenge目標 ×${b.mult}`;
+    if (b.type==='challengeStartGold') return b.text || `Challenge開始Gold +${b.amount}`;
     if (b.type==='unlockFeature') return b.text || '機能解放';
     return '恒久ボーナス';
   }

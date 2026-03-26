@@ -103,6 +103,7 @@
   runtime.getCelestialLayerStatus = function(st){ return (H.getCelestialLayerStatus || ((cfg,src)=>[]))(C, st || runtime.state); };
   runtime.getCelestialBranchStatus = function(st){ return (H.getCelestialBranchStatus || ((cfg,src)=>[]))(C, st || runtime.state); };
   runtime.hasSpecialAscUpgrade = function(st, kind){ return (H.hasSpecialAscUpgrade || ((cfg,src,k)=>false))(C, st || runtime.state, kind); };
+  runtime.getChallengeRewardSummary = function(st){ return (H.getChallengeRewardSummary || ((cfg,src)=>({ globalMult:1, flatGPS:0, startGold:0, prestigeEffectAdd:0, costMult:1, challengeGoalMult:1, challengeStartGold:0, challengeAutoBuySpeedMult:1, keepLegacyOnChallenge:false })))(C, st || runtime.state); };
   runtime.ascUpgradeMaxLevel = function(def, st){
     return (H.ascUpgradeMaxLevel || ((cfg,src,d)=> (typeof d?.maxLevel === 'number' ? d.maxLevel : Infinity)))(C, st || runtime.state, def);
   };
@@ -123,4 +124,12 @@
   };
   runtime.abyssUpgradeCost = function(def, lvl){ return (H.abyssUpgradeCost || ((d,l)=>1))(def, lvl); };
   runtime.abyssUpgradeMaxLevel = function(def){ return (def && typeof def.maxLevel === 'number') ? def.maxLevel : Infinity; };
+  runtime.getChallengeGoalTotal = function(ch, st){
+    if (!ch) return Infinity;
+    const src = st || runtime.state;
+    const rewardSummary = runtime.getChallengeRewardSummary(src);
+    const agg = typeof runtime.getAggregates === 'function' ? runtime.getAggregates(src) : {};
+    const legacyMult = (agg && agg.challengeGoalMult) || 1;
+    return Math.max(1, Math.floor((ch.goalTotalGold || 0) * rewardSummary.challengeGoalMult * legacyMult));
+  };
 })();

@@ -131,10 +131,15 @@
 
   runtime.computeStartingGoldOnPrestige = function(){
     const activeChallenge = runtime.getActiveChallengeDef(runtime.state);
-    if (activeChallenge && activeChallenge.effects && typeof activeChallenge.effects.forceStartGold === 'number'){
-      return Math.max(0, activeChallenge.effects.forceStartGold);
+    const agg = runtime.getAggregates(runtime.state);
+    const baseStartGold = (C.STARTING_GOLD || 50) + (agg.startingGoldBonus || 0);
+    if (activeChallenge){
+      const forcedGold = activeChallenge.effects && typeof activeChallenge.effects.forceStartGold === 'number'
+        ? activeChallenge.effects.forceStartGold
+        : baseStartGold;
+      return Math.max(forcedGold, baseStartGold + (agg.challengeStartGoldBonus || 0) + (runtime.getChallengeRewardSummary(runtime.state).challengeStartGold || 0));
     }
-    return (C.STARTING_GOLD || 50) + (runtime.getAggregates(runtime.state).startingGoldBonus || 0);
+    return baseStartGold;
   };
 
   runtime.previewAscGain = function(){
@@ -159,7 +164,7 @@
     const elapsed = Math.min(now - (runtime.state.lastSavedAt || now), (C.MAX_OFFLINE_SECONDS || 60*60*24));
     if (elapsed > 1){
       runtime.recalcAndCacheGPS(runtime.state);
-      const gain = runtime.state.gpsCache * elapsed;
+      const gain = runtime.state.gpsCache * elapsed * ((runtime.getAggregates(runtime.state).offlineGainMult || 1));
       runtime.state.gold += gain;
       runtime.state.totalGoldEarned += gain;
       runtime.state.lastSavedAt = now;

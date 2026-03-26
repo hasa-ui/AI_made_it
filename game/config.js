@@ -5,7 +5,7 @@
   const C = {
     SAVE_KEY: 'inc.split.full.v4',
     SAVE_VERSION: 16,
-    APP_VERSION: 'Ver.1.30.0',
+    APP_VERSION: 'Ver.1.31.0',
     UI_UPDATE_INTERVAL_MS: 120,
     UI_SLOW_UPDATE_INTERVAL_MS: 400,
     AUTO_SAVE_INTERVAL: 5000,
@@ -79,6 +79,13 @@
     { id:'lg_seed50', name:'種銭支給',     desc:'開始ゴールド +150 /Lv', baseCost:2, costMult:1.7, maxLevel:5, x:140, y:270, type:'startGold', payload:{amountPerLevel:150}, prereq:[]},
     { id:'lg_passive', name:'永続配当',    desc:'恒久 +5 GPS /Lv', baseCost:8, costMult:2.3, maxLevel:4, x:860,  y:110, type:'flatGPS', payload:{gpsPerLevel:5}, prereq:[{id:'lg_global10',minLevel:2}]},
     { id:'lg_mega', name:'遺産の賢王',     desc:'全体 ×1.5 (Lv1)', baseCost:20, costMult:1.0, maxLevel:1, x:860,  y:320, type:'globalMult', payload:{multPerLevel:0.5}, prereq:[{id:'lg_passive',minLevel:1}]},
+
+    { id:'lg_challenge_oath', name:'制圧戦術教義', desc:'Challenge目標 ×0.92 (排他)', baseCost:14, costMult:2.6, maxLevel:1, x:520, y:430, type:'challengeGoalMult', payload:{multPerLevel:0.92}, prereq:[{id:'lg_cost5',minLevel:2}], exclusiveGroup:'phase3_build_focus' },
+    { id:'lg_challenge_cache', name:'制約補給庫', desc:'Challenge開始Gold +1800 /Lv', baseCost:24, costMult:2.8, maxLevel:2, x:760, y:430, type:'challengeStartGold', payload:{amountPerLevel:1800}, prereq:[{id:'lg_challenge_oath',minLevel:1}] },
+    { id:'lg_idle_oath', name:'休眠蓄積教義', desc:'オフライン報酬 ×1.8 /Lv (排他)', baseCost:14, costMult:2.6, maxLevel:1, x:520, y:550, type:'offlineGainMult', payload:{multPerLevel:1.8}, prereq:[{id:'lg_passive',minLevel:1}], exclusiveGroup:'phase3_build_focus' },
+    { id:'lg_idle_reserve', name:'保全配当列', desc:'恒久 +35 GPS /Lv', baseCost:24, costMult:2.7, maxLevel:2, x:760, y:550, type:'flatGPS', payload:{gpsPerLevel:35}, prereq:[{id:'lg_idle_oath',minLevel:1}] },
+    { id:'lg_speed_oath', name:'急転周回教義', desc:'開始ゴールド +1200 /Lv (排他)', baseCost:14, costMult:2.6, maxLevel:1, x:520, y:670, type:'startGold', payload:{amountPerLevel:1200}, prereq:[{id:'lg_seed50',minLevel:2}], exclusiveGroup:'phase3_build_focus' },
+    { id:'lg_speed_resonator', name:'即応共振器', desc:'Prestige効果 +0.035 /Lv', baseCost:24, costMult:2.9, maxLevel:2, x:760, y:670, type:'prestigeEffectAdd', payload:{addPerLevel:0.035}, prereq:[{id:'lg_speed_oath',minLevel:1}] },
 
     { id:'lg_titan_forge', name:'タイタン鍛造所', desc:'全体 ×2.5 /Lv', baseCost:60,  costMult:3.2, maxLevel:2, x:1120, y:80,  type:'globalMult', payload:{multPerLevel:1.5}, prereq:[{id:'lg_mega',minLevel:1}] },
     { id:'lg_quantum_matrix', name:'量子マトリクス', desc:'採掘機 ×5.00 /Lv', baseCost:200, costMult:4.0, maxLevel:2, x:1340, y:160, type:'unitMult', payload:{unitId:'miner', multPerLevel:4.0}, prereq:[{id:'lg_titan_forge',minLevel:1}] },
@@ -202,6 +209,7 @@
       id:'ch_taxed_growth',
       name:'Challenge 1: Taxed Growth',
       desc:'全体生産が35%に低下、代わりにコスト上昇は通常のまま。',
+      goalHint:'基本生産の底上げと序盤の購入順を見直す入門用。',
       goalTotalGold: 120000,
       effects:{ globalMult:0.35 },
       reward:{ type:'globalMult', mult:1.08, text:'恒久: 全体 ×1.08' }
@@ -210,14 +218,16 @@
       id:'ch_no_upgrades',
       name:'Challenge 2: Pure Machinery',
       desc:'アップグレード購入不可で累計ゴールドを到達させる。',
+      goalHint:'ユニット配分だけで押し切り、Challenge開始時の保持要素を解放する。',
       goalTotalGold: 160000,
       effects:{ disableUpgrades:true },
-      reward:{ type:'flatGPS', gps:350, text:'恒久: +350 GPS' }
+      reward:{ type:'challengeKeepLegacy', text:'機能: Challenge開始時に所持Legacyを保持' }
     },
     {
       id:'ch_cost_spike',
       name:'Challenge 3: Cost Spike',
       desc:'ユニット価格が1.7倍で進行。成長設計が試される。',
+      goalHint:'コスト圧に耐える購入順を学び、Prestige効率を補強する。',
       goalTotalGold: 220000,
       effects:{ costMult:1.7 },
       reward:{ type:'prestigeEffectAdd', add:0.02, text:'恒久: Prestige効果 +0.02' }
@@ -226,14 +236,16 @@
       id:'ch_monoline',
       name:'Challenge 4: Mono Line',
       desc:'最初に購入した1種類のユニットだけで走り切る。切替不可。',
+      goalHint:'単一路線ビルドを練習し、Challenge中の自動化を強化する。',
       goalTotalGold: 280000,
       effects:{ singleUnitOnly:true },
-      reward:{ type:'costMult', mult:0.9, text:'恒久: コスト ×0.90' }
+      reward:{ type:'challengeAutoBuySpeed', mult:0.5, text:'機能: Challenge中の自動購入間隔 ×0.5' }
     },
     {
       id:'ch_fragile_rush',
       name:'Challenge 5: Fragile Rush',
       desc:'開始資金が1に固定され、さらに全体生産が25%になる。序盤設計力が試される。',
+      goalHint:'初速の作り方を学び、通常周回の基礎倍率を補う。',
       goalTotalGold: 360000,
       effects:{ globalMult:0.25, forceStartGold:1 },
       reward:{ type:'globalMult', mult:1.16, text:'恒久: 全体 ×1.16' }
@@ -242,22 +254,25 @@
       id:'ch_ascetic_engine',
       name:'Challenge 6: Ascetic Engine',
       desc:'アップグレード購入不可 + コスト1.45倍。基礎運用だけで突破を目指す。',
+      goalHint:'厳しい制約下での基礎運用を見直し、以後のChallenge目標を軽くする。',
       goalTotalGold: 460000,
       effects:{ disableUpgrades:true, costMult:1.45 },
-      reward:{ type:'flatGPS', gps:2600, text:'恒久: +2600 GPS' }
+      reward:{ type:'challengeGoalMult', mult:0.88, text:'機能: 以後のChallenge目標 ×0.88' }
     },
     {
       id:'ch_quantum_lock',
       name:'Challenge 7: Quantum Lock',
       desc:'単一路線かつコスト1.8倍、さらに全体生産45%。高難度の最終試練。',
+      goalHint:'高速周回か単一路線かを見極め、Challenge再挑戦の初速を解放する。',
       goalTotalGold: 620000,
       effects:{ singleUnitOnly:true, costMult:1.8, globalMult:0.45 },
-      reward:{ type:'prestigeEffectAdd', add:0.08, text:'恒久: Prestige効果 +0.08' }
+      reward:{ type:'challengeStartGold', amount:25000, text:'機能: Challenge開始Gold +25000' }
     },
     {
       id:'ch_event_horizon',
       name:'Challenge 8: Event Horizon',
       desc:'全体生産18%・コスト2.6倍・開始資金1固定の極限周回。',
+      goalHint:'Abyss 進行向け。まず gain 内訳表示を解放して深淵導線を読む。',
       goalTotalGold: 2200000,
       effects:{ globalMult:0.18, costMult:2.6, forceStartGold:1 },
       reward:{ type:'unlockFeature', feature:'abyss_gain_breakdown', text:'機能: Abyss gain 内訳表示を解放' }
@@ -267,6 +282,7 @@
       category:'abyss',
       name:'Challenge 9: Dimensional Drain',
       desc:'Antimatter Dimensions風。所持ユニット総数が増えるほど全体生産が急減（1台ごとに×0.975）。',
+      goalHint:'総台数デバフを抑えつつ、深淵変換アップグレードを解放する。',
       goalTotalGold: 1.0e260,
       effects:{ globalMultPerOwned:0.975 },
       reward:{ type:'unlockFeature', feature:'abyss_conversion_upgrades', text:'機能: Abyss変換アップグレードを解放' }
@@ -276,6 +292,7 @@
       category:'abyss',
       name:'Challenge 10: Tickspeed Debt',
       desc:'Antimatter Dimensions風。ユニット総数が増えるほど購入コスト倍率が累積加速（1 + 総数/700）。',
+      goalHint:'過剰購入を避け、再始動系 Abyss アップグレードを開く。',
       goalTotalGold: 1.0e285,
       effects:{ costRampByOwnedDiv:700 },
       reward:{ type:'unlockFeature', feature:'abyss_cycle_upgrades', text:'機能: Abyss再始動アップグレードを解放' }
@@ -285,6 +302,7 @@
       category:'abyss',
       name:'Challenge 11: Abyssal Singularity',
       desc:'Antimatter Dimensions風最終試練。最高Tierユニットのみ生産可能、アップグレード不可、開始1G固定。',
+      goalHint:'最終Tierの一点突破ビルドで Abyss 到達そのものを狙う。',
       goalTotalGold: C.ABYSS_RESET_GOAL,
       effects:{ onlyHighestUnitProduces:true, disableUpgrades:true, forceStartGold:1 },
       reward:{ type:'globalMult', mult:2.2, text:'恒久: 全体 ×2.20' }

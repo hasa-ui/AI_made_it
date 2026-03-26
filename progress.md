@@ -105,3 +105,95 @@ Original prompt: ロードマップのPhase 1を完了させてください
 - 実装: `game/ui.bootstrap.js` を追加し、`DOMContentLoaded` と初回起動責務を `ui.app.js` 本体から分離。`README.md` に実装マップと読み込み順を追加。
 - 文書: `Ver.1.30.0` として `game/config.js`、アップデート情報タブ、更新モーダルを今回の内部再編内容へ更新。
 - 検証: `node --check` で新旧 UI/engine/state 一式の構文確認に成功。VM ハーネスで `StateManager` / `ENGINE` / `GameUIBootstrap` の公開面と script 順依存が成立することを確認。Playwright は今回も `browser.newPage: Target page, context or browser has been closed` で実行不可。
+
+## 2026-03-26 ロードマップ Phase 3
+- 調査: `ロードマップ.md` の Phase 3 は「Legacy / Challenge のビルド化」。現状は Legacy Tree に排他制御がなく、Challenge 報酬も数値寄りで、Challenge 選択画面も狙いと報酬タイプが見えない状態。
+- 方針: Legacy には排他 root から伸びる `Challenge特化 / 放置特化 / 高速周回特化` の3枝を追加し、Challenge には `保持 / 自動化 / ルール変更` の機能報酬を混ぜる。UI は Challenge ごとの狙いと報酬カテゴリを明示する。
+- 実装: `game/config.js` に 6 個の Legacy ノードを追加。`phase3_build_focus` 排他 group により `Challenge特化 / 放置特化 / 高速周回特化` の3 root が同時取得不可になり、後続ノードで各ビルドを伸ばせるようにした。
+- 実装: Challenge 2/4/6/7 の報酬を `Challenge開始時に所持Legacyを保持`、`Challenge中の自動購入間隔 ×0.5`、`以後のChallenge目標 ×0.88`、`Challenge開始Gold +25000` に差し替え、`goalHint` も追加した。
+- 実装: `engine.helpers` に Challenge 報酬 summary 集計を追加し、`engine.runtime/economy/progression/challenge/shop` で Challenge開始Gold、実効目標、排他購入制御、自動購入加速、オフライン特化 Legacy を反映した。
+- 実装: `ui.app.js` で Legacy Inspector に排他情報、Challenge 一覧に `狙い / 報酬タイプ / 実効目標`、Challenge ステータスに実効目標進捗を表示するよう更新した。
+- 文書: `Ver.1.31.0` として `ロードマップ.md` の Phase 3 を完了済みに更新し、`仕様書.md`、アップデート情報タブ、更新モーダルも現仕様へ同期した。
+- 検証: `node --check` 成功。VM ハーネスで Legacy 排他購入、Challenge 報酬 summary、実効 Challenge 目標減少、Challenge 開始 Gold 見積を確認。Playwright は今回も `page.goto: Target page, context or browser has been closed` で実行不可。
+
+## 2026-03-26 Phase 3 challenge regression fixes
+- 修正: `challenge.savedGold` を state defaults / migration / reset normalizer に追加し、Challenge 開始時の専用 start gold を通常 run の gold と分離して退避できるようにした。
+- 修正: `startChallengeInternal()` で開始前 `gold` と `totalGoldEarned` の両方を保存し、`abandonChallengeInternal()` / `tryCompleteChallengeInternal()` で両方を復元するよう変更。Challenge 7 や Legacy 由来の開始 gold が通常 run へ漏れないようにした。
+- 修正: `doAscendInternal()` で、アクティブ challenge 中かつ `challengeKeepLegacy` 報酬解放済みなら `legacy` をリセットしないよう変更し、Challenge 2 報酬が Ascend 再始動後も継続するようにした。
+- 修正: `engine.state-normalizers` と UI fallback 側の challenge shape にも `savedGold` を揃え、Abyss reset 後や UI 単体参照時に shape 差異が残らないようにした。
+- 検証: `node --check` と vm harness で、Challenge 開始/中断による gold 漏れが消えていること、Challenge 2 報酬が active challenge 中の Ascend 後も維持されることを確認。Playwright client は `browser.newPage: Target page, context or browser has been closed` で今回も実行不可。
+
+## 2026-03-26 Phase 3 challenge snapshot follow-up fixes
+- 修正: `game/engine.challenge.js` で gold だけの退避をやめ、Challenge 開始前の `units` `upgrades` `legacy` `legacyNodes` `prestigeEarnedTotal` `runStats` を `savedSnapshot` に保存し、中断/クリア時は同じ helper で復元するよう変更。Challenge 開始 gold を使って買った資産が通常 run に漏れないようにした。
+- 修正: `game/engine.reset.js` で `challengeKeepLegacy` 中の Ascend は `legacyNodes` も保持するようにし、Challenge 2 報酬が points だけでなく Legacy Tree 全体として再始動後も残るようにした。
+- 修正: `state.defaults` / `state.migration` / `engine.state-normalizers` / UI fallback に `challenge.savedSnapshot` を追加し、途中 save や Abyss reset 後でも challenge state shape が揃うようにした。
+- 検証: `node --check` と vm harness で、Challenge 開始 gold を unit へ変換しても中断/クリア後に通常 run へ持ち出せないこと、`challengeKeepLegacy` が active challenge 中の Ascend 後も Legacy Tree を保持することを確認。Playwright client は `page.goto: Target page, context or browser has been closed` で今回も実行不可。
+
+## 2026-03-26 Challenge meta progression rollback fix
+- 修正: `game/engine.challenge.js` の `savedSnapshot` に AP/CP 系 state も追加し、`ascPoints` `ascEarnedTotal` `ascOwned` `celestialPoints` `celestialEarnedTotal` `celestialOwned` `celestial.activeBranchId` を Challenge 開始前の状態ごと復元するよう変更。
+- 修正: あわせて `achievementsOwned` `runStats` `lastAscensionRun` も snapshot/restore 対象に含め、Challenge 中の Ascend や shop 購入の副作用が discard 後に main save へ残らないようにした。
+- 検証: vm harness で `Ascend -> Ascension/Celestial 購入 -> abandon` と `Ascend -> Ascension/Celestial 購入 -> complete` の両経路を確認し、AP/CP・所持 upgrade・branch 状態が開始前 state に戻ることを確認。Playwright client は `page.goto: Target page, context or browser has been closed` で今回も実行不可。
+
+## 2026-03-26 Challenge snapshot compatibility and mini-game rollback
+- 修正: `game/engine.challenge.js` の restore を「field が存在する時だけ適用」へ切り替え、今回以前の in-progress challenge save が持っていない AP/CP・shop・achievement fields を無理に復元しないようにした。これで旧 snapshot からの abandon/complete で `ascOwned` や `celestialOwned` が壊れないようにした。
+- 修正: 現行 `savedSnapshot` に `miniGame` を追加し、Challenge 中のミニゲーム挑戦で増えた `plays` `bestScore` `perfectRuns` も discard 時に巻き戻すようにした。
+- 検証: vm harness で、旧 snapshot からの abandon 後に meta object が保持されて shop 購入も続行できること、および現行 snapshot では mini-game progress が abandon/complete の両方で開始前 state に戻ることを確認。Playwright client は `browser.newPage: Target page, context or browser has been closed` で今回も実行不可。
+
+## 2026-03-26 Legacy challenge snapshot backfill
+- 修正: `game/state.migration.js` に active challenge 用の snapshot backfill を追加し、旧形式 `savedSnapshot` に欠けている `ascPoints` `ascOwned` `celestialOwned` `achievementsOwned` `miniGame` `runStats` `lastAscensionRun` などを、ロード時の save state から補完するようにした。
+- 修正: これにより、旧 build で開始した challenge をアップデート後に abandon/complete しても、guarded restore が mini-game や ascension summary を巻き戻せるようにした。
+- 検証: vm harness で `SM.importState()` 後の legacy snapshot に `miniGame` / `lastAscensionRun` が入ることと、その save からの abandon/complete で両方が開始前 state に戻ることを確認。Playwright client は `page.addInitScript: Target page, context or browser has been closed` で今回も実行不可。
+
+## 2026-03-26 Legacy snapshot safe fallback
+- 修正: `game/state.migration.js` の legacy active challenge backfill は、live in-challenge state から rollback 基準値を作るのをやめ、欠けている meta fields を `defaultState` ベースの安全な既定値へ補完するよう変更した。
+- 修正: これにより、旧 build 中の challenge で既に稼いでいた AP/CP、mini-game progress、`lastAscensionRun` をアップデート後の abandon/complete で main save に残さないようにした。
+- 検証: vm harness で、legacy active challenge save を import した時点で `savedSnapshot` の不足分が live state ではなく既定値へ埋まること、およびその save からの abandon/complete で `ascPoints` / `miniGame` / `lastAscensionRun` が安全側 state へ戻ることを確認。Playwright client は `browser.newPage: Target page, context or browser has been closed` で今回も実行不可。
+
+## 2026-03-26 Legacy snapshot loaded-state preservation
+- 修正: `game/state.migration.js` の legacy active challenge backfill を `ascendedInChallenge` で分岐し、challenge 内で Ascend していない save については、欠けている meta fields を loaded save から補完するよう変更した。
+- 修正: 一方で `ascendedInChallenge > 0` の save は、Ascend 由来の leak を避けるため、引き続き ascend-derived fields を安全側 fallback へ補完するようにした。
+- 検証: vm harness で、`ascendedInChallenge = 0` の legacy save は `abandonChallengeInternal()` 後も `ascPoints` / `ascOwned` / `celestialOwned` / `miniGame` / `lastAscensionRun` が維持されること、`ascendedInChallenge = 1` では ascend-derived fields だけ安全側 fallback になることを確認。Playwright client は `browser.newPage: Target page, context or browser has been closed` で今回も実行不可。
+
+## 2026-03-26 Legacy active challenge auto-resolve
+- 修正: `game/state.migration.js` の不完全な legacy active challenge snapshot は、ロード時に meta baseline を再構成しないように変更した。必要な rollback field が欠けている場合は、その snapshot に実際に保存されている run-local data だけで復元し、`challenge.activeId` を `null` にして auto-abandon 相当に解消する。
+- 修正: これにより、in-challenge live state を rollback baseline として再利用せずに済み、legacy save での abandon/complete 時に tainted meta state を戻してしまう経路を消した。
+- 検証: vm harness で、不完全な legacy active challenge save は import 時点で `challenge.activeId === null` になり run-local snapshot だけ復元されること、complete snapshot save は引き続き active のまま維持されることを確認。Playwright client は `browser.newPage: Target page, context or browser has been closed` で今回も実行不可。
+
+## 2026-03-26 Legacy auto-resolve meta discard
+- 修正: `game/state.migration.js` の auto-resolve 分岐で、不完全な legacy active challenge save は run-local snapshot 復元後に `ascPoints` `ascOwned` `celestialOwned` `celestial.activeBranchId` `achievementsOwned` `miniGame` `runStats` `lastAscensionRun` などの曖昧な meta progression を安全な既定値へ明示的にリセットするよう変更した。
+- 修正: これにより、旧 build の challenge 内で稼がれた可能性がある meta progression を、challenge flag 解除後に main save へ残さないようにした。
+- 検証: vm harness で、不完全な legacy active challenge save は import 時点で `challenge.activeId === null` になり、run-local だけ snapshot 値へ戻り、曖昧な meta progression は default/null へ落ちること、complete snapshot save は従来どおり active のまま維持されることを確認。Playwright client は `browser.newPage: Target page, context or browser has been closed` で今回も実行不可。
+
+## 2026-03-26 Legacy auto-resolve meta preservation
+- 修正: `game/state.migration.js` の不完全な legacy active challenge auto-resolve から、top-level meta progression を default/null へ落とす処理を削除した。これにより、互換性のない challenge 自体はロード時に解消しつつ、読み込んだ save に既に存在していた `ascPoints`、Ascension/Celestial 所持、achievement、mini-game、run history は保持される。
+- 修正: run-local snapshot の復元 (`gold` `totalGoldEarned` `units` `upgrades` `legacy` など) と `challenge.activeId` のクリアは維持し、auto-resolve の影響範囲を challenge 互換解消に限定した。
+- 検証: vm harness で、不完全な legacy active challenge save は `SM.importState()` 後に `challenge.activeId === null` になりつつ、run-local は snapshot 値へ戻り、`ascPoints` / `ascOwned` / `celestialOwned` / `achievementsOwned` / `miniGame` / `runStats` / `lastAscensionRun` は loaded save の値が維持されることを確認。complete snapshot save は引き続き active のまま維持されることも確認。Playwright client は `browser.newPage: Target page, context or browser has been closed` で今回も実行不可。
+
+## 2026-03-26 Legacy auto-resolve meta discard and run reset
+- 修正: `game/state.migration.js` の不完全な legacy active challenge auto-resolve は、曖昧な meta progression を再び discard するよう戻した。`ascPoints` / `ascOwned` / `celestialPoints` / `celestialOwned` / `celestial.activeBranchId` / `achievementsOwned` / `miniGame` は challenge baseline が無い以上安全に復元できないため、auto-resolve 時に default/null へ落とす。
+- 修正: ただし `runStats` は全面初期化にせず、`snapshot.runStats` が無い場合だけ「通常 run の current-run 部分」を再初期化する helper を migration に追加した。これで `currentRunStartedAt` / `currentRunPeakGold` / `currentRunUnitTypes` / `currentRunUpgradeBuys` は challenge 開始で壊れた値を引きずらず、`ascendedInChallenge` 回数ぶんだけ `history` と `runCount` も巻き戻す。
+- 修正: auto-resolve 後は `challenge.ascendedInChallenge = 0` に戻し、破棄された legacy challenge の Ascend 回数が後続 state へ残らないようにした。
+- 検証: vm harness で、不完全な legacy active challenge save は import 時点で `challenge.activeId === null` になり、run-local snapshot を戻しつつ曖昧な meta progression は default/null へ落ちること、`snapshot.runStats` 不在時でも current run 情報が通常 run 用に再初期化され、challenge 中 Ascend で増えた `history` / `runCount` が巻き戻ることを確認。Playwright client は `browser.newPage: Target page, context or browser has been closed` で今回も実行不可。
+
+## 2026-03-26 Legacy auto-resolve meta preservation follow-up
+- 修正: `game/state.migration.js` の不完全な legacy active challenge auto-resolve から、top-level meta progression を default/null へ落とす処理を削除した。これにより、challenge 互換解消のために `challenge.activeId` を外しても、読み込んだ save に残っている `ascPoints`、Ascension/Celestial 所持、achievement、mini-game 進行は保持される。
+- 修正: `lastAscensionRun` は、legacy snapshot 自体が baseline を持っている時だけ snapshot 値で復元し、そうでない場合は loaded save 側の既存 summary をそのまま残すようにした。
+- 修正: 一方で `runStats` の current-run 再初期化 helper と、`ascendedInChallenge` 分だけ `history` / `runCount` を巻き戻す処理はそのまま残し、challenge 開始で壊れた通常 run の統計だけを補正する構成にした。
+- 検証: vm harness で、不完全な legacy active challenge save は import 時点で `challenge.activeId === null` になりつつ、run-local snapshot を戻した上で `ascPoints` / `ascOwned` / `celestialOwned` / `achievementsOwned` / `miniGame` / `lastAscensionRun` が loaded save の値のまま維持されることを確認。`snapshot.runStats` 不在時でも current run 情報が通常 run 用に再初期化され、challenge 中 Ascend で増えた `history` / `runCount` は巻き戻ることも確認。Playwright client は `browser.newPage: Target page, context or browser has been closed` で今回も実行不可。
+
+## 2026-03-26 Legacy auto-resolve leak fix follow-up
+- 修正: `game/state.migration.js` の不完全な legacy active challenge auto-resolve では、baseline を持たない meta progression を再び discard するよう戻した。`ascPoints` / `ascOwned` / `celestialPoints` / `celestialOwned` / `celestial.activeBranchId` / `achievementsOwned` / `achievementsProgress` / `miniGame` は、challenge 内で変化していた可能性を排除できないため、default/null へ落とす。
+- 修正: `lastAscensionRun` は条件付きにし、legacy snapshot が baseline を持たない場合でも `ascendedInChallenge === 0` の save では loaded save 側の既存 summary を保持し、`ascendedInChallenge > 0` の save では leaked summary を `null` へ落とすようにした。
+- 修正: current-run `runStats` の再初期化と、`ascendedInChallenge` 回数ぶんの `history` / `runCount` 巻き戻しは継続し、discard 後の通常 run 統計が challenge 状態を引きずらないようにしている。
+- 検証: vm harness で、不完全な legacy active challenge save は import 時点で `challenge.activeId === null` になり、run-local snapshot を戻しつつ曖昧な meta progression は default/null へ落ちること、`ascendedInChallenge = 0` では既存 `lastAscensionRun` が保持され、`ascendedInChallenge = 1` では `lastAscensionRun === null` になることを確認。Playwright client は `browser.newPage: Target page, context or browser has been closed` で今回も実行不可。
+
+## 2026-03-26 Legacy partial snapshot field restore
+- 修正: `game/state.migration.js` の legacy auto-resolve は、partial snapshot を「全部欠損扱い」せず、snapshot に残っている meta baseline を field 単位で復元するよう変更した。これにより `ascPoints` / `ascOwned` / `celestialOwned` などが snapshot にある save では、その値をそのまま rollback 基準として使う。
+- 修正: `ascEarnedTotal` と `celestialEarnedTotal` は Ascend でしか増えないため、`ascendedInChallenge === 0` の legacy save では loaded save 側の値を保持し、`ascendedInChallenge > 0` かつ snapshot baseline 不在の時だけ `0` へ落とすようにした。
+- 修正: 一方で snapshot に baseline が無い `achievementsOwned` / `achievementsProgress` / `miniGame` などは引き続き reset し、`lastAscensionRun` の条件付き保持と `runStats` の current-run 再初期化も維持している。
+- 検証: vm harness で、partial legacy snapshot が `ascPoints` / `ascOwned` / `celestialOwned` を持つケースではそれらが field 単位で復元され、snapshot に無い `achievementsOwned` / `miniGame` だけが reset されること、`ascendedInChallenge = 0` では `ascEarnedTotal` / `celestialEarnedTotal` が loaded save の値を保持し、`ascendedInChallenge = 1` では snapshot baseline 不在時に `0` へ落ちることを確認。Playwright client は `browser.newPage: Target page, context or browser has been closed` で今回も実行不可。
+
+## 2026-03-26 Restored snapshot migration reapply
+- 修正: `game/state.migration.js` の既存 versioned migration を helper 化し、partial legacy snapshot から `ascOwned` / `celestialOwned` を復元した後にも同じ clamp/refund を再適用するようにした。
+- 修正: これにより、`sourceVersion < 16` の Ascension 一回きり upgrade overcap や、`sourceVersion < 14` の Celestial branch upgrade refund 済み状態が、snapshot restore で復活してしまう経路を塞いだ。
+- 検証: vm harness で、`sourceVersion = 13` の incomplete legacy active challenge save に `savedSnapshot.ascOwned.asc_void_multiplier = 3` と `savedSnapshot.celestialOwned.cel_harmonic_seed = 2` を持たせて import し、auto-resolve 後に `asc_void_multiplier === 1` / `ascPoints === 8400`、`cel_harmonic_seed === 0` / `celestialPoints === 10` へ補正されることを確認。Playwright client は `browser.newPage: Target page, context or browser has been closed` で今回も実行不可。

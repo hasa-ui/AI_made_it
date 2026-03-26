@@ -13,7 +13,9 @@
         computeStartingGoldOnPrestige: ()=>runtime.computeStartingGoldOnPrestige(),
         invalidateAggCache: ()=>runtime.invalidateAggCache(),
         recalcAndCacheGPS: (st)=>runtime.recalcAndCacheGPS(st),
-        getActiveChallengeDef: (st)=>runtime.getActiveChallengeDef(st)
+        getActiveChallengeDef: (st)=>runtime.getActiveChallengeDef(st),
+        getChallengeRewardSummary: (st)=>runtime.getChallengeRewardSummary(st),
+        getChallengeGoalTotal: (ch, st)=>runtime.getChallengeGoalTotal(ch, st)
       })
     : null;
 
@@ -71,6 +73,8 @@
     getAbyssGainBreakdown: (st) => runtime.getAbyssGainBreakdownInternal(st || runtime.state),
     getAbyssObjectives: (st) => runtime.getAbyssObjectivesInternal(st || runtime.state),
     hasAbyssFeature: (featureId, st) => runtime.hasAbyssFeature(st || runtime.state, featureId),
+    getChallengeRewardSummary: (st) => runtime.getChallengeRewardSummary(st || runtime.state),
+    getChallengeGoalTotal: (ch, st) => runtime.getChallengeGoalTotal(ch, st || runtime.state),
     buyAbyssUpgradeInternal: (id) => runtime.buyAbyssUpgradeInternal(id),
     doPrestigeInternal: ()=>runtime.doPrestigeInternal(),
     doAscendInternal: ()=>runtime.doAscendInternal(),

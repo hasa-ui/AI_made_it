@@ -210,6 +210,18 @@
     }
     return { label:'購入済み・待機中', inactive:true };
   }
+  function getChallengeGoalTotal(ch, st){
+    const src = st || E.getState();
+    return E.getChallengeGoalTotal ? E.getChallengeGoalTotal(ch, src) : (ch.goalTotalGold || 0);
+  }
+  function getChallengeRewardTypeLabel(reward){
+    if (!reward || !reward.type) return '恒久強化';
+    if (reward.type === 'challengeKeepLegacy') return '保持';
+    if (reward.type === 'challengeAutoBuySpeed') return '自動化';
+    if (reward.type === 'challengeGoalMult' || reward.type === 'challengeStartGold') return 'ルール変更';
+    if (reward.type === 'unlockFeature') return '機能解放';
+    return '恒久強化';
+  }
   function ensureSettingsDefaults(st){
     st.settings = Object.assign({}, SETTINGS_DEFAULTS, st.settings || {});
     st.settings.toast = Object.assign({}, SETTINGS_DEFAULTS.toast, st.settings.toast || {});
@@ -464,6 +476,9 @@
     if (def.type === 'costMult'){ const total = Math.pow(def.payload.multPerLevel||1, level); return { text:`コスト ×${total.toFixed(3)}`, value: total }; }
     if (def.type === 'startGold'){ const amount = (def.payload.amountPerLevel || 0) * level; return { text:`開始G +${amount}`, value: amount }; }
     if (def.type === 'flatGPS'){ const gps = (def.payload.gpsPerLevel || 0) * level; return { text:`恒久 +${gps} GPS`, value: gps }; }
+    if (def.type === 'challengeGoalMult'){ const total = Math.pow(def.payload.multPerLevel || 1, level); return { text:`Challenge目標 ×${total.toFixed(3)}`, value: total }; }
+    if (def.type === 'challengeStartGold'){ const amount = (def.payload.amountPerLevel || 0) * level; return { text:`Challenge開始G +${amount}`, value: amount }; }
+    if (def.type === 'offlineGainMult'){ const total = Math.pow(def.payload.multPerLevel || 1, level); return { text:`オフライン報酬 ×${total.toFixed(3)}`, value: total }; }
     return { text:`${def.desc||''}`, value: null };
   }
 
@@ -480,10 +495,20 @@
     document.getElementById('ins_lvl').textContent = fmtLegacyValue(lvl);
     document.getElementById('ins_max').textContent = fmtLegacyValue(E.legacyMaxLevel(def, E.getState()));
 
+    const prereqParts = [];
     if (def.prereq && def.prereq.length){
       const names = def.prereq.map(p=>{ const nm = (C.LEGACY_DEFS.find(x=>x.id===p.id)||{}).name || p.id; return `${nm} (Lv${p.minLevel||1})`; });
-      document.getElementById('ins_prereq').textContent = names.join('、');
-    } else document.getElementById('ins_prereq').textContent = 'なし';
+      prereqParts.push(`前提: ${names.join('、')}`);
+    } else {
+      prereqParts.push('前提: なし');
+    }
+    if (def.exclusiveGroup){
+      const exclusiveNames = (C.LEGACY_DEFS || [])
+        .filter(other=>other.id !== def.id && other.exclusiveGroup === def.exclusiveGroup)
+        .map(other=>other.name);
+      if (exclusiveNames.length) prereqParts.push(`排他: ${exclusiveNames.join('、')}`);
+    }
+    document.getElementById('ins_prereq').textContent = prereqParts.join(' / ');
 
     const nextCost = E.legacyCostForNextLevel(def, E.getState().legacyNodes[id] || 0, E.getState());
     document.getElementById('ins_next_cost').textContent = fmtLegacyValue(nextCost);
@@ -716,7 +741,11 @@
     if (!hasAscSpecial('unlockAutobuy')) return;
     const cfg = (st.settings && st.settings.autoBuy) ? st.settings.autoBuy : {};
     if (!cfg.enabled) return;
-    const interval = Math.max(50, Number(cfg.intervalMs || 500)) / 1000;
+    const rewardSummary = E.getChallengeRewardSummary ? E.getChallengeRewardSummary(st) : null;
+    const challengeAutoBuyFactor = (st.challenge && st.challenge.activeId && rewardSummary)
+      ? Math.max(0.1, Number(rewardSummary.challengeAutoBuySpeedMult || 1))
+      : 1;
+    const interval = Math.max(50, Number(cfg.intervalMs || 500)) * challengeAutoBuyFactor / 1000;
     autoBuyAccumulator += dt;
     if (autoBuyAccumulator < interval) return;
 
@@ -936,7 +965,7 @@
     for (const ch of (C.CHALLENGES || [])){
       const row = document.createElement('div');
       row.className = 'upgradeRow';
-      row.innerHTML = `<div><strong>${ch.name}</strong><div class="muted small">${ch.desc}</div><div class="muted tiny">目標: 累計Gold ${fmtNumber(ch.goalTotalGold || 0)} / 報酬: ${(ch.reward && ch.reward.text) || '恒久ボーナス'}</div></div><div class="row"><button id="chStart-${ch.id}" class="small accent">開始</button><button id="chClaim-${ch.id}" class="small">達成判定</button><button id="chAbandon-${ch.id}" class="small warn">中断</button><span id="chDone-${ch.id}" class="muted small">未クリア</span></div>`;
+      row.innerHTML = `<div><strong>${ch.name}</strong><div class="muted small">${ch.desc}</div><div class="muted tiny">狙い: ${ch.goalHint || '制約に合わせた最適化を探す'}</div><div class="muted tiny">報酬タイプ: ${getChallengeRewardTypeLabel(ch.reward)}</div><div class="muted tiny" id="chGoal-${ch.id}">目標: 累計Gold ${fmtNumber(getChallengeGoalTotal(ch, E.getState()))} / 報酬: ${(ch.reward && ch.reward.text) || '恒久ボーナス'}</div></div><div class="row"><button id="chStart-${ch.id}" class="small accent">開始</button><button id="chClaim-${ch.id}" class="small">達成判定</button><button id="chAbandon-${ch.id}" class="small warn">中断</button><span id="chDone-${ch.id}" class="muted small">未クリア</span></div>`;
       const targetWrap = ch.category === 'abyss' ? abyssWrap : coreWrap;
       if (targetWrap) targetWrap.appendChild(row);
     }
@@ -1128,12 +1157,13 @@
 
   function renderChallengeStatus(){
     const st = E.getState();
-    st.challenge = st.challenge || { activeId:null, completed:{}, bestSec:{}, ascendedInChallenge:0 };
+    st.challenge = st.challenge || { activeId:null, completed:{}, bestSec:{}, ascendedInChallenge:0, savedSnapshot:null, savedGold:null, savedTotalGold:null };
     const status = document.getElementById('challengeStatus');
     if (status){
       const active = E.getActiveChallenge ? E.getActiveChallenge(st) : null;
+      const activeGoal = active ? getChallengeGoalTotal(active, st) : 0;
       if (active) status.textContent = `挑戦中: ${active.name}
-進捗: ${fmtNumber(st.totalGoldEarned || 0)} / ${fmtNumber(active.goalTotalGold || 0)}
+進捗: ${fmtNumber(st.totalGoldEarned || 0)} / ${fmtNumber(activeGoal)}
 アップグレード制限: ${active.effects && active.effects.disableUpgrades ? 'あり' : 'なし'}
 ユニット単一路線: ${active.effects && active.effects.singleUnitOnly ? 'あり' : 'なし'}
 最高Tierのみ生産: ${active.effects && active.effects.onlyHighestUnitProduces ? 'あり' : 'なし'}
@@ -1149,6 +1179,8 @@
     }
     for (const ch of (C.CHALLENGES || [])){
       const done = !!(st.challenge.completed && st.challenge.completed[ch.id]);
+      const goalEl = document.getElementById(`chGoal-${ch.id}`);
+      if (goalEl) goalEl.textContent = `目標: 累計Gold ${fmtNumber(getChallengeGoalTotal(ch, st))} / 報酬: ${(ch.reward && ch.reward.text) || '恒久ボーナス'}`;
       const doneEl = document.getElementById(`chDone-${ch.id}`);
       const bestSec = st.challenge.bestSec ? st.challenge.bestSec[ch.id] : undefined;
       const hasBestSec = Number.isFinite(bestSec);
@@ -1573,7 +1605,7 @@
       if (want && !confirm('レガシーを1レベル取得しますか？')) return;
       const res = E.attemptBuyLegacyInternal(selectedLegacyId, 1);
       if (res.ok){ svgDirty=true; syncUIAfterChange(createUiDirty('header','playShop','prestigeCore','ascCore','legacySvg')); selectLegacyNode(selectedLegacyId); checkAchievementsAfterAction(); showTypedToast('purchase','レガシーを購入しました'); }
-      else showTypedToast('general','購入失敗（コスト不足または前提不足）');
+      else showTypedToast('general', res && res.reason === 'exclusive' ? '排他ビルドのため購入できません' : '購入失敗（コスト不足または前提不足）');
     });
 
     document.getElementById('ins_buyMax')?.addEventListener('click', ()=>{
@@ -1582,7 +1614,7 @@
       if (want && !confirm('選択中のレガシーノードを限界まで購入しますか？')) return;
       const res = E.attemptBuyLegacyInternal(selectedLegacyId, Infinity);
       if (res.ok){ svgDirty=true; syncUIAfterChange(createUiDirty('header','playShop','prestigeCore','ascCore','legacySvg')); selectLegacyNode(selectedLegacyId); checkAchievementsAfterAction(); showTypedToast('purchase','レガシーをまとめて購入しました'); }
-      else showTypedToast('general','購入できるレベルはありません');
+      else showTypedToast('general', res && res.reason === 'exclusive' ? '排他ビルドのため購入できません' : '購入できるレベルはありません');
     });
 
     document.getElementById('ins_close')?.addEventListener('click', ()=>{
@@ -1623,9 +1655,9 @@
     const body = document.getElementById('updateModalBody');
     if (!modal || !body) return;
     body.textContent = `${C.APP_VERSION} の主な更新
-- State を defaults / migration / storage / facade に分割し、セーブ処理の責務を整理
-- Engine を runtime / economy / progression / shop / reset / facade に分割し、window.ENGINE の互換を保ったまま保守しやすく再編
-- UI bootstrap を独立ファイル化し、起動責務を描画ロジック本体から切り離し`;
+- ロードマップ Phase 3 を完了し、Legacy Tree に排他ビルド枝を追加
+- Challenge 報酬へ保持 / 自動化 / ルール変更系を追加し、Challenge を進行装置として再設計
+- Challenge 画面に各挑戦の狙いと報酬タイプを表示し、周回方針を判断しやすく改善`;
     modal.style.display = 'flex';
     document.getElementById('closeUpdateModal')?.addEventListener('click', ()=>{
       modal.style.display = 'none';

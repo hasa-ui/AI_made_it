@@ -13,6 +13,9 @@
     let startingUnits = {};
     let prestigeEffectAdd = 0;
     let flatGPS = 0;
+    let challengeGoalMult = 1;
+    let challengeStartGoldBonus = 0;
+    let offlineGainMult = 1;
 
     for (const def of (C.LEGACY_DEFS || [])){
       const lvl = (st.legacyNodes && st.legacyNodes[def.id]) ? st.legacyNodes[def.id] : 0;
@@ -25,6 +28,9 @@
       if (def.type === 'startUnit') startingUnits[p.unitId] = (startingUnits[p.unitId] || 0) + (p.amountPerLevel || 0) * lvl;
       if (def.type === 'prestigeEffectAdd') prestigeEffectAdd += (p.addPerLevel || 0) * lvl;
       if (def.type === 'flatGPS') flatGPS += (p.gpsPerLevel || 0) * lvl;
+      if (def.type === 'challengeGoalMult') challengeGoalMult *= Math.pow(p.multPerLevel || 1, lvl);
+      if (def.type === 'challengeStartGold') challengeStartGoldBonus += (p.amountPerLevel || 0) * lvl;
+      if (def.type === 'offlineGainMult') offlineGainMult *= Math.pow(p.multPerLevel || 1, lvl);
     }
 
     for (const a of (C.ASC_UPGRADES || [])){
@@ -119,18 +125,25 @@
       }
     }
 
-    const completed = (st.challenge && st.challenge.completed) ? st.challenge.completed : {};
-    for (const ch of (C.CHALLENGES || [])){
-      if (!completed[ch.id]) continue;
-      const r = ch.reward || {};
-      if (r.type === 'globalMult' && typeof r.mult === 'number') globalMult *= r.mult;
-      if (r.type === 'flatGPS' && typeof r.gps === 'number') flatGPS += r.gps;
-      if (r.type === 'startGold' && typeof r.amount === 'number') startingGoldBonus += r.amount;
-      if (r.type === 'prestigeEffectAdd' && typeof r.add === 'number') prestigeEffectAdd += r.add;
-      if (r.type === 'costMult' && typeof r.mult === 'number') costMult *= r.mult;
-    }
+    const challengeRewards = runtime.getChallengeRewardSummary(st);
+    globalMult *= challengeRewards.globalMult;
+    flatGPS += challengeRewards.flatGPS;
+    startingGoldBonus += challengeRewards.startGold;
+    prestigeEffectAdd += challengeRewards.prestigeEffectAdd;
+    costMult *= challengeRewards.costMult;
 
-    return { globalMult, unitMults, costMult, startingGoldBonus, startingUnits, prestigeEffectAdd, flatGPS };
+    return {
+      globalMult,
+      unitMults,
+      costMult,
+      startingGoldBonus,
+      startingUnits,
+      prestigeEffectAdd,
+      flatGPS,
+      challengeGoalMult,
+      challengeStartGoldBonus,
+      offlineGainMult
+    };
   };
 
   runtime.getAggregates = function(st){
