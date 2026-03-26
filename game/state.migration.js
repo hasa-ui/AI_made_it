@@ -4,6 +4,7 @@
   if (!runtime) throw new Error('state.defaults.js must be loaded before state.migration.js');
 
   const { C, SAVE_VERSION, deepCopy, defaultState } = runtime;
+  function hasOwn(obj, key){ return !!obj && Object.prototype.hasOwnProperty.call(obj, key); }
 
   function migrateState(raw){
     if (!raw || typeof raw !== 'object') throw new Error('Invalid save data: object required');
@@ -78,6 +79,21 @@
     merged.challenge.bestSec = Object.assign({}, merged.challenge.bestSec || {});
     if (typeof merged.challenge.ascendedInChallenge !== 'number') merged.challenge.ascendedInChallenge = 0;
     if (!merged.challenge.savedSnapshot || typeof merged.challenge.savedSnapshot !== 'object' || Array.isArray(merged.challenge.savedSnapshot)) merged.challenge.savedSnapshot = null;
+    if (merged.challenge.activeId && merged.challenge.savedSnapshot){
+      const snapshot = Object.assign({}, merged.challenge.savedSnapshot);
+      if (!hasOwn(snapshot, 'ascPoints')) snapshot.ascPoints = merged.ascPoints || 0;
+      if (!hasOwn(snapshot, 'ascEarnedTotal')) snapshot.ascEarnedTotal = merged.ascEarnedTotal || 0;
+      if (!hasOwn(snapshot, 'celestialPoints')) snapshot.celestialPoints = merged.celestialPoints || 0;
+      if (!hasOwn(snapshot, 'celestialEarnedTotal')) snapshot.celestialEarnedTotal = merged.celestialEarnedTotal || 0;
+      if (!hasOwn(snapshot, 'ascOwned')) snapshot.ascOwned = deepCopy(merged.ascOwned || {});
+      if (!hasOwn(snapshot, 'celestialOwned')) snapshot.celestialOwned = deepCopy(merged.celestialOwned || {});
+      if (!hasOwn(snapshot, 'celestial')) snapshot.celestial = deepCopy(merged.celestial || { activeBranchId:null });
+      if (!hasOwn(snapshot, 'achievementsOwned')) snapshot.achievementsOwned = deepCopy(merged.achievementsOwned || {});
+      if (!hasOwn(snapshot, 'miniGame')) snapshot.miniGame = deepCopy(merged.miniGame || defaultState.miniGame);
+      if (!hasOwn(snapshot, 'runStats')) snapshot.runStats = deepCopy(merged.runStats || defaultState.runStats);
+      if (!hasOwn(snapshot, 'lastAscensionRun')) snapshot.lastAscensionRun = deepCopy(merged.lastAscensionRun || null);
+      merged.challenge.savedSnapshot = snapshot;
+    }
     if (typeof merged.challenge.savedGold !== 'number' && merged.challenge.savedGold !== null) merged.challenge.savedGold = null;
     if (typeof merged.challenge.savedTotalGold !== 'number' && merged.challenge.savedTotalGold !== null) merged.challenge.savedTotalGold = null;
     merged.abyss = Object.assign({}, deepCopy(defaultState.abyss), merged.abyss || {});

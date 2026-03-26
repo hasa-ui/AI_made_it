@@ -138,3 +138,8 @@ Original prompt: ロードマップのPhase 1を完了させてください
 - 修正: `game/engine.challenge.js` の restore を「field が存在する時だけ適用」へ切り替え、今回以前の in-progress challenge save が持っていない AP/CP・shop・achievement fields を無理に復元しないようにした。これで旧 snapshot からの abandon/complete で `ascOwned` や `celestialOwned` が壊れないようにした。
 - 修正: 現行 `savedSnapshot` に `miniGame` を追加し、Challenge 中のミニゲーム挑戦で増えた `plays` `bestScore` `perfectRuns` も discard 時に巻き戻すようにした。
 - 検証: vm harness で、旧 snapshot からの abandon 後に meta object が保持されて shop 購入も続行できること、および現行 snapshot では mini-game progress が abandon/complete の両方で開始前 state に戻ることを確認。Playwright client は `browser.newPage: Target page, context or browser has been closed` で今回も実行不可。
+
+## 2026-03-26 Legacy challenge snapshot backfill
+- 修正: `game/state.migration.js` に active challenge 用の snapshot backfill を追加し、旧形式 `savedSnapshot` に欠けている `ascPoints` `ascOwned` `celestialOwned` `achievementsOwned` `miniGame` `runStats` `lastAscensionRun` などを、ロード時の save state から補完するようにした。
+- 修正: これにより、旧 build で開始した challenge をアップデート後に abandon/complete しても、guarded restore が mini-game や ascension summary を巻き戻せるようにした。
+- 検証: vm harness で `SM.importState()` 後の legacy snapshot に `miniGame` / `lastAscensionRun` が入ることと、その save からの abandon/complete で両方が開始前 state に戻ることを確認。Playwright client は `page.addInitScript: Target page, context or browser has been closed` で今回も実行不可。
