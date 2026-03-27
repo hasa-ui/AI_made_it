@@ -59,6 +59,8 @@
   let legacyZoom = 1;
   let pinchStartDistance = null;
   let pinchStartZoom = 1;
+  let mobileExpandedUnitId = null;
+  let mobileExpandedUpgradeId = null;
   const SETTINGS_DEFAULTS = {
     notation:'compact',
     notationThreshold:1000,
@@ -129,6 +131,64 @@
     const el = document.createElement(tag);
     if (className) el.className = className;
     return el;
+  }
+  function syncMobileCollapsibleDetails(){
+    const mode = isMobileViewport() ? 'mobile' : 'desktop';
+    document.querySelectorAll('details[data-mobile-collapsed]').forEach((el)=>{
+      if (el.dataset.viewportMode === mode) return;
+      el.dataset.viewportMode = mode;
+      el.open = mode !== 'mobile';
+    });
+  }
+  function syncMobileShopExpansion(){
+    const mobile = isMobileViewport();
+    for (const [id, ref] of Object.entries(unitButtons)){
+      if (!ref || !ref.itemEl || !ref.detailEl || !ref.toggleBtn) continue;
+      const open = mobile && mobileExpandedUnitId === id;
+      ref.itemEl.classList.toggle('is-open', open);
+      ref.detailEl.style.display = mobile ? (open ? 'block' : 'none') : 'block';
+      ref.toggleBtn.style.display = mobile ? 'inline-flex' : 'none';
+      ref.toggleBtn.textContent = open ? '閉じる' : '詳細';
+    }
+    for (const [id, ref] of Object.entries(upgradeButtons)){
+      if (!ref || !ref.itemEl || !ref.detailEl || !ref.toggleBtn) continue;
+      const open = mobile && mobileExpandedUpgradeId === id;
+      ref.itemEl.classList.toggle('is-open', open);
+      ref.detailEl.style.display = mobile ? (open ? 'block' : 'none') : 'block';
+      ref.toggleBtn.style.display = mobile ? 'inline-flex' : 'none';
+      ref.toggleBtn.textContent = open ? '閉じる' : '詳細';
+    }
+  }
+  function toggleMobileShopEntry(kind, id){
+    if (!isMobileViewport()) return;
+    if (kind === 'unit') mobileExpandedUnitId = (mobileExpandedUnitId === id) ? null : id;
+    if (kind === 'upgrade') mobileExpandedUpgradeId = (mobileExpandedUpgradeId === id) ? null : id;
+    syncMobileShopExpansion();
+  }
+  function syncLegacyInspectorSheet(){
+    const insWrap = document.getElementById('tab-inspector');
+    if (!insWrap) return;
+    const st = E.getState();
+    const activeTab = getActiveTabName(st);
+    const activeLegacy = activeTab === 'prestige' && getActiveSubTab('prestige', st) === 'legacy';
+    if (!activeLegacy){
+      insWrap.style.display = 'none';
+      insWrap.classList.remove('mobile-open');
+      return;
+    }
+    if (!isMobileViewport()){
+      insWrap.style.display = 'block';
+      insWrap.classList.remove('mobile-open');
+      return;
+    }
+    const open = !!selectedLegacyId;
+    insWrap.style.display = open ? 'block' : 'none';
+    insWrap.classList.toggle('mobile-open', open);
+  }
+  function syncMobileResponsiveUi(){
+    syncMobileCollapsibleDetails();
+    syncMobileShopExpansion();
+    syncLegacyInspectorSheet();
   }
 
   function hasAscSpecial(kind){ return (U.hasAscSpecial || ((C,E,k)=>false))(C, E, kind); }
@@ -307,20 +367,27 @@
     container.innerHTML = '';
     for (const def of C.UNIT_DEFS){
       const div = document.createElement('div'); div.className='unit';
-      div.innerHTML = `<div class="unitRow">
-        <div>
+      div.innerHTML = `<div class="shopAccordionTop">
+        <div class="shopAccordionTitle">
           <strong>${def.name}</strong>
           <div class="muted small">${def.desc || ''}</div>
+          <div class="shopAccordionSummary" style="margin-top:6px;">
+            <div class="metricLine"><span class="metricLabel">所持</span><span id="owned-${def.id}" class="metricValue">0</span></div>
+            <div class="metricLine"><span class="metricLabel">次価格</span><span id="cost-${def.id}" class="metricValue">0</span></div>
+          </div>
         </div>
-        <div class="unitStats">
-          <div class="metricLine"><span class="metricLabel">所持</span><span id="owned-${def.id}" class="metricValue">0</span></div>
-          <div class="metricLine"><span class="metricLabel">生産寄与</span><span id="contrib-${def.id}" class="metricValue">0%</span></div>
-          <div class="metricLine"><span class="metricLabel">次価格</span><span id="cost-${def.id}" class="metricValue">0</span></div>
+        <div class="shopAccordionPrimaryActions">
           <div class="row" style="margin-top:4px">
             <button id="buy1-${def.id}">+1</button>
-            <button id="buy10-${def.id}" class="small">+10</button>
-            <button id="buyMax-${def.id}" class="small">Buy Max</button>
           </div>
+          <button id="toggleUnit-${def.id}" class="small alt shopAccordionToggle" type="button">詳細</button>
+        </div>
+      </div>
+      <div id="unitDetail-${def.id}" class="shopAccordionExtra">
+        <div class="metricLine"><span class="metricLabel">生産寄与</span><span id="contrib-${def.id}" class="metricValue">0%</span></div>
+        <div class="row" style="margin-top:8px">
+          <button id="buy10-${def.id}" class="small">+10</button>
+          <button id="buyMax-${def.id}" class="small">Buy Max</button>
         </div>
       </div>`;
       container.appendChild(div);
@@ -328,14 +395,16 @@
       unitButtons[def.id] = {
         buy1: document.getElementById(`buy1-${def.id}`), buy10: document.getElementById(`buy10-${def.id}`), buyMax: document.getElementById(`buyMax-${def.id}`),
         ownedEl: document.getElementById(`owned-${def.id}`), costEl: document.getElementById(`cost-${def.id}`), contribEl: document.getElementById(`contrib-${def.id}`),
+        itemEl: div, detailEl: document.getElementById(`unitDetail-${def.id}`), toggleBtn: document.getElementById(`toggleUnit-${def.id}`),
         nextCost: Infinity, buy10Cost: Infinity
       };
+      unitButtons[def.id].toggleBtn?.addEventListener('click', ()=>toggleMobileShopEntry('unit', def.id));
 
       unitButtons[def.id].buy1.addEventListener('click', ()=>{ const res = E.buyUnitInternal(def.id,1); if (!res || !res.ok) showTypedToast('general','ゴールド不足'); else { persistState(); syncUIAfterChange(createUiDirty('header','playShop','prestigeCore','ascCore')); checkAchievementsAfterAction(); showTypedToast('purchase', `${def.name} を購入しました`); }});
       unitButtons[def.id].buy10.addEventListener('click', ()=>{ const res = E.buyUnitInternal(def.id,10); if (!res || !res.ok) showTypedToast('general','ゴールド不足'); else { persistState(); syncUIAfterChange(createUiDirty('header','playShop','prestigeCore','ascCore')); checkAchievementsAfterAction(); showTypedToast('purchase', `${def.name} x10 を購入しました`); }});
       unitButtons[def.id].buyMax.addEventListener('click', ()=>{ const res = E.buyMaxUnitsInternal(def.id); if (!res || !res.ok) showTypedToast('general','購入できる量はありません'); else { persistState(); syncUIAfterChange(createUiDirty('header','playShop','prestigeCore','ascCore')); checkAchievementsAfterAction(); showTypedToast('purchase', `${def.name} を ${res.bought} 台購入しました`); }});
     }
-    built.units = true; cacheRefs();
+    built.units = true; cacheRefs(); syncMobileShopExpansion();
   }
 
   function buildUpgradesUI(){
@@ -344,22 +413,31 @@
     container.innerHTML = '';
     for (const def of C.UPGRADE_DEFS){
       const div = document.createElement('div'); div.className='upg';
-      div.innerHTML = `<div class="upgRow">
-        <div><strong>${def.name}</strong><div class="muted small">${def.desc||''}</div></div>
-        <div class="upgStats">
-          <div class="metricLine"><span class="metricLabel">Lv</span><span id="uplvl-${def.id}" class="metricValue">0</span></div>
-          <div class="metricLine"><span class="metricLabel">次価格</span><span id="upCost-${def.id}" class="metricValue">0</span></div>
-          <div class="row" style="margin-top:4px"><button id="buyUp-${def.id}">Buy Lv+</button><button id="buyMaxUp-${def.id}" class="small">Buy Max</button></div>
+      div.innerHTML = `<div class="shopAccordionTop">
+        <div class="shopAccordionTitle">
+          <strong>${def.name}</strong><div class="muted small">${def.desc||''}</div>
+          <div class="shopAccordionSummary" style="margin-top:6px;">
+            <div class="metricLine"><span class="metricLabel">Lv</span><span id="uplvl-${def.id}" class="metricValue">0</span></div>
+            <div class="metricLine"><span class="metricLabel">次価格</span><span id="upCost-${def.id}" class="metricValue">0</span></div>
+          </div>
         </div>
+        <div class="shopAccordionPrimaryActions">
+          <div class="row" style="margin-top:4px"><button id="buyUp-${def.id}">Buy Lv+</button></div>
+          <button id="toggleUp-${def.id}" class="small alt shopAccordionToggle" type="button">詳細</button>
+        </div>
+      </div>
+      <div id="upgradeDetail-${def.id}" class="shopAccordionExtra">
+        <div class="row" style="margin-top:8px"><button id="buyMaxUp-${def.id}" class="small">Buy Max</button></div>
       </div>`;
       container.appendChild(div);
 
-      upgradeButtons[def.id] = { buy: document.getElementById(`buyUp-${def.id}`), buyMax: document.getElementById(`buyMaxUp-${def.id}`), lvlEl: document.getElementById(`uplvl-${def.id}`), costEl: document.getElementById(`upCost-${def.id}`), nextCost: Infinity };
+      upgradeButtons[def.id] = { buy: document.getElementById(`buyUp-${def.id}`), buyMax: document.getElementById(`buyMaxUp-${def.id}`), lvlEl: document.getElementById(`uplvl-${def.id}`), costEl: document.getElementById(`upCost-${def.id}`), itemEl: div, detailEl: document.getElementById(`upgradeDetail-${def.id}`), toggleBtn: document.getElementById(`toggleUp-${def.id}`), nextCost: Infinity };
+      upgradeButtons[def.id].toggleBtn?.addEventListener('click', ()=>toggleMobileShopEntry('upgrade', def.id));
 
       upgradeButtons[def.id].buy.addEventListener('click', ()=>{ const res = E.buyUpgradeInternal(def.id); if (!res || !res.ok) showTypedToast('general','ゴールド不足'); else { persistState(); syncUIAfterChange(createUiDirty('header','playShop','prestigeCore','ascCore')); checkAchievementsAfterAction(); showTypedToast('purchase', `${def.name} を Lv ${res.lvl} にしました`); }});
       upgradeButtons[def.id].buyMax.addEventListener('click', ()=>{ const res = E.buyMaxUpgradeInternal(def.id); if (!res || !res.ok) showTypedToast('general','購入できるレベルはありません'); else { persistState(); syncUIAfterChange(createUiDirty('header','playShop','prestigeCore','ascCore')); checkAchievementsAfterAction(); showTypedToast('purchase', `${def.name} を ${res.bought} レベル上げました`); }});
     }
-    built.upgrades = true; cacheRefs();
+    built.upgrades = true; cacheRefs(); syncMobileShopExpansion();
   }
 
   function buildAscShop(){
@@ -519,6 +597,7 @@
 
     for (const k in svgNodeEls) if (svgNodeEls[k]) svgNodeEls[k].classList.remove('selected');
     if (svgNodeEls[id]) svgNodeEls[id].classList.add('selected');
+    syncLegacyInspectorSheet();
   }
 
   // ---------- Achievements ----------
@@ -1394,6 +1473,7 @@
     if (uiDirty.header) syncHeaderResources(st);
     syncVisiblePanels(st, { dirty:uiDirty, economySnapshot, previewSnapshot });
     syncDynamicButtons(st, uiDirty);
+    syncMobileResponsiveUi();
   }
   function getCurrentViewDirty(st){
     const activeTab = getActiveTabName(st);
@@ -1473,6 +1553,7 @@
     st.settings.activeSubTabs[parent] = active;
     persistState();
     if (parent === 'prestige' && active === 'legacy') svgDirty = true;
+    syncLegacyInspectorSheet();
     if (!opts.skipSync) syncUIAfterChange(getSubTabDirty(parent, active));
   }
 
@@ -1490,9 +1571,6 @@
     if (!matched){ const alt = document.getElementById('tab-' + name); if (alt){ document.querySelectorAll('.tabPane').forEach(p=>p.style.display='none'); alt.style.display='block'; matched = true; } }
     if (!matched){ const fallback = document.getElementById('tab-play') || document.querySelector('.tabPane'); if (fallback){ document.querySelectorAll('.tabPane').forEach(p=>p.style.display='none'); fallback.style.display='block'; name = fallback.id.replace('tab-',''); } }
 
-    const insWrap = document.getElementById('tab-inspector');
-    if (insWrap){ if (name === 'prestige' && ((E.getState().settings && E.getState().settings.activeSubTabs || {}).prestige || 'core') === 'legacy'){ insWrap.style.display = 'block'; svgDirty = true; } else { insWrap.style.display = 'none'; } }
-
     document.querySelectorAll('.tabBtn').forEach(btn=>{
       const bt = (btn.dataset && btn.dataset.tab) ? btn.dataset.tab : (btn.getAttribute('data-tab') || (btn.id && btn.id.replace(/^tabBtn-/, '')));
       if (bt === name) btn.classList.add('active'); else btn.classList.remove('active');
@@ -1509,6 +1587,7 @@
       st.settings = st.settings || {};
       st.settings.activeTab = name;
       persistState();
+      syncLegacyInspectorSheet();
       syncUIAfterChange(getCurrentViewDirty(st));
     } catch(e){}
   }
@@ -1620,6 +1699,7 @@
     document.getElementById('ins_close')?.addEventListener('click', ()=>{
       document.getElementById('ins_box').style.display='none'; document.getElementById('ins_none').style.display='block';
       selectedLegacyId = null; for (const id in svgNodeEls) if (svgNodeEls[id]) svgNodeEls[id].classList.remove('selected');
+      syncLegacyInspectorSheet();
     });
 
     document.getElementById('legacyZoomIn')?.addEventListener('click', ()=> setLegacyZoom(legacyZoom + getLegacyZoomStep()));
@@ -1655,9 +1735,9 @@
     const body = document.getElementById('updateModalBody');
     if (!modal || !body) return;
     body.textContent = `${C.APP_VERSION} の主な更新
-- ロードマップ Phase 3 を完了し、Legacy Tree に排他ビルド枝を追加
-- Challenge 報酬へ保持 / 自動化 / ルール変更系を追加し、Challenge を進行装置として再設計
-- Challenge 画面に各挑戦の狙いと報酬タイプを表示し、周回方針を判断しやすく改善`;
+- モバイル向けにヘッダー情報とタブを横スクロール式へ圧縮
+- 長い説明ブロックを折りたたみ化し、初期表示の縦占有を削減
+- プレイ一覧を行展開式にし、レガシー Inspector をモバイル下部シート表示へ変更`;
     modal.style.display = 'flex';
     document.getElementById('closeUpdateModal')?.addEventListener('click', ()=>{
       modal.style.display = 'none';
@@ -1684,11 +1764,13 @@
     applyLegacyZoom();
 
     showTab(E.getState().settings.activeTab || 'play');
+    syncMobileResponsiveUi();
     showUpdateModalIfNeeded();
 
     document.addEventListener('visibilitychange', ()=>{
       if (document.visibilityState === 'hidden') flushScheduledSave(true);
     });
+    window.addEventListener('resize', ()=>syncMobileResponsiveUi());
     window.addEventListener('pagehide', ()=>flushScheduledSave(true));
     window.addEventListener('beforeunload', ()=>flushScheduledSave(true));
     setInterval(()=>flushScheduledSave(true), C.AUTO_SAVE_INTERVAL || 5000);

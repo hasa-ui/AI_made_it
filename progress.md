@@ -197,3 +197,11 @@ Original prompt: ロードマップのPhase 1を完了させてください
 - 修正: `game/state.migration.js` の既存 versioned migration を helper 化し、partial legacy snapshot から `ascOwned` / `celestialOwned` を復元した後にも同じ clamp/refund を再適用するようにした。
 - 修正: これにより、`sourceVersion < 16` の Ascension 一回きり upgrade overcap や、`sourceVersion < 14` の Celestial branch upgrade refund 済み状態が、snapshot restore で復活してしまう経路を塞いだ。
 - 検証: vm harness で、`sourceVersion = 13` の incomplete legacy active challenge save に `savedSnapshot.ascOwned.asc_void_multiplier = 3` と `savedSnapshot.celestialOwned.cel_harmonic_seed = 2` を持たせて import し、auto-resolve 後に `asc_void_multiplier === 1` / `ascPoints === 8400`、`cel_harmonic_seed === 0` / `celestialPoints === 10` へ補正されることを確認。Playwright client は `browser.newPage: Target page, context or browser has been closed` で今回も実行不可。
+
+## 2026-03-27 Mobile readability UI pass
+- 実装: `Ver.1.31.1` として、モバイル向けの初期表示を圧縮。ヘッダー KPI とメイン/サブタブを横スクロール式へ寄せ、`最終セーブ` / `累計ゴールド` はモバイルではヘッダーから外した。
+- 実装: `index.html` の主要説明カードを `details[data-mobile-collapsed]` 化し、プレイ導線、Ascension 説明、ミニゲーム規則、Celestial ルート、Challenge、Abyss の長文をモバイルで折りたたみ表示にした。
+- 実装: `game/ui.app.js` でプレイ一覧を mobile accordion 化し、ユニット/アップグレードは `+1` と要約だけを初期表示、`+10` / `Buy Max` / 追加指標は展開時のみ表示するよう変更。1 行だけ開く挙動にしている。
+- 実装: レガシー Inspector はモバイルで bottom sheet 表示へ変更し、ノード未選択時は隠すようにした。desktop では従来どおり常設サイド表示を維持。
+- 文書: アップデート情報タブと初回アップデートモーダルを `Ver.1.31.1` の内容へ更新。
+- 検証: `node --check game/config.js && node --check game/ui.app.js`、`git diff --check` が成功。`rg` で `mobileDetails` / `shopAccordionToggle` / `mobile-open` / `Ver.1.31.1` の反映を確認。Playwright client は `browser.newPage: Target page, context or browser has been closed` で今回も実行不可。

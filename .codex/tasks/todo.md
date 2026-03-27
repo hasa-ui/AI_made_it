@@ -266,6 +266,23 @@
 - `node <<'NODE' ... NODE` harness で、`sourceVersion = 13` の incomplete legacy active challenge save が `savedSnapshot.ascOwned.asc_void_multiplier = 3` と `savedSnapshot.celestialOwned.cel_harmonic_seed = 2` を持つケースを import し、auto-resolve 後に `asc_void_multiplier === 1` + `ascPoints === 8400`、`cel_harmonic_seed === 0` + `celestialPoints === 10` へ補正されることを確認。
 - Playwright client: `browser.newPage: Target page, context or browser has been closed` により今回もブラウザ確認は実行不可。
 
+## Implement mobile readability UI pass
+- [x] Compress header and tab navigation for mobile
+- [x] Add collapsible mobile summaries and play-list accordions
+- [x] Move legacy inspector to a mobile bottom sheet presentation
+- [x] Update version/update info and verify changed files
+
+## Progress log
+- Updated the mobile presentation in `index.html`, `game/styles.css`, and `game/ui.app.js` to reduce initial vertical usage: header KPI chips and tab bars now favor horizontal scrolling, long explanation blocks are wrapped in mobile-collapsible `details`, and play-tab rows gained a summary-first accordion layout.
+- Added mobile-only UI state helpers in `game/ui.app.js` so unit/upgrade rows expand one at a time, responsive `details` only auto-collapse when viewport mode changes, and the legacy inspector becomes a bottom sheet on mobile instead of a permanently visible side panel.
+- Bumped the app version to `Ver.1.31.1` and updated the updates tab plus update modal text for the new mobile readability pass.
+
+## Verification log
+- `node --check game/config.js && node --check game/ui.app.js` : 成功
+- `git diff --check` : 成功
+- `rg -n "Ver\\.1\\.31\\.1|mobileDetails|shopAccordionToggle|mobile-open|syncMobileResponsiveUi|toggleUnit-|toggleUp-" index.html game/styles.css game/ui.app.js game/config.js` で、更新情報・折りたたみ詳細・一覧 accordion・mobile inspector sheet のフックが追加されていることを確認。
+- Playwright client: `browser.newPage: Target page, context or browser has been closed` により今回もブラウザ確認は実行不可。
+
 ## Fix partial legacy snapshot baseline loss
 - [x] Restore available meta rollback fields from partially populated legacy snapshots
 - [x] Preserve earned-total counters when no in-challenge ascends occurred

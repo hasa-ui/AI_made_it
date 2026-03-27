@@ -10,7 +10,7 @@
   <header id="mainHeader">
     <div>
       <h1 style="margin:0 0 6px">インクリメンタル</h1>
-      <p class="muted" style="margin:0">完全版 — 実運用重視UI・Ascension・ヘルプ統合（アルファ版）</p>
+      <p class="muted headerLead" style="margin:0">完全版 — 実運用重視UI・Ascension・ヘルプ統合（アルファ版）</p>
     </div>
 
     <div id="headerRight">
@@ -23,11 +23,11 @@
           <div class="muted small">生産量 (GPS)</div>
           <div id="gps">0</div>
         </div>
-        <div class="statusItem">
+        <div class="statusItem desktopStatusOnly">
           <div class="muted small">最終セーブ</div>
           <div id="lastSave" class="muted small inline">—</div>
         </div>
-        <div class="statusItem">
+        <div class="statusItem desktopStatusOnly">
           <div class="muted small">累計ゴールド</div>
           <div id="totalEarned" class="muted small inline">0</div>
         </div>
@@ -68,12 +68,14 @@
     <section class="col maincol">
       <div id="tab-play" class="tabPane">
         <div class="card flowCard">
-          <h3>プレイ導線</h3>
-          <ol class="flowSteps muted small">
-            <li><strong>最初に見る</strong>：ヘッダーの「所持金」と「GPS」で現在地を把握</li>
-            <li><strong>次に比較する</strong>：ユニット一覧で「生産寄与率」と「次価格」を比較</li>
-            <li><strong>最後に行動する</strong>：「+1 / +10 / Buy Max」で目的に合わせて購入</li>
-          </ol>
+          <details class="mobileDetails" data-mobile-collapsed open>
+            <summary><strong>プレイ導線</strong><span class="muted tiny"> 現在地 → 比較 → 購入</span></summary>
+            <ol class="flowSteps muted small">
+              <li><strong>最初に見る</strong>：ヘッダーの「所持金」と「GPS」で現在地を把握</li>
+              <li><strong>次に比較する</strong>：ユニット一覧で「生産寄与率」と「次価格」を比較</li>
+              <li><strong>最後に行動する</strong>：「+1 / +10 / Buy Max」で目的に合わせて購入</li>
+            </ol>
+          </details>
         </div>
 
         <div class="card">
@@ -151,11 +153,13 @@
 
         <div id="subtab-ascension-core" class="subTabPane">
         <div class="card">
-          <h3>Ascension（超越）</h3>
-          <p class="muted small" style="line-height:1.6;">
-            Ascensionを実行すると、ゴールド・ユニット・アップグレード・プレステージ履歴・累計ゴールド・利用可能レガシー・レガシーツリーがリセットされる代わりに、強力な <strong>Ascensionポイント(AP)</strong> を獲得します。<br>
-            ※一部のAscensionショップ強化で、累計ゴールドやレガシーツリーの維持を解放できます。
-          </p>
+          <details class="mobileDetails" data-mobile-collapsed open>
+            <summary><strong>Ascension（超越）</strong><span class="muted tiny"> AP を獲得する上位リセット</span></summary>
+            <p class="muted small" style="line-height:1.6;">
+              Ascensionを実行すると、ゴールド・ユニット・アップグレード・プレステージ履歴・累計ゴールド・利用可能レガシー・レガシーツリーがリセットされる代わりに、強力な <strong>Ascensionポイント(AP)</strong> を獲得します。<br>
+              ※一部のAscensionショップ強化で、累計ゴールドやレガシーツリーの維持を解放できます。
+            </p>
+          </details>
           <div class="row" style="margin-top:12px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.1);">
             <div>
               <div class="muted small">次に得られるAP（見積）: <span id="ascGainPreview" style="color:#f472b6; font-size:1.2rem; font-weight:bold;">0</span> AP</div>
@@ -175,16 +179,18 @@
         <div class="card" id="ascMiniGameCard" style="display:none;">
           <h3>Ascension ミニゲーム: 星脈同調</h3>
           <p class="muted small">Ascension Shop を全購入すると解放。挑戦ごとに AP を1消費。反転頻度を抑えた10ラウンド制で高スコアを狙います。</p>
-          <div class="muted small" style="line-height:1.65; margin-top:8px;">
-            <strong>ルール</strong>
-            <ul style="margin:6px 0 0 18px; padding:0;">
-              <li>全10ラウンド。基本は通常ルールで、後半のみ「反転」ラウンドが出現します。</li>
-              <li>通常ルール：表示された目標レーン（A〜D）を制限時間内に押すと成功です。</li>
-              <li>反転ルール：目標レーンの<strong>対向レーン</strong>を押すと成功（目標レーンや他レーンはミス）です。</li>
-              <li>ラウンドが進むほど制限時間が短くなりますが、緩やかに短縮されます。タイムアウトはミス扱いです。</li>
-              <li>挑戦終了時にスコアに応じて AP を還元します（高スコアほど還元量アップ）。</li>
-            </ul>
-          </div>
+          <details class="mobileDetails" data-mobile-collapsed open>
+            <summary><strong>ルール</strong><span class="muted tiny"> 通常 / 反転 / 報酬</span></summary>
+            <div class="muted small" style="line-height:1.65; margin-top:8px;">
+              <ul style="margin:6px 0 0 18px; padding:0;">
+                <li>全10ラウンド。基本は通常ルールで、後半のみ「反転」ラウンドが出現します。</li>
+                <li>通常ルール：表示された目標レーン（A〜D）を制限時間内に押すと成功です。</li>
+                <li>反転ルール：目標レーンの<strong>対向レーン</strong>を押すと成功（目標レーンや他レーンはミス）です。</li>
+                <li>ラウンドが進むほど制限時間が短くなりますが、緩やかに短縮されます。タイムアウトはミス扱いです。</li>
+                <li>挑戦終了時にスコアに応じて AP を還元します（高スコアほど還元量アップ）。</li>
+              </ul>
+            </div>
+          </details>
           <div class="row" style="margin-top:8px;">
             <button id="miniGameStart" class="accent">挑戦開始 (AP -1)</button>
             <span id="miniGameSummary" class="muted small">未挑戦</span>
@@ -240,8 +246,10 @@
           <div id="celestialLayerListTab"></div>
         </div>
         <div class="card">
-          <h3>Celestialルート</h3>
-          <p class="muted small">解放済みの星界層に応じてルートを選択できます。選択中ルートは恒久ボーナスを与え、対応するCelestialアップグレードを購入可能にします。カード内では推奨スタイル、到達目標、保存済みだが待機中の専用強化も確認できます。</p>
+          <details class="mobileDetails" data-mobile-collapsed open>
+            <summary><strong>Celestialルート</strong><span class="muted tiny"> ルート選択と専用強化</span></summary>
+            <p class="muted small">解放済みの星界層に応じてルートを選択できます。選択中ルートは恒久ボーナスを与え、対応するCelestialアップグレードを購入可能にします。カード内では推奨スタイル、到達目標、保存済みだが待機中の専用強化も確認できます。</p>
+          </details>
           <div id="celestialBranchActive" class="muted small" style="margin-top:8px;">未選択</div>
           <div id="celestialBranchList" style="margin-top:12px;"></div>
         </div>
@@ -255,8 +263,10 @@
 
       <div id="tab-challenges" class="tabPane">
         <div class="card">
-          <h3>Challenge (制約周回)</h3>
-          <p class="muted small">Antimatter Dimensions風の「制約付きラン」です。開始時に周回をリセットし、目標累計Goldを達成すると恒久報酬を得られます。</p>
+          <details class="mobileDetails" data-mobile-collapsed open>
+            <summary><strong>Challenge (制約周回)</strong><span class="muted tiny"> 目標達成で恒久報酬</span></summary>
+            <p class="muted small">Antimatter Dimensions風の「制約付きラン」です。開始時に周回をリセットし、目標累計Goldを達成すると恒久報酬を得られます。</p>
+          </details>
           <div class="subTabs" style="margin-top:8px;">
             <button class="subTabBtn active" data-parent="challenges" data-subtab="core">通常Challenge</button>
             <button class="subTabBtn" data-parent="challenges" data-subtab="abyss">Abyss Challenge</button>
@@ -273,8 +283,10 @@
 
       <div id="tab-abyss" class="tabPane" style="display:none;">
         <div class="card">
-          <h3>Abyss</h3>
-          <p class="muted small">深淵専用の機能です。Abyss Shardを使って恒久強化を購入できます。Abyss gain は Challenge / Celestial / 周回数 / Infinity 到達で段階的に増加します。</p>
+          <details class="mobileDetails" data-mobile-collapsed open>
+            <summary><strong>Abyss</strong><span class="muted tiny"> Shard 強化と gain 導線</span></summary>
+            <p class="muted small">深淵専用の機能です。Abyss Shardを使って恒久強化を購入できます。Abyss gain は Challenge / Celestial / 周回数 / Infinity 到達で段階的に増加します。</p>
+          </details>
           <div class="row">
             <div class="statusItem"><div class="muted small">所持 Abyss Shard</div><div id="abyssTabShard" style="color:#60a5fa;font-weight:bold;">0</div></div>
             <div class="statusItem"><div class="muted small">累計 Abyss Reset</div><div id="abyssResetCount" class="muted small inline">0</div></div>
@@ -369,6 +381,7 @@
           <h3>アップデート情報</h3>
           <p class="small muted" style="margin-top:4px;">このゲームは現在<strong>アルファ版</strong>です。仕様やバランスは今後も変更されます。</p>
           <ul class="small muted" style="margin-top:8px; padding-left:20px; line-height:1.8;">
+            <li><strong>Ver.1.31.1</strong>：モバイル向けの見た目を調整。ヘッダー情報とタブを横スクロール式へ圧縮し、長い説明ブロックを折りたたみ化。プレイ一覧は詳細を行展開式にし、レガシー Inspector はモバイルで下部シート表示へ変更して縦スクロール量を削減。</li>
             <li><strong>Ver.1.31.0</strong>：ロードマップ Phase 3 を完了。Legacy Tree に排他ビルド枝を追加し、Challenge特化 / 放置特化 / 高速周回特化の3方針へ分岐可能に。Challenge報酬へ保持・自動化・ルール変更系を導入し、Challenge画面にも狙いと報酬タイプを表示。</li>
             <li><strong>Ver.1.30.0</strong>：内部構造を再編。State を defaults / migration / storage / facade に、Engine を runtime / economy / progression / shop / reset / facade に分割し、UI bootstrap を独立ファイル化。公開 API とセーブ互換は維持したまま、今後の機能追加と不具合調査をしやすい構成へ整理。</li>
             <li><strong>Ver.1.29.4</strong>：設定画面に画面更新頻度の調整項目を追加。通常UI更新間隔と重いパネル更新間隔を個別に変更でき、どちらも 50ms まで短縮可能に。</li>
